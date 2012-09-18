@@ -1,0 +1,322 @@
+@lightGrey: #DEDEDE;
+@lighterGrey: #EEE;
+
+@font-face {
+  font-family: 'Dosis';
+  src: url('Dosis-Bold.ttf') format('truetype');
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: 'Dosis';
+  src: url('Dosis-BoldItalic.ttf') format('truetype');
+  font-weight: bold;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Dosis';
+  src: url('Dosis-Italic.ttf') format('truetype');
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Dosis';
+  src: url('Dosis-Regular.ttf') format('truetype');
+}
+
+BODY {
+  font-family: 'Dosis';
+  font-size: 14px;
+  background-color: @lighterGrey;
+}
+
+DIV.navbar {
+  box-shadow: 0 2px 6px black;
+}
+
+DIV.hero-unit.header{
+  border-radius: 0px 0px 0px 0px;
+  background-color: teal;
+  margin-bottom: 0px;
+  box-shadow: 1px 4px white;
+}
+
+DIV.hero-unit.header H3 {
+  text-shadow: 0 1px 4px black;
+  font-weight: normal;
+  font-size: 26px;
+  width: 408px;
+  margin-top: 19%;
+}
+
+.icon-stopwatch {
+  background-image: url('/assets/img/stopwatch_icon.png');
+  background-repeat: no-repeat;
+  background-position: 1px 1px;
+  height: 28px;
+  width: 36px;
+}
+
+.icon-group {
+  background-image: url('/assets/img/group_icon.png');
+  background-repeat: no-repeat;
+  background-position: 1px 1px;
+  height: 23px;
+  width: 37px;
+}
+
+.icon-charts {
+  background-image: url('/assets/img/charts_icon.png');
+  background-repeat: no-repeat;
+  background-position: 1px 1px;
+  height: 25px;
+  width: 28px;
+}
+
+DIV.fish {
+  background-image: url('/assets/img/logo.png');
+  background-repeat: no-repeat;
+  height: 185px;
+  width: 218px;
+  float: right;
+  margin-right: 22%;
+}
+
+DIV.header {
+  background-image: url('/assets/img/header_bg_repeat.gif');
+  background-position: 0 44px;
+  background-repeat: repeat;
+  padding-bottom: 0px;
+  padding-top: 44px;
+}
+
+h3.teaserText {
+  color: white;
+}
+
+DIV.headerBox {
+  margin-left: 25%;
+  color: white;
+}
+
+DIV.downloadButton {
+  display: block;
+  text-shadow: 0 1px 3px black;
+  background-image: url('/assets/img/btn_download_w_icon.png');
+  background-repeat: no-repeat;
+}
+
+A.myBtn {
+  background-image: url('/assets/img/btn_download_w_icon.png') !important;
+  border: none;
+  background-position: -2px -3px;
+  margin-top: 25px;
+}
+
+A.btn:hover {
+  background-position: -2px -3px;
+}
+
+DIV.footer {
+  margin-top: 30px;
+  background-color: @lightGrey;
+  min-height: 60px;
+  padding: 30px;
+}
+
+A.specialColor, A.specialColor:hover {
+  text-decoration: none;
+  color: teal;
+}
+
+DIV.fourBox H3 {
+  font-size: 19px;
+  margin-bottom: 0px;
+}
+
+DIV.fourBox P {
+  margin-left: 58px;
+}
+
+DIV.fourBox i {
+  margin-right: 20px;
+}
+
+/*DIV.span3 {
+  width: 240px;
+}
+
+DIV.span8 {
+  width: 620px;
+}*/
+
+DIV.span6 .span3 {
+  margin-left: 0px;
+}
+
+DIV.headContainer {
+  background-image: url('/assets/img/header_bg.jpg');
+  background-repeat: no-repeat;
+  height: 300px;
+}
+
+DIV.container > .span5 {
+  margin-left: 0px;
+}
+.container, .navbar-static-top .container, .navbar-fixed-top .container, .navbar-fixed-bottom .container {
+  width: 900px;
+}
+
+DIV.bottomRow {
+  padding-bottom: 80px;
+}
+
+/*DIV.span4 {
+  width: 300px;
+}*/
+
+DIV.teaserImageOne {
+  margin-left: 33%;
+  background-image: url('/assets/img/icon_business.gif');
+  background-repeat: none;
+  width: 103px;
+  height: 103px;
+}
+
+DIV.teaserImageTwo {
+  margin-left: 33%;
+  background-image: url('/assets/img/icon_developer.gif');
+  background-repeat: none;
+  width: 103px;
+  height: 103px;
+}
+
+DIV.teaserImageThree {
+  margin-left: 33%;
+  background-image: url('/assets/img/icon_user.gif');
+  background-repeat: none;
+  width: 103px;
+  height: 103px;
+}
+
+DIV.gitHubTopBar {
+  float: right;
+}
+
+DIV.socialGitHubInner IFRAME {
+  padding: 10px;
+}
+
+DIV.navbarfixed {
+  height: 6%;
+}
+
+DIV.socialBar {
+  margin-left: 30px;
+  margin-top: -16px;
+  height: 20px;
+}
+
+DIV.span6 DIV.socialBasic UL {
+  margin-top: 10px;
+  margin-left: 0px;
+}
+
+DIV.topRow h3, DIV.bottomRow h3 {
+  font-weight: normal;
+}
+
+UL.socialBasicInner,
+UL.socialBasicInner LI {
+  list-style: none;
+  float: left;
+  padding-right: 10px;
+  margin-bottom: 0px;
+}
+
+DIV.fourBox .socialBasicInner {
+  margin-left: 0px;
+  padding-top: 20px;
+}
+
+LI.tweetButton {
+  padding: 0 12px;
+}
+
+LI.tweetButton IFRAME {
+  width: 82px !important;
+}
+
+LI.plusOneButton {
+  padding-right: 0px !important;
+  padding-left: 5px !important;
+}
+
+LI.plusOneButton > DIV {
+  width: 72px !important;
+}
+
+DIV.socialBar .socialGitHubInner IFRAME {
+  padding-top: 0px;
+}
+
+DIV.footerLinks {
+  margin-left: 22px;
+}
+
+DIV.footerLinks A {
+  text-decoration: none;
+  color: black;
+}
+
+DIV.footerLinks LI, DIV.delimiter {
+  list-style: none;
+  float: left;
+}
+
+DIV.footerLinks LI {
+  padding: 0 10px;
+  padding-bottom: 0px;
+}
+
+DIV.copyWrapper {
+  float: right;
+  background-color: @lightGrey;
+  background-image: url('/assets/img/footer_bg.gif');
+  background-repeat: no-repeat;
+  height: 90px;
+  width: 416px;
+  margin-top: -44px;
+  margin-right: 98px;
+}
+
+DIV.copyright {
+  float: right;
+  margin-right: 10px;
+  margin-top: 45px;
+}
+
+DIV.copyright .underscore {
+  text-decoration: none;
+  color: black;
+  border-bottom: 1px red solid;
+}
+
+DIV.footer {
+  border-top: 1px #bdbdbd solid;
+  height: 59px;
+  padding: 30px 30px 0;
+}
+
+DIV.topRow P A, DIV.bottomRow P A {
+  color: black;
+}
+
+DIV.topRow P A:hover, DIV.bottomRow P A:hover {
+  color: #ff4500;
+}
+
+DIV.downloadContainer {
+  margin-top: 20%;
+}

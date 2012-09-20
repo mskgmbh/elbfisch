@@ -1,37 +1,93 @@
 <!--thing long box on the left-->
 <div class="span3">
   <h3>Über <a class="specialColor">Elbfisch</a></h3>
-  <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+  <p>
+    Die zunehmende Etablierung von Embedded-PC-Systemen im Bereich der
+    Automatisierungstechnik begünstigt
+    den lange überfälligen Schritt, auch im industriellen Umfeld objektorientierte
+    Softwareentwicklungsverfahren einzusetzen.
+  </p>
+  <p>
+    Elbfisch bietet hierfür eine Laufzeitumgebung und einen Kanon von
+    Grundfunktionen an, die die Implementierung
+    von komplexen Automatisierungsaufgaben auf preiswerten Hardware-Plattformen in
+    Java ermöglicht.
+  </p>
 </div>
 
 <!-- wide box on top -->
 <div class="span6">
   <h3>Elbfisch <a class="specialColor">Funktionen</a></h3>
-  <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus<a> ac cursus commodo, tortor</a> mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+  <p>
+    Elbfisch stellt eine Laufzeitumgebung und einen Kanon von Grundfunktionen zur
+    Verfügung, mit denen unter Nutzung weit verbreiteter Opensource-Produkte, wie
+    die integrierten Entwicklungsumgebungen "Netbeans" und "Eclipse", Linux als
+    Betriebssystem, "git" als verteiltes Versionmanagementsystem die teambasierte
+    Entwicklung objektorientierter Automatisierungapplikationen ermöglicht wird. Die
+    Programmierung erfolgt in Java.
+  </p>
 
 
 <!-- quad boxes -->
 <div class="span3 fourBox">
-  <h3><i class="icon-group"></i><a class="specialColor">FEATURE 1</a></h3>
-  <p>Donec id elit non mi porta gravida at eget <a>metus. Fusce dapibus,</a> tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+  <h3><i class="icon-group"></i><a class="specialColor">Modularität</a></h3>
+  <p>
+    Die Konzeption von Elbfisch basiert auf dem Grundgedanken, dass eine
+    Automatisierungapplikation ein Abbild des Prozesses
+    darstellen muss, den sie steuert. Ein Prozess (eine Anlage) besteht aus
+    Aggregaten die untereinander in Wechselwirkung stehen
+    und wiederum selbst aus untergeordneten Aggregaten bestehen können. Eine solche
+    hierarchische Anordnung von Aggregaten kann mit Hilfe von Elbfisch-Modulen
+    abgebildet werden.
+    Module können unabhängig voneinander implementiert werden, besitzen definierte,
+    seiteneffektfreie Schnittstellen und sind, soweit
+    allgemeingültig implementiert in beliebigen Implementierungen wiederverwendbar.
+  </p>
 </div>
 
 <div class="span3 fourBox">
-  <h3><i class="icon-charts"></i><a class="specialColor">FEATURE 2</a></h3>
-  <p>Donec sed <a>odio dui. Cras justo odio</a>, dapibus ac facilisis in, egestas eget quam. Vestibulum id ligula porta felis euismod semper. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
+  <h3><i class="icon-charts"></i><a class="specialColor">Geordneter Informationsaustausch</a></h3>
+  <p>
+    Sowie Aggregate in einer zu automatisierenden Anlage untereinander in
+    Wechselwirkung treten, so müssen auch die diese repräsentierenden
+    Elbfisch-Module untereinander Informationen austauschen. Elbfisch stellt hierzu
+    des Konzept der Signale zur Verfügung. Ein Modul nimmt Informationen von anderen
+    Modulen über Signale entgegen und stellt anderen Modulen selbst Informationen
+    über Signale zur Verfügung.
+  </p>
 </div>
 
 
 
 <!-- quad boxes -->
 <div class="span3 fourBox">
-  <h3><i class="icon-stopwatch"></i><a class="specialColor">FEATURE 3</a></h3>
-  <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+  <h3><i class="icon-stopwatch"></i><a class="specialColor">Verarbeitung von Prozessereignissen</a></h3>
+  <p>
+    Ein wesentliches Feature von Elbfisch besteht in der Möglichkeit für Module, auf
+    Prozessereignisse zu reagieren und diese zu verarbeiten. Die Vielfalt möglicher
+    Prozessereignisse ist unbegrenzt. Diese können z.B. sein: Ablauf einer Zeit,
+    Eintreten eines
+    Signalwechsel auf einer Eingangsklemme, Überschreitung eines analogen Wertes,
+    kombinatorische Ereignisse, Nichteintreten eines
+    Ereignisses innerhalb einer Zeit, Notaus-Situationen, Abschaltung einer Anlage etc..
+    Module können explizit auf das Eintreten von Ereignissen warten und werden dann
+    von Elbfisch aktiviert.
+  </p>
 </div>
 
 <div class="span3 fourBox">
-  <h3><i class="icon-charts"></i><a class="specialColor">FEATURE 4</a></h3>
-  <p>Donec sed odio dui. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Vestibulum id ligula porta felis euismod semper. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
+  <h3><i class="icon-charts"></i><a class="specialColor">Synchrones Design</a></h3>
+  <p>
+    Elbfisch steuert die Module einer Applikation, auftretende Ereignisse und den
+    Austausch von Signalen über ein Zeitscheibenverfahren (Zyklus). Z.B werden
+    Änderungen eines Signals durch ein Modul erst im nächsten Zyklus an alle
+    verbrauchenden Module weitergeleitet. Auf diese Weise bleiben alle
+    Eingangssignale für alle Module innerhalb eines Zyklus unveränderlich und damit
+    konsistent. Damit ist die Wechselwirkungsfreiheit des Ablaufs der Module
+    sichergestellt. Die Module können innerhalb eines Zyklus in beliebiger
+    Reihenfolge ablaufen, ja sich sogar gegenseitig unterbrechen. Die
+    auszutauschenden Signale bleiben in jedem Fall konsistent.
+  </p>
 </div>
 
 <div class="socialBasic">

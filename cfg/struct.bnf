@@ -1,0 +1,153 @@
+Package org.jpac.plc.s7.symaddr; // package name
+
+Helpers
+  /**
+   * SCL is a case-insensitive language. So, we'll use helpers
+   * to simplify our regular expressions. E.g. Instead of writing, 
+   * for instance, end = ('e' | 'E') ('n' | 'N') ('d' | 'D'), we 
+   * may write:  end = e n d, which takes less space is makes the 
+   * regular expression more readable.
+   */
+  a = 'a' | 'A' ; // this could also be written as ['a' + 'A']
+  b = 'b' | 'B' ; // but I prefer the old lex style
+  c = 'c' | 'C' ;
+  d = 'd' | 'D' ;
+  e = 'e' | 'E' ;
+  f = 'f' | 'F' ;
+  g = 'g' | 'G' ;
+  h = 'h' | 'H' ;
+  i = 'i' | 'I' ;
+  l = 'l' | 'L' ;
+  m = 'm' | 'M' ;
+  n = 'n' | 'N' ;
+  o = 'o' | 'O' ;
+  p = 'p' | 'P' ;
+  r = 'r' | 'R' ;
+  s = 's' | 'S' ;
+  t = 't' | 'T' ;
+  u = 'u' | 'U' ;
+  v = 'v' | 'V' ;
+  w = 'w' | 'W' ;
+  y = 'y' | 'Y' ;
+
+  // un-printable characters
+  tab = 9 ;
+  cr = 13 ;
+  lf = 10 ;
+  blank = ' ' ;
+
+  line_terminator = lf | cr | cr lf; // neu
+
+  l_curly_bracket = '{' ;
+  r_curly_bracket = '}' ;
+  ascii_char = [32 .. 127] ;
+  unicode_input_character = [0..0xffff];
+  input_character = [unicode_input_character - [cr + lf]];
+
+  not_star             = [input_character - '*'] | line_terminator;
+  not_star_not_bracket = [input_character - ['*' + ')']] | line_terminator;
+  
+  // letters and digits
+  letter = [[['a' .. 'z'] + ['A' .. 'Z']] + '_'];
+  digit  = ['0' .. '9'] ;
+
+Tokens
+  // reserved words
+  structsym     = s t r u c t ;
+  structendsym  = e n d '_' s t r u c t ;
+  varsym        = v a r ;
+  bool          = b o o l ;
+  byte          = b y t e ;
+  char          = c h a r ;
+  word          = w o r d ;
+  dword         = d w o r d ;
+  int           = i n t ;
+  dint          = d i n t ;
+  real          = r e a l ;
+  string        = s t r i n g ;
+  udt           = u d t ;
+  s5time        = s '5' t i m e ;
+  time          = t i m e ;
+  timeofday     = t i m e '_' o f '_' d a y ;
+  date          = d a t e ;
+  dateandtime   = d a t e '_' a n d '_' t i m e ;
+  array         = a r r a y ;
+  of            = o f ;
+
+  // symbols separators
+  comma = ',' ;
+  colon = ':' ;
+  semicolon = ';' ;
+  dot = '.' ;
+  dotdot = '..' ;
+  l_paren = '(' ;
+  r_paren = ')' ;
+  l_squarebracket = '[';
+  r_squarebracket = ']';
+
+  // identifiers
+  identifier = letter (letter | digit)* ;
+
+  sign   = ['+' + '-'] ;
+
+  // numbers
+  number       = digit+ ; // integer numbers only
+
+  // comments
+ traditional_comment   = '(*' not_star+ '*'+ (not_star_not_bracket not_star* '*'+)* ')';
+ documentation_comment = '(**' '*'* (not_star_not_bracket not_star* '*'+)* ')';
+ end_of_line_comment   = '//' input_character* line_terminator?;
+ intialization         = ':=' [ascii_char - ';']* ;
+  // blanks 
+  blanks = blank | cr lf | cr | lf | tab ;
+
+Ignored Tokens
+  traditional_comment,
+  documentation_comment,
+  end_of_line_comment,
+  intialization,
+  blanks ;
+
+Productions
+
+ datatype = {var} var | {struct} struct semicolon;
+
+ var = varsym variables_definition_list ;
+
+ struct =
+    structsym
+       variables_definition_list 
+    structendsym ;
+    
+ variables_definition_list =
+    {single} variables_definition |
+    {multiple} variables_definition_list variables_definition ;
+
+ variables_type_assignment =
+    identifier_list colon type;
+
+ variables_definition = variables_type_assignment semicolon;
+
+ identifier_list =
+    {single} identifier |
+    {multiple} identifier_list comma identifier ;
+
+  signednumber = sign* number ;
+
+ arraydim  = [firstindex]:signednumber dotdot [lastindex]:signednumber;
+
+ additionalarraydim = comma arraydim ;
+
+ arraydim_list =
+    {single} arraydim |
+    {multiple} arraydim_list comma arraydim ;
+
+ arraydecl = array l_squarebracket arraydim_list r_squarebracket of type;
+
+ stringdecl = string l_squarebracket number r_squarebracket ;
+
+ type = {bool} bool | {byte} byte | {char} char | {word} word | {dword} dword | {int} int | {dint} dint | {real} real |
+        {string} stringdecl | {udt} udt number | {s5time} s5time | {time} time |
+        {timeofday} timeofday | {date} date | {dateandtime} dateandtime | {array} arraydecl | {struct} struct ;
+
+// end of grammar.

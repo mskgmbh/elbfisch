@@ -1,0 +1,82 @@
+/**
+ * PROJECT   : jPac java process automation controller
+ * MODULE    : SignedIntegerMapper.java
+ * VERSION   : $Revision$
+ * DATE      : $Date$
+ * PURPOSE   : 
+ * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
+ * REMARKS   : -
+ * CHANGES   : CH#n <Kuerzel> <datum> <Beschreibung>
+ *
+ * This file is part of the jPac process automation controller.
+ * jPac is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * jPac is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with the jPac If not, see <http://www.gnu.org/licenses/>.
+ *
+ * LOG       : $Log$
+ */
+
+package org.jpac;
+
+/**
+ *
+ * @author Andreas Ulbrich<ulbrich@mskgmbh.com>
+ */
+public abstract class SignedIntegerMapper{
+    protected int  minSourceValue;
+    protected int  maxSourceValue;
+    protected int  minTargetValue;
+    protected int  maxTargetValue;
+    protected int  scale;
+    protected int  sourceSpan;
+    protected int  targetSpan;
+
+    public SignedIntegerMapper() {
+    }
+
+    public SignedIntegerMapper(SignedInteger source, SignedInteger target) {
+        this.minSourceValue = source.getMinValue();
+        this.maxSourceValue = source.getMaxValue();
+        this.minTargetValue = target.getMinValue();
+        this.maxTargetValue = target.getMaxValue();
+        this.sourceSpan     = maxSourceValue - minSourceValue;
+        this.targetSpan     = maxTargetValue - minTargetValue;
+        this.scale          = targetSpan / sourceSpan;
+    }
+
+    public SignedIntegerMapper(int minSourceValue, int maxSourceValue, int minTargetValue, int maxTargetValue) {
+        this.minSourceValue = minSourceValue;
+        this.maxSourceValue = maxSourceValue;
+        this.minTargetValue = minTargetValue;
+        this.maxTargetValue = maxTargetValue;
+        this.sourceSpan     = maxSourceValue - minSourceValue;
+        this.targetSpan     = maxTargetValue - minTargetValue;
+        this.scale          = targetSpan / sourceSpan;
+    }
+
+    public int map(int sourceValue) throws NumberOutOfRangeException{
+        if (sourceValue < minSourceValue || sourceValue > maxSourceValue){
+            throw new NumberOutOfRangeException(sourceValue, minSourceValue, maxSourceValue);
+        }
+        int targetValue = (scale * (sourceValue - minSourceValue)) + minTargetValue;
+        return targetValue;
+    }
+
+    public int map(double sourceValue) throws NumberOutOfRangeException{
+        int intSourceValue = (int)sourceValue;
+        if (intSourceValue < minSourceValue || intSourceValue > maxSourceValue){
+            throw new NumberOutOfRangeException(sourceValue, minSourceValue, maxSourceValue);
+        }
+        int targetValue = (scale * (intSourceValue - minSourceValue)) + minTargetValue;
+        return targetValue;
+    }
+}

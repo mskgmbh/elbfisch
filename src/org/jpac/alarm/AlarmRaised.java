@@ -1,0 +1,78 @@
+/**
+ * PROJECT   : jPac java process automation controller
+ * MODULE    : AlarmRaised.java
+ * VERSION   : $Revision: 1.1 $
+ * DATE      : $Date: 2012/05/07 06:15:19 $
+ * PURPOSE   : 
+ * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
+ * REMARKS   : -
+ * CHANGES   : CH#n <Kuerzel> <datum> <Beschreibung>
+ *
+ * This file is part of the jPac process automation controller.
+ * jPac is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * jPac is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with the jPac If not, see <http://www.gnu.org/licenses/>.
+ *
+ * LOG       : $Log: AlarmRaised.java,v $
+ * LOG       : Revision 1.1  2012/05/07 06:15:19  schuster
+ * LOG       : Alarm introduced
+ * LOG       :
+ */
+
+package org.jpac.alarm;
+
+import org.jpac.Fireable;
+import org.jpac.JPac;
+import org.jpac.ProcessEvent;
+import org.jpac.ProcessException;
+import org.jpac.SignalInvalidException;
+
+public class AlarmRaised extends ProcessEvent{
+    private Alarm alarm;
+    private long  lastNotPendingCycle;
+    
+    public AlarmRaised(Alarm alarm){
+        super();
+        this.alarm = alarm;
+        if (alarm.isValid()){
+            try{this.lastNotPendingCycle = alarm.isPending() ? JPac.getInstance().getCycleNumber() : 0L;} catch(SignalInvalidException exc){/*cannot happen*/};
+        }
+        else{
+            this.lastNotPendingCycle = 0L;
+        }
+    }
+
+    @Override
+    public boolean fire() throws ProcessException {
+        if (!alarm.isPending()){
+            lastNotPendingCycle = JPac.getInstance().getCycleNumber();
+        }
+        //return true during the cycle, in which the state of the alarm changes from "not pending" to "pending"
+        return (alarm.isPending()) && (lastNotPendingCycle == JPac.getInstance().getCycleNumber() - 1);
+    }
+
+    @Override
+    public String toString(){
+        return super.toString() + "(" + alarm + ")";
+    }
+
+    @Override
+    protected boolean equalsCondition(Fireable fireable){
+        boolean equal = false;
+        if (fireable instanceof AlarmRaised){
+            AlarmRaised ar = (AlarmRaised)fireable;
+            equal = this.alarm.equals(ar.alarm);
+        }
+        return equal;
+    }
+    
+}

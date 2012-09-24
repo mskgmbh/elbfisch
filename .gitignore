@@ -1,0 +1,14 @@
+/build/
+/dist/
+/nbproject/private/
+.cvsignore
+.DS_Store
+/build
+CVS
+/dist
+nbproject
+/lib
+/build.xml
+/TEST-org.jpac.AutomationControllerTest.xml
+
+/nbproject

@@ -133,7 +133,7 @@ BODY {
   height: 90px;
   width: 416px;
   position: absolute;
-  right: 400px;
+  right: 310px;
   top: 0;
 }
 .footer .copyNote .copy {
@@ -155,7 +155,7 @@ BODY {
 }
 .footer UL LI {
   float: left;
-  margin: 0 10px;
+  margin: 0 8px;
 }
 .footer UL.links {
   margin: 0;
@@ -167,7 +167,20 @@ BODY {
 }
 .footer .gitSocialInner IFRAME {
   z-index: 10;
-  padding: 0 10px;
+  padding: 0 8px;
+}
+.footer .UL.social LI.tweetButton {
+  padding: 0 12px;
+}
+.footer .UL.social LI.tweetButton IFRAME {
+  width: 82px !important;
+}
+.footer .UL.social LI.plusOneButton {
+  padding-right: 0px !important;
+  padding-left: 5px !important;
+}
+.footer .UL.social LI.plusOneButton > DIV {
+  width: 72px !important;
 }
 .imprint {
   font-family: Arial;

@@ -149,6 +149,9 @@ BODY {
 }
 .footer UL {
   list-style: none;
+  margin: 0;
+  margin-left: 15px;
+  margin-bottom: 10px;
 }
 .footer UL LI {
   float: left;
@@ -156,6 +159,7 @@ BODY {
 }
 .footer UL.links {
   margin: 0;
+  margin-left: 15px;
 }
 .footer UL.links LI  A {
   color: #000000;

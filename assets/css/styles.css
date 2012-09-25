@@ -169,17 +169,17 @@ BODY {
   z-index: 10;
   padding: 0 8px;
 }
-.footer .UL.social LI.tweetButton {
+.footer UL.social LI.tweetButton {
   padding: 0 12px;
 }
-.footer .UL.social LI.tweetButton IFRAME {
+.footer UL.social LI.tweetButton IFRAME {
   width: 82px !important;
 }
-.footer .UL.social LI.plusOneButton {
+.footer UL.social LI.plusOneButton {
   padding-right: 0px !important;
   padding-left: 5px !important;
 }
-.footer .UL.social LI.plusOneButton > DIV {
+.footer UL.social LI.plusOneButton > DIV {
   width: 72px !important;
 }
 .imprint {

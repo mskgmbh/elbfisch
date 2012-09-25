@@ -166,21 +166,13 @@ BODY {
   text-decoration: none;
 }
 .footer .gitSocialInner IFRAME {
-  z-index: 10;
-  padding: 0 8px;
-}
-.footer UL.social LI.tweetButton {
-  padding: 0 12px;
+  padding: 0 10px;
 }
 .footer UL.social LI.tweetButton IFRAME {
-  width: 82px !important;
-}
-.footer UL.social LI.plusOneButton {
-  padding-right: 0px !important;
-  padding-left: 5px !important;
+  width: 85px !important;
 }
 .footer UL.social LI.plusOneButton > DIV {
-  width: 72px !important;
+  width: 65px !important;
 }
 .imprint {
   font-family: Arial;

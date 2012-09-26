@@ -142,7 +142,7 @@ BODY {
 }
 .footer .copyNote .copy A {
   color: #000000;
-  border-bottom: 1px #ff0000 solid;
+  border-bottom: 1px #ff6633 solid;
 }
 .footer .copyNote .copy A:hover {
   text-decoration: none;

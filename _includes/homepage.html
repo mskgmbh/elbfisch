@@ -17,7 +17,7 @@
         Elbfisch bietet hierfür eine Laufzeitumgebung und einen Kanon von Grundfunktionen an, die die Implementierung von komplexen Automatisierungsaufgaben auf preiswerten Hardware-Plattformen in Java ermöglicht.
       </p>
       <p>
-        Wir geben dieses Projekt nun an die OpenSource Community ab. Wir tun dies mit Dank an die vielen Leute und Unternehmen, die bereits seit Jahren ihr Wissen und ihre Produkte mit Anderen teilen. Wir selbst nutzen OpenSource-Produkte seit vielen Jahren. Jetzt ist der Zeitpunkt gekommen, unsererseits ein gutes Stück unseres Wissens der Community zur Verfügung zu stellen. Möge diese Arbeit für viele von Nutzen sein - und möge sie zum Frieden auf der Welt beitragen. Letzteres weniger durch ihren Inhalt als vielmehr durch die Art und Weise, wie Menschen in diesem Projekt zusammenarbeiten – in gegenseitiger Achtung, mit dem nötigen Respekt für die Sichtweisen Anderer und in Anerkennung des Wunsches eines jeden, mit seiner Arbeit einen Beitrag für eine bessere Welt zu leisten – unabhängig von seiner Herkunft und Religion, jeder nach seinen Möglichkeiten jeder mit dem Einsatz den er bereit ist, in die Sache zu investieren. Elbfisch ist im Rahmen verschiedener Projekte unserer professionellen Arbeit entstanden und umfasst eine Reihe von Funktionen, die uns innerhalb unseres Horizontes nützlich erscheinen. Möge Elbfisch über diesen Horizont hinauswachsen, bereichert um die Sichtweisen anderer, ergänzt um Funktionen, die seinen Anwendungsspektrum erweitern.
+        Wir geben dieses Projekt nun an die OpenSource Community ab. Wir tun dies mit Dank an die vielen Leute und Unternehmen, die bereits seit Jahren ihr Wissen und ihre Produkte mit Anderen teilen. Wir selbst nutzen OpenSource-Produkte seit vielen Jahren. Jetzt ist der Zeitpunkt gekommen, unsererseits ein gutes Stück unseres Wissens der Community zur Verfügung zu stellen. Möge diese Arbeit für viele von Nutzen sein - und möge sie zum Frieden auf der Welt beitragen. Letzteres weniger durch ihren Inhalt als vielmehr durch die Art und Weise, wie Menschen in diesem Projekt zusammenarbeiten – in gegenseitiger Achtung, mit dem nötigen Respekt für die Sichtweisen Anderer und in Anerkennung des Wunsches eines jeden, mit seiner Arbeit einen Beitrag für eine bessere Welt zu leisten – unabhängig von seiner Herkunft und Religion, jeder nach seinen Möglichkeiten, jeder mit dem Einsatz den er bereit ist, in die Sache zu investieren. Elbfisch ist im Rahmen verschiedener Projekte unserer professionellen Arbeit entstanden und umfasst eine Reihe von Funktionen, die uns innerhalb unseres Horizontes nützlich erscheinen. Möge Elbfisch über diesen Horizont hinauswachsen, bereichert um die Sichtweisen anderer, ergänzt um Funktionen, die sein Anwendungsspektrum erweitern.
       </p>
       <p>
         <strong>Bernd Schuster</strong><br />
@@ -29,7 +29,7 @@
         <div class="span8">
           <h3>Elbfisch<span class="hightlight">Funktionen</h3>
           <p>
-            Elbfisch stellt eine Laufzeitumgebung und einen Kanon von Grundfunktionen zur Verfügung, mit denen unter Nutzung weit verbreiteter Opensource-Produkte, wie die integrierten Entwicklungsumgebungen "Netbeans" und "Eclipse", Linux als Betriebssystem, "git" als verteiltes Versionmanagementsystem die teambasierte Entwicklung objektorientierter Automatisierungapplikationen ermöglicht wird. Die Programmierung erfolgt in Java.
+            Elbfisch stellt eine Laufzeitumgebung und einen Kanon von Grundfunktionen zur Verfügung, mit denen unter Nutzung weit verbreiteter OpenSource-Produkte, wie die integrierten Entwicklungsumgebungen "Netbeans" und "Eclipse", Linux als Betriebssystem, "git" als verteiltes Versionmanagementsystem die teambasierte Entwicklung objektorientierter Automatisierungapplikationen ermöglicht wird. Die Programmierung erfolgt in Java.
           </p>
         </div>
       </div>
@@ -37,7 +37,7 @@
         <div class="span4">
           <h3 class="glyphe glyphe-module"><span class="hightlight">Modularität</h3>
           <p>
-            Die Konzeption von Elbfisch basiert auf dem Grundgedanken, dass eine Automatisierungapplikation ein Abbild des Prozesses darstellen muss, den sie steuert. Ein Prozess (eine Anlage) besteht aus Aggregaten die untereinander in Wechselwirkung stehen und wiederum selbst aus untergeordneten Aggregaten bestehen können. Eine solche hierarchische Anordnung von Aggregaten kann mit Hilfe von Elbfisch-Modulen abgebildet werden. Module können unabhängig voneinander implementiert werden, besitzen definierte, seiteneffektfreie Schnittstellen und sind, soweit allgemeingültig implementiert in beliebigen Implementierungen wiederverwendbar.
+            Die Konzeption von Elbfisch basiert auf dem Grundgedanken, dass eine Automatisierungsapplikation ein Abbild des Prozesses darstellen muss, den sie steuert. Ein Prozess (eine Anlage) besteht aus Aggregaten die untereinander in Wechselwirkung stehen und wiederum selbst aus untergeordneten Aggregaten bestehen können. Eine solche hierarchische Anordnung von Aggregaten kann mit Hilfe von Elbfisch-Modulen abgebildet werden. Module können unabhängig voneinander implementiert werden, besitzen definierte, seiteneffektfreie Schnittstellen und sind, soweit allgemeingültig implementiert, in beliebigen Implementierungen wiederverwendbar.
           </p>
         </div>
         <div class="span4">
@@ -57,7 +57,7 @@
         <div class="span4">
           <h3 class="glyphe glyphe-stopwatch"><span class="hightlight">Synchrones Design</h3>
           <p>
-            Elbfisch steuert die Module einer Applikation, auftretende Ereignisse und den Austausch von Signalen über ein Zeitscheibenverfahren (Zyklus). Z.B werden Änderungen eines Signals durch ein Modul erst im nächsten Zyklus an alle verbrauchenden Module weitergeleitet. Auf diese Weise bleiben alle Eingangssignale für alle Module innerhalb eines Zyklus unveränderlich und damit konsistent. Damit ist die Wechselwirkungsfreiheit des Ablaufs der Module sichergestellt. Die Module können innerhalb eines Zyklus in beliebiger Reihenfolge ablaufen, ja sich sogar gegenseitig unterbrechen. Die auszutauschenden Signale bleiben in jedem Fall konsistent.
+            Elbfisch steuert die Module einer Applikation, auftretende Ereignisse und den Austausch von Signalen über ein Zeitscheibenverfahren (Zyklus). Z.B. werden Änderungen eines Signals durch ein Modul erst im nächsten Zyklus an alle verbrauchenden Module weitergeleitet. Auf diese Weise bleiben alle Eingangssignale für alle Module innerhalb eines Zyklus unveränderlich und damit konsistent. Damit ist die Wechselwirkungsfreiheit des Ablaufs der Module sichergestellt. Die Module können innerhalb eines Zyklus in beliebiger Reihenfolge ablaufen, ja sich sogar gegenseitig unterbrechen. Die auszutauschenden Signale bleiben in jedem Fall konsistent.
           </p>
         </div>
       </div>
@@ -69,21 +69,21 @@
       <div class="teaser teaserCompany"></div>
       <h3>Für<span class="hightlight">Firmen</h3>
       <p>
-        Wir entwickeln für Sie auf Basis von Elbfisch maßgeschneiderte Lösungen, ob Bibliotheken/Treiber für ihre Hardware-Produkte, oder komplette Automatisierung-Applikationen für Ihre Projekte. Sprechen sie uns an: <a href="mailto:info@elbfisch.org">info@elbfisch.org</a>
+        Wir entwickeln für Sie auf Basis von Elbfisch maßgeschneiderte Lösungen, ob Bibliotheken/Treiber für ihre Hardware-Produkte, oder komplette Automatisierungsapplikationen für Ihre Projekte. Sprechen Sie uns an: <a href="mailto:info@elbfisch.org">info@elbfisch.org</a>
       </p>
     </div>
     <div class="span4">
       <div class="teaser teaserDeveloper"></div>
       <h3>Für<span class="hightlight">Entwickler</h3>
       <p>
-        Es gibt viel zu tun! Schauen Sie im <a href="https://github.com/mskgmbh/elbfisch/wiki">Elbfisch-Wiki</a> nach. Finden Sie dort die Roadmap für die Fortentwicklung des Projekts. Oder haben Sie konkrete eigene Ideen ? Lassen Sie uns diese wissen !
+        Es gibt viel zu tun! Schauen Sie im <a href="https://github.com/mskgmbh/elbfisch/wiki">Elbfisch-Wiki</a> nach. Finden Sie dort die Roadmap für die Fortentwicklung des Projekts. Oder haben Sie konkrete eigene Ideen? Lassen Sie uns diese wissen!
       </p>
     </div>
     <div class="span4">
       <div class="teaser teaserUser"></div>
       <h3>Für<span class="hightlight">Anwender</h3>
       <p>
-        Folgen Sie die den einfachen Beispielen im <a href="https://github.com/mskgmbh/elbfisch/wiki">Elbfisch-Wiki</a>. Sie werden sehen, wie schnell Sie Ihre erste Elbfisch-Applikation geschrieben haben.
+        Folgen Sie den einfachen Beispielen im <a href="https://github.com/mskgmbh/elbfisch/wiki">Elbfisch-Wiki</a>. Sie werden sehen, wie schnell Sie Ihre erste Elbfisch-Applikation geschrieben haben.
       </p>
     </div>
   </div>

@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : RemoteSignalServer.java
- * VERSION   : $Revision: 1.1 $
- * DATE      : $Date: 2012/03/30 13:54:35 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,11 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: RemoteSignalServer.java,v $
- * LOG       : Revision 1.1  2012/03/30 13:54:35  schuster
- * LOG       : introducing remote signal handling
- * LOG       :
  */
 
 package org.jpac;

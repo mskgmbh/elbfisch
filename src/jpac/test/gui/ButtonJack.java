@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : ButtonJack.java
- * VERSION   : $Revision$
- * DATE      : $Date$
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,9 +21,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log$
  */
+
 
 package jpac.test.gui;
 
@@ -32,8 +31,6 @@ import org.jpac.Logical;
 import org.jpac.PinAlreadyAssignedException;
 import org.jpac.PinNotAssignedException;
 import org.jpac.Plug;
-import org.jpac.PlugIncompatibleException;
-import org.jpac.SignalAlreadyConnectedException;
 
 /**
  * used to attach an org.jpac.gui.Button to a module. It supplies the signals

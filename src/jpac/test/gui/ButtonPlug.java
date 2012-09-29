@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : ButtonPlug.java
- * VERSION   : $Revision$
- * DATE      : $Date$
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,9 +21,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log$
  */
+
 
 package jpac.test.gui;
 

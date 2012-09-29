@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : SignedIntegerEvent.java
- * VERSION   : $Revision: 1.4 $
- * DATE      : $Date: 2012/04/30 06:36:05 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,17 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: SignedIntegerEvent.java,v $
- * LOG       : Revision 1.4  2012/04/30 06:36:05  schuster
- * LOG       : introducing histogramm acquisition, some minor changes concerning toString()
- * LOG       :
- * LOG       : Revision 1.3  2012/04/24 06:37:08  schuster
- * LOG       : some improvements concerning consistency
- * LOG       :
- * LOG       : Revision 1.2  2012/03/09 10:30:28  schuster
- * LOG       : Firable.fire(), Fireable.reset() made public
- * LOG       :
  */
 
 package org.jpac;

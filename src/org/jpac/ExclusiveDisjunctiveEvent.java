@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : ExclusiveDisjunctiveEvent.java
- * VERSION   : $Revision: 1.2 $
- * DATE      : $Date: 2012/03/09 10:30:28 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,11 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: ExclusiveDisjunctiveEvent.java,v $
- * LOG       : Revision 1.2  2012/03/09 10:30:28  schuster
- * LOG       : Firable.fire(), Fireable.reset() made public
- * LOG       :
  */
 
 package org.jpac;

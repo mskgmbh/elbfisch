@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : RemoteSignalOutputDaemon.java
- * VERSION   : $Revision: 1.7 $
- * DATE      : $Date: 2012/07/23 12:16:25 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,30 +21,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: RemoteSignalOutputDaemon.java,v $
- * LOG       : Revision 1.7  2012/07/23 12:16:25  schuster
- * LOG       : check, if the host of a remote instance is reachable before trying to connect over RMI
- * LOG       :
- * LOG       : Revision 1.6  2012/07/17 07:22:10  schuster
- * LOG       : logging adjusted
- * LOG       :
- * LOG       : Revision 1.5  2012/07/17 07:15:46  schuster
- * LOG       : some optimizations concerning remote connections
- * LOG       :
- * LOG       : Revision 1.4  2012/06/22 12:29:17  schuster
- * LOG       : changes concerning stability of reconnections
- * LOG       :
- * LOG       : Revision 1.3  2012/06/22 10:16:13  schuster
- * LOG       : corrected RemoteFrame.copy()
- * LOG       :
- * LOG       : Revision 1.2  2012/04/02 06:32:18  schuster
- * LOG       : some improvements concerning remote signals
- * LOG       :
- * LOG       : Revision 1.1  2012/03/30 13:54:35  schuster
- * LOG       : introducing remote signal handling
- * LOG       :
  */
+
 package org.jpac;
 
 import java.net.InetAddress;

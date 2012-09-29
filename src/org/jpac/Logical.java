@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : Logical.java
- * VERSION   : $Revision: 1.8 $
- * DATE      : $Date: 2012/06/18 11:20:53 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,29 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: Logical.java,v $
- * LOG       : Revision 1.8  2012/06/18 11:20:53  schuster
- * LOG       : introducing cyclic tasks
- * LOG       :
- * LOG       : Revision 1.7  2012/05/30 08:37:22  schuster
- * LOG       : connection to alarms implemented
- * LOG       :
- * LOG       : Revision 1.6  2012/05/25 09:06:27  schuster
- * LOG       : comment updated
- * LOG       :
- * LOG       : Revision 1.5  2012/05/25 09:02:17  schuster
- * LOG       : invert signal on propagation over a connection implemented
- * LOG       :
- * LOG       : Revision 1.4  2012/04/24 06:37:09  schuster
- * LOG       : some improvements concerning consistency
- * LOG       :
- * LOG       : Revision 1.3  2012/04/02 06:32:18  schuster
- * LOG       : some improvements concerning remote signals
- * LOG       :
- * LOG       : Revision 1.2  2012/03/30 13:54:36  schuster
- * LOG       : introducing remote signal handling
- * LOG       :
  */
 
 package org.jpac;

@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
- * MODULE    : ModuleExplorer.java
- * VERSION   : $Revision: 1.2 $
- * DATE      : $Date: 2012/06/18 11:20:53 $
+ * MODULE    : ConnectTest.java
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,14 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: ConnectTest.java,v $
- * LOG       : Revision 1.2  2012/06/18 11:20:53  schuster
- * LOG       : introducing cyclic tasks
- * LOG       :
- * LOG       : Revision 1.1  2012/05/07 06:17:15  schuster
- * LOG       : some new tests
- * LOG       :
  */
 
 package org.jpac;

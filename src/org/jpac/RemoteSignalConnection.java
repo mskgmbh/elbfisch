@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : RemoteSignalFrame.java
- * VERSION   : $Revision: 1.3 $
- * DATE      : $Date: 2012/07/17 07:15:46 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,18 +21,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: RemoteSignalConnection.java,v $
- * LOG       : Revision 1.3  2012/07/17 07:15:46  schuster
- * LOG       : some optimizations concerning remote connections
- * LOG       :
- * LOG       : Revision 1.2  2012/06/29 08:09:22  schuster
- * LOG       : jPac will shutdown, if an error occurs during intialization
- * LOG       :
- * LOG       : Revision 1.1  2012/03/30 13:54:35  schuster
- * LOG       : introducing remote signal handling
- * LOG       :
  */
+
 package org.jpac;
 
 import java.util.ArrayList;

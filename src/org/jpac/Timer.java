@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : Timer.java
- * VERSION   : $Revision: 1.10 $
- * DATE      : $Date: 2012/05/07 06:15:00 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,38 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: Timer.java,v $
- * LOG       : Revision 1.10  2012/05/07 06:15:00  schuster
- * LOG       : TimerExpires fired only inside the cycle directly following the cycle, the timer stopped running
- * LOG       :
- * LOG       : Revision 1.9  2012/04/24 07:02:56  schuster
- * LOG       : introducing TimerExpires event
- * LOG       :
- * LOG       : Revision 1.8  2012/04/19 09:33:37  schuster
- * LOG       : stop() implemented
- * LOG       :
- * LOG       : Revision 1.7  2012/03/09 09:24:24  schuster
- * LOG       : JPac handling breakpoints
- * LOG       :
- * LOG       : Revision 1.6  2012/02/27 07:41:19  schuster
- * LOG       : some minor changes
- * LOG       :
- * LOG       : Revision 1.5  2012/02/23 11:09:33  schuster
- * LOG       : minor correction
- * LOG       :
- * LOG       : Revision 1.4  2012/02/17 07:53:41  schuster
- * LOG       : minor change
- * LOG       :
- * LOG       : Revision 1.3  2012/02/17 07:51:29  schuster
- * LOG       : running state consistent for whole cycle
- * LOG       :
- * LOG       : Revision 1.2  2012/02/16 14:38:24  schuster
- * LOG       : Timer modified
- * LOG       :
- * LOG       : Revision 1.1  2012/02/16 12:55:10  schuster
- * LOG       : Timer added
- * LOG       :
  */
 
 package org.jpac;

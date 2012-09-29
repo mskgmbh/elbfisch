@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : Address.java
- * VERSION   : $Revision: 1.2 $
- * DATE      : $Date: 2012/03/02 08:12:49 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -22,10 +22,6 @@
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  *
- * LOG       : $Log: Address.java,v $
- * LOG       : Revision 1.2  2012/03/02 08:12:49  schuster
- * LOG       : minor formatting change
- * LOG       :
  */
 
 package org.jpac;

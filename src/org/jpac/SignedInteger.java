@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : SignedInteger.java
- * VERSION   : $Revision: 1.4 $
- * DATE      : $Date: 2012/04/25 15:58:43 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,17 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: SignedInteger.java,v $
- * LOG       : Revision 1.4  2012/04/25 15:58:43  schuster
- * LOG       : Change events extended to alterations without base value
- * LOG       :
- * LOG       : Revision 1.3  2012/04/24 06:37:08  schuster
- * LOG       : some improvements concerning consistency
- * LOG       :
- * LOG       : Revision 1.2  2012/03/30 13:54:35  schuster
- * LOG       : introducing remote signal handling
- * LOG       :
  */
 
 package org.jpac;

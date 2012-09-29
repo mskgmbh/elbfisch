@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : Clamp.java
- * VERSION   : $Revision: 1.6 $
- * DATE      : $Date: 2012/06/18 11:20:53 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,31 +21,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: Clamp.java,v $
- * LOG       : Revision 1.6  2012/06/18 11:20:53  schuster
- * LOG       : introducing cyclic tasks
- * LOG       :
- * LOG       : Revision 1.5  2012/05/07 06:16:47  schuster
- * LOG       : some adaptions concerning update of AbstractModule
- * LOG       :
- * LOG       : Revision 1.4  2012/04/30 06:36:05  schuster
- * LOG       : introducing histogramm acquisition, some minor changes concerning toString()
- * LOG       :
- * LOG       : Revision 1.3  2012/04/24 06:37:08  schuster
- * LOG       : some improvements concerning consistency
- * LOG       :
- * LOG       : Revision 1.2  2012/03/05 07:23:10  schuster
- * LOG       : introducing Properties
- * LOG       :
  */
+
 package jpac.test.fg;
 
 import org.jpac.AbstractModule;
 import org.jpac.Decimal;
-import org.jpac.EmergencyStopAcknowledged;
-import org.jpac.EmergencyStopException;
-import org.jpac.ImpossibleEvent;
 import org.jpac.InputInterlockException;
 import org.jpac.Module;
 import org.jpac.OutputInterlockException;
@@ -93,9 +74,9 @@ public class Clamp extends Module{
 
     @Override
     protected void work() throws ProcessException{
-        boolean done       = false;
-        boolean steppingUp = true;
-        double  value = MINVALUE;
+        boolean done         = false;
+        double  value        = 0.0;
+        double  clampedValue = 0.0;
         InputSignalsValid inputSignalsValid = new InputSignalsValid();
         try{
             do{
@@ -107,16 +88,16 @@ public class Clamp extends Module{
                 do{
                    try{
                        value = getAnalogInput().get();
+                       clampedValue = value;
                        if (value > MAXVALUE){
-                           value = MAXVALUE;
+                           clampedValue = MAXVALUE;
                        }
                        if (value < MINVALUE){
-                           value = MINVALUE;
+                           clampedValue = MINVALUE;
                        }
-                       getAnalogOutput().set(value);
-                       //try{Thread.sleep(30);}catch(Exception ex){};
+                       getAnalogOutput().set(clampedValue);
+                       Log.info("clamp analog output: " + getAnalogOutput().get());
                        getAnalogInput().changes(value, 0.1).await();
-                       //Log.info("clamp work() accessTest: " + accessTestDecimal.get());
                     }
                     catch(SignalInvalidException ex){
                         Log.error("Error", ex);
@@ -124,18 +105,6 @@ public class Clamp extends Module{
                         //invalidate own output signals
                         value = MINVALUE;
                         getAnalogOutput().invalidate();
-                        //repeat waiting for revalidation
-                        done = true;
-                    }
-                    catch (EmergencyStopException ex) {
-                        Log.error("Error", ex);
-                        //input signals have gone invalid
-                        //invalidate own output signals
-                        value = MINVALUE;
-                        getAnalogOutput().invalidate();
-                        EmergencyStopAcknowledged esa = new EmergencyStopAcknowledged();
-                        //wait for reinvocation
-                        esa.await();
                         //repeat waiting for revalidation
                         done = true;
                     }
@@ -156,18 +125,9 @@ public class Clamp extends Module{
 
     @Override
     protected void inEveryCycleDo() throws ProcessException {
-        //throw new UnsupportedOperationException("Not supported yet.");
-        if (cnt++ == 20){
-            //shutdown(99);
-            //new ImpossibleEvent().await();
-            //throw new EmergencyStopException("clamp cycle failed !!!");
-            //accessTestDecimal.get();
-//            int i = 0;
-//            int j = 1000/i;
-        }
-//        accessTestDecimal.set(cnt++);
+        throw new UnsupportedOperationException("Not supported yet.");
     }
-
+    
     private boolean allInputSignalsValid(){
         return getAnalogInput().isValid();
     }

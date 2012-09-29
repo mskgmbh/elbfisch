@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : Inverter.java
- * VERSION   : $Revision: 1.5 $
- * DATE      : $Date: 2012/06/18 11:20:53 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,20 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: Inverter.java,v $
- * LOG       : Revision 1.5  2012/06/18 11:20:53  schuster
- * LOG       : introducing cyclic tasks
- * LOG       :
- * LOG       : Revision 1.4  2012/05/07 06:16:47  schuster
- * LOG       : some adaptions concerning update of AbstractModule
- * LOG       :
- * LOG       : Revision 1.3  2012/04/24 06:37:08  schuster
- * LOG       : some improvements concerning consistency
- * LOG       :
- * LOG       : Revision 1.2  2012/03/09 10:30:28  schuster
- * LOG       : Firable.fire(), Fireable.reset() made public
- * LOG       :
  */
 
 package jpac.test.fg;
@@ -99,6 +85,7 @@ public class Inverter extends Module{
                             do{
                                double value = getAnalogInput().get();
                                getAnalogOutput().set( -value);
+                               Log.info("Inverter output: " + getAnalogOutput().get());
                                getAnalogInput().changes(value, 0.1).await();
                             }
                             while(true);

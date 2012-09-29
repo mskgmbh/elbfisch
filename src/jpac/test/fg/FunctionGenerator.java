@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : FunctionGenerator.java
- * VERSION   : $Revision: 1.5 $
- * DATE      : $Date: 2012/06/18 11:20:53 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,20 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: FunctionGenerator.java,v $
- * LOG       : Revision 1.5  2012/06/18 11:20:53  schuster
- * LOG       : introducing cyclic tasks
- * LOG       :
- * LOG       : Revision 1.4  2012/05/07 06:16:47  schuster
- * LOG       : some adaptions concerning update of AbstractModule
- * LOG       :
- * LOG       : Revision 1.3  2012/04/24 06:37:08  schuster
- * LOG       : some improvements concerning consistency
- * LOG       :
- * LOG       : Revision 1.2  2012/03/05 07:23:10  schuster
- * LOG       : introducing Properties
- * LOG       :
  */
 
 package jpac.test.fg;
@@ -65,18 +51,9 @@ public class FunctionGenerator extends Module{
     private Decimal         signalOutput;
     private Decimal         invertedSignalOutput;
     private Decimal         clampedSignalOutput;
-    
-    private RemoteSignalOutput remoteSignal;
-    private RemoteSignalOutput remoteInvertedSignal;
-    private RemoteSignalOutput remoteClampedSignal;
-    
+        
     private int                cnt;
 
-//    private Plug            channel1;
-//    private Plug            channel2;
-//    private Plug            channel3;
-//
-//
     public FunctionGenerator(){
         super(null);
         initialize();
@@ -88,46 +65,36 @@ public class FunctionGenerator extends Module{
     }
 
     private void initialize(){
+        //the function generator can enabled and reset by another module ...
+        //instantiate 2 signals accordingly
         jsgEnable       = new Logical(this, "enable");
         jsgReset        = new Logical(this, "reset");
+        //the function generator consists of a jig saw generator ....
         jsg             = new JigSawGenerator(this, "JigSawGenerator",jsgEnable, jsgReset);
+        //a clamp unit ...
         clamp           = new Clamp(this, "ClampingUnit");
+        //... and an analog  inverter
         inverter        = new Inverter(this, "AnalogInverter");
 
+        //the function generator provides 3 output signals:
+        //the output for the jig saw signal
         signalOutput            = new Decimal(this, "SignalOutput",-100,100);
+        //an output for a clamped jig saw signal
         clampedSignalOutput     = new Decimal(this, "ClampedOutput",-100,100);
+        //and an output which provides the inverted signal of "signalOutput"
         invertedSignalOutput    = new Decimal(this, "InvertedOutput",-100,100);
         
-
-//        channel1 = new Plug(this, "Channel1");
-//        channel2 = new Plug(this, "Channel2");
-//        channel3 = new Plug(this, "Channel3");
         try{
-            remoteSignal          = new RemoteSignalOutput("remoteSignal","localhost",10003,"RemoteJPacTest.SignalInput");
-            remoteInvertedSignal  = new RemoteSignalOutput("remoteInvertedSignal","localhost",10003,"RemoteJPacTest.InvertedInput");
-            remoteClampedSignal   = new RemoteSignalOutput("remoteClampedSignal","localhost",10003,"RemoteJPacTest.ClampedInput");        
-            
+            //connect the analog output of the jig saw generator to the analog input of the clamp unit
             jsg.getAnalogOutput().connect(clamp.getAnalogInput());
+            //connect the analog output of the jig saw generator to the analog input of the analog inverter
             jsg.getAnalogOutput().connect(inverter.getAnalogInput());
+            //connect the analog output of the clamp unit to the corresponding analog output of the function generator
             clamp.getAnalogOutput().connect(clampedSignalOutput);
+            //connect the analog output of the jig saw generator to the analog output of the function generator
             jsg.getAnalogOutput().connect(signalOutput);
-            inverter.getAnalogOutput().connect(invertedSignalOutput);
-            
-            jsg.getAnalogOutput().connect(remoteSignal);
-            inverter.getAnalogOutput().connect(remoteInvertedSignal);
-            clamp.getAnalogOutput().connect(remoteClampedSignal);
-            
-//            channel1.addPin(0,true).assign(jsg.getAnalogOutput());
-//            channel1.addPin(1,true).assign(clamp.getAnalogOutput());
-//            channel1.addPin(2,true).assign(inverter.getAnalogOutput());
-//
-//            channel2.addPin(0,true).assign(jsg.getAnalogOutput());
-//            channel2.addPin(1,true).assign(clamp.getAnalogOutput());
-//            channel2.addPin(2,true).assign(inverter.getAnalogOutput());
-//
-//            channel3.addPin(0,true).assign(jsg.getAnalogOutput());
-//            channel3.addPin(1,true).assign(clamp.getAnalogOutput());
-//            channel3.addPin(2,true).assign(inverter.getAnalogOutput());
+            //connect the analog output of the inverter to the corresponding analog output of the function generator
+            inverter.getAnalogOutput().connect(invertedSignalOutput);            
         }
         catch(Exception exc){
             Log.error("Error: ", exc);
@@ -136,30 +103,21 @@ public class FunctionGenerator extends Module{
 
     @Override
     protected void work() throws ProcessException{
-        PeriodOfTime pot = new PeriodOfTime(4000 * ms);
+        PeriodOfTime pot = new PeriodOfTime(4 * sec);
         try{
+            //enable the jig saw generator
             jsgEnable.set(true);
             jsgReset.set(false);
 
             int i = 0;
+            //for 10 times do nothing very meaningful ....
             do{
-                try{
-                    pot.await();
-                    Log.info("function generator : " + i);
-//                    Log.info("clamp.accessTestDecimal : " + clamp.accessTestDecimal.get());
-//                    clamp.accessTestDecimal.set(1234.567);
-                    i++;
-//                    if (i == 3 || i == 6){
-//                        //force an emergency stop exception
-//                        jsgEnable.set(false);
-//                    }
-                }
-                catch(EmergencyStopException ex){
-                    Log.error("ignoreing emergency stop exception: " + i);
-                    jsgEnable.set(true);
-                }
+                //wait a period of time
+                pot.await();
+                //Log.info("function generator : " + i);
+                i++;
             }
-            while(i < 100);
+            while(i < 10);
             shutdown(0);
             //throw new EmergencyStopException("stopped by function generator");
         }
@@ -170,9 +128,11 @@ public class FunctionGenerator extends Module{
     
     @Override
     public void start(){
+        //start the containing modules...
         jsg.start();
         inverter.start();
         clamp.start();
+        //then start myself
         super.start();
     }
 
@@ -186,11 +146,7 @@ public class FunctionGenerator extends Module{
 
     @Override
     protected void inEveryCycleDo() throws ProcessException {
-        //throw new UnsupportedOperationException("Not supported yet.");
-        //Log.info("function generator cyclic");
-//        if (cnt++ == 20){
-//           clamp.accessTestDecimal.set(1234.567);
-//        }
+        //nothing to do for the function generator in every cycle
     }
 
 }

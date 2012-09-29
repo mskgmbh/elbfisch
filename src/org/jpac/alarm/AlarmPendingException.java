@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : AlarmPendingException.java
- * VERSION   : $Revision: 1.2 $
- * DATE      : $Date: 2012/06/11 14:53:50 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,15 +21,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: AlarmPendingException.java,v $
- * LOG       : Revision 1.2  2012/06/11 14:53:50  ulbrich
- * LOG       : AlarmPendingException made public for accessing from outside the package while doing alarm handling / acknowledging
- * LOG       :
- * LOG       : Revision 1.1  2012/05/07 06:15:19  schuster
- * LOG       : Alarm introduced
- * LOG       :
  */
+
 package org.jpac.alarm;
 
 import org.jpac.ProcessException;

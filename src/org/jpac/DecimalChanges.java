@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : DecimalChanges.java
- * VERSION   : $Revision: 1.4 $
- * DATE      : $Date: 2012/06/22 10:29:45 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,17 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: DecimalChanges.java,v $
- * LOG       : Revision 1.4  2012/06/22 10:29:45  schuster
- * LOG       : change event fired on  >=
- * LOG       :
- * LOG       : Revision 1.3  2012/04/25 15:58:43  schuster
- * LOG       : Change events extended to alterations without base value
- * LOG       :
- * LOG       : Revision 1.2  2012/04/24 06:37:08  schuster
- * LOG       : some improvements concerning consistency
- * LOG       :
  */
 
 package org.jpac;

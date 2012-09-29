@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : AlarmQueueEntry.java
- * VERSION   : $Revision: 1.1 $
- * DATE      : $Date: 2012/07/12 12:59:10 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,12 +21,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: AlarmQueueEntry.java,v $
- * LOG       : Revision 1.1  2012/07/12 12:59:10  schuster
- * LOG       : AlarmQueueEntry introduced
- * LOG       :
  */
+
 package org.jpac.alarm;
 
 import org.jpac.SignalInvalidException;

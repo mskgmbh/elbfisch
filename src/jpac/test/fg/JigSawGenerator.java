@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : JigSawGenerator.java
- * VERSION   : $Revision: 1.6 $
- * DATE      : $Date: 2012/06/18 11:20:53 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,23 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: JigSawGenerator.java,v $
- * LOG       : Revision 1.6  2012/06/18 11:20:53  schuster
- * LOG       : introducing cyclic tasks
- * LOG       :
- * LOG       : Revision 1.5  2012/05/07 06:16:47  schuster
- * LOG       : some adaptions concerning update of AbstractModule
- * LOG       :
- * LOG       : Revision 1.4  2012/04/24 06:37:08  schuster
- * LOG       : some improvements concerning consistency
- * LOG       :
- * LOG       : Revision 1.3  2012/03/09 10:30:28  schuster
- * LOG       : Firable.fire(), Fireable.reset() made public
- * LOG       :
- * LOG       : Revision 1.2  2012/03/05 07:23:10  schuster
- * LOG       : introducing Properties
- * LOG       :
  */
 
 package jpac.test.fg;
@@ -45,7 +28,6 @@ package jpac.test.fg;
 import org.jpac.AbstractModule;
 import org.jpac.Logical;
 import org.jpac.Decimal;
-import org.jpac.EmergencyStopException;
 import org.jpac.Fireable;
 import org.jpac.InputInterlockException;
 import org.jpac.Module;
@@ -54,7 +36,7 @@ import org.jpac.OutputInterlockException;
 import org.jpac.PeriodOfTime;
 import org.jpac.ProcessEvent;
 import org.jpac.ProcessException;
-import org.jpac.SignalInvalidException;
+import org.jpac.ShutdownRequestException;
 
 /**
  *
@@ -65,20 +47,23 @@ public class JigSawGenerator extends Module{
     final private double MINVALUE  = 0.0;
     final private double INCREMENT = 0.01;
 
+    //user defined process event. Will be fired, when all
+    //input signal went valid
     private class InputSignalsValid extends ProcessEvent{
-
         @Override
         public boolean fire() {
             return allInputSignalsValid();
         }
     }
     
+    //user defined process event. Will be fired, when
+    //the enable input is set to false, or the reset
+    //signal is activated by setting it to true or 
+    //both went invalid
     private class MonitorEvent extends ProcessEvent{
-
         @Override
         public boolean fire() throws ProcessException {
-            boolean fire = getEnable().is(false) || getReset().is(true);
-            Log.debug("MonitorEvent.fire = " + fire );
+            boolean fire = !(getEnable().isValid() && getReset().isValid()) || getEnable().is(false) || getReset().is(true);
             return fire;
         }
 
@@ -92,15 +77,9 @@ public class JigSawGenerator extends Module{
     private Logical     enable;         //input
     private Logical     reset;          //input
     private Logical     valid;          //output
-    private Decimal analogOutput;   //output
+    private Decimal     analogOutput;   //output
 
-    public JigSawGenerator(AbstractModule containingModule, Logical enable, Logical reset){
-        super(containingModule);
-        this.enable = enable;
-        this.reset = reset;
-        initialize();
-    }
-
+    //constructor receiving too input signals from the containing module
     public JigSawGenerator(AbstractModule containingModule, String name, Logical enable, Logical reset){
         super(containingModule, name);
         this.enable = enable;
@@ -109,101 +88,89 @@ public class JigSawGenerator extends Module{
     }
 
     private void initialize(){
-//        enable       = new Logical(this, "enable");
-//        reset        = new Logical(this, "reset");
+        //instantiate own output signals
         valid        = new Logical(this, "valid");
         analogOutput = new Decimal(this, "analogOutput",MINVALUE,MAXVALUE);
-
-
     }
 
     @Override
     protected void work() throws ProcessException{
-        boolean done       = false;
-        boolean steppingUp = true;
-        double  value      = MINVALUE;
+        boolean done                        = false;
+        boolean steppingUp                  = true;
+        double  value                       = MINVALUE;
         InputSignalsValid inputSignalsValid = new InputSignalsValid();
-        Fireable monitorEvent = null;
+        MonitorEvent monitorEvent           = null;
 
         PeriodOfTime stepTime = new PeriodOfTime(500*ms);
         try{
-            do{
+            do{ //wait until the containing module initializes the input
+                //signals (making them valid)
                 System.out.println("JSG: awaiting inputSignalsValid ...");
                 inputSignalsValid.await();
                 System.out.println("JSG: inputSignalsValid ");
+                //inputs signals went valid, initialize own output signals
+                //making them valid, too
                 done = false;
                 value = 0.0;
                 analogOutput.set(value);
                 valid.set(true);
+                //wait, until the containing module enables the jig saw generation
                 getEnable().state(true).await();
                 //... and start jig saw generation
                 //until the enable bit is removed
                 status.enter("processing");
+                //instantiate an event, which supervises the enable/reset inputs and monitor it
                 monitorEvent = new MonitorEvent();
                 monitorEvent.monitor();
-                try{
-                    do{
-                       try{
-                           analogOutput.set(value);
-                           //prepare value for next cycle
-                           if (steppingUp){
-                               value += INCREMENT;
-                               if (value > MAXVALUE){
-                                   value = MAXVALUE;
-                                   steppingUp = false;
-                               }
+                do{
+                   try{//put out the actual value to the analog output
+                       analogOutput.set(value);
+                       Log.info("jsg analog output: " + analogOutput.get());
+                       //prepare value for next cycle
+                       if (steppingUp){
+                           value += INCREMENT;
+                           if (value > MAXVALUE){
+                               value = MAXVALUE;
+                               steppingUp = false;
                            }
-                           else{
-                               value -= INCREMENT;
-                               if (value < MINVALUE){
-                                   value = MINVALUE;
-                                   steppingUp = true;
-                               }
+                       }
+                       else{
+                           value -= INCREMENT;
+                           if (value < MINVALUE){
+                               value = MINVALUE;
+                               steppingUp = true;
                            }
-                           stepTime.await();
                        }
-                       catch(MonitorException exc){
-                            Log.error("Error 1: ", exc);
-                            monitorEvent.unmonitor();
-                            throw new EmergencyStopException("MonitorException thrown : " + exc);
-                       }
-                       catch(SignalInvalidException ex){
-                           Log.error("error: ", ex);
-                           //input signals have gone invalid
-                           //invalidate own output signals
+                       //wait a period of time
+                       stepTime.await();
+                   }
+                   catch(MonitorException ex){
+                       Log.error("monitor event occured: ", ex);
+                       if (!(getEnable().isValid() && getReset().isValid()) || getReset().is(true)){
+                           //if the enable or reset input went invalid or the reset input has been set to true
+                           //invalidate own output signals...
                            value = 0.0;
                            analogOutput.invalidate();
                            valid.invalidate();
-                           //repeat waiting for revalidation
+                           //... and stop processing, until they went valid again
+                           done = true;
+                       } else if (getEnable().is(false)){
+                           //if the enable input went to false
+                           //force the output to zero
+                           value = 0.0;
+                           analogOutput.set(value);
+                           //... and stop processing, until it is enabled again
                            done = true;
                        }
-                      }
-                    while(!done);
-                }
-                catch (EmergencyStopException ex) {
-                   Log.error("Error 2", ex);
-                   //invalidate own output signals
-                   value = 0.0;
-                   analogOutput.invalidate();
-                   valid.invalidate();
-//                   EmergencyStopAcknowledged esa = new EmergencyStopAcknowledged();
-//                   esa.await();
-//                   try{
-//                       (new NextCycle()).await();
-//                   }
-//                   catch(EmergencyStopException exc){
-//                       //catch emergency stop exception ...+
-//                       Log.error("Error 3", ex);
-//                   }
-                   //... wait a while and acknowledge it
-                   PeriodOfTime pot = new PeriodOfTime(2000 * ms);
-                   pot.await();
-                   //acknowledge the emergency stop
-                   acknowledgeEmergencyStop();
-                }
+                   }
+                  }
+                while(!done);
                 status.leave();
               }
             while(true);
+        }
+        catch(ShutdownRequestException exc){
+            Log.info("shutdown requested by other module. jig saw generator stops processing");
         }
         finally{
             //module will be shut down

@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : Signal.java
- * VERSION   : $Revision: 1.7 $
- * DATE      : $Date: 2012/07/17 07:17:10 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,26 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: Signal.java,v $
- * LOG       : Revision 1.7  2012/07/17 07:17:10  schuster
- * LOG       : slide correction concerning null values
- * LOG       :
- * LOG       : Revision 1.6  2012/06/18 11:20:53  schuster
- * LOG       : introducing cyclic tasks
- * LOG       :
- * LOG       : Revision 1.5  2012/04/30 06:36:05  schuster
- * LOG       : introducing histogramm acquisition, some minor changes concerning toString()
- * LOG       :
- * LOG       : Revision 1.4  2012/04/24 06:37:08  schuster
- * LOG       : some improvements concerning consistency
- * LOG       :
- * LOG       : Revision 1.3  2012/03/30 13:54:35  schuster
- * LOG       : introducing remote signal handling
- * LOG       :
- * LOG       : Revision 1.2  2012/02/22 13:27:42  schuster
- * LOG       : register signal after full initialization
- * LOG       :
  */
 
 package org.jpac;

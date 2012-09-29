@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : AbstractModule.java
- * VERSION   : $Revision: 1.10 $
- * DATE      : $Date: 2012/07/23 07:36:12 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -22,34 +22,6 @@
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  *
- * LOG       : $Log: AbstractModule.java,v $
- * LOG       : Revision 1.10  2012/07/23 07:36:12  nouza
- * LOG       : some corrections concerning inEveryCycleDo-exceptions
- * LOG       :
- * LOG       : Revision 1.9  2012/07/17 12:11:51  schuster
- * LOG       : histogramm tracing prohibited for first cycle
- * LOG       :
- * LOG       : Revision 1.8  2012/06/18 11:20:53  schuster
- * LOG       : introducing cyclic tasks
- * LOG       :
- * LOG       : Revision 1.7  2012/05/07 06:16:09  schuster
- * LOG       : initialize() eliminated
- * LOG       :
- * LOG       : Revision 1.6  2012/04/30 06:36:05  schuster
- * LOG       : introducing histogramm acquisition, some minor changes concerning toString()
- * LOG       :
- * LOG       : Revision 1.5  2012/04/24 08:40:58  schuster
- * LOG       : Error exception is logged
- * LOG       :
- * LOG       : Revision 1.4  2012/03/02 08:04:35  schuster
- * LOG       : startup procedure optimized
- * LOG       :
- * LOG       : Revision 1.3  2012/02/27 07:41:19  schuster
- * LOG       : some minor changes
- * LOG       :
- * LOG       : Revision 1.2  2012/02/23 11:11:51  schuster
- * LOG       : units made public
- * LOG       :
  */
 
 package org.jpac;
@@ -57,7 +29,6 @@ package org.jpac;
 import java.util.Iterator;
 import java.util.Stack;
 import java.util.ArrayList;
-import java.util.concurrent.Semaphore;
 import org.apache.log4j.Logger;
 import org.jpac.statistics.Histogramm;
 
@@ -417,6 +388,11 @@ public abstract class AbstractModule extends Thread{
             catch(ProcessException exc){
                 getAwaitedProcessEvent().setProcessException(new InEveryCycleDoException(exc));
                 inEveryCycleDoActive = false;
+            }
+            catch(UnsupportedOperationException exc){
+                //inEveryCycleDo not implemented in this module
+                //never call it again
+                inEveryCycleDoActive = false;                
             }
             catch(Exception exc){
                 getAwaitedProcessEvent().setProcessException(new InEveryCycleDoException(exc));

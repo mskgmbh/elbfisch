@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : NthCycle.java
- * VERSION   : $Revision: 1.3 $
- * DATE      : $Date: 2012/03/09 10:30:29 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,14 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: NthCycle.java,v $
- * LOG       : Revision 1.3  2012/03/09 10:30:29  schuster
- * LOG       : Firable.fire(), Fireable.reset() made public
- * LOG       :
- * LOG       : Revision 1.2  2012/03/09 09:24:24  schuster
- * LOG       : JPac handling breakpoints
- * LOG       :
  */
 
 package org.jpac;

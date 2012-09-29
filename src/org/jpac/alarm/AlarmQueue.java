@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : AlarmQueue.java
- * VERSION   : $Revision: 1.4 $
- * DATE      : $Date: 2012/07/12 12:59:10 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,20 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: AlarmQueue.java,v $
- * LOG       : Revision 1.4  2012/07/12 12:59:10  schuster
- * LOG       : AlarmQueueEntry introduced
- * LOG       :
- * LOG       : Revision 1.3  2012/06/18 11:20:53  schuster
- * LOG       : introducing cyclic tasks
- * LOG       :
- * LOG       : Revision 1.2  2012/06/14 14:00:20  ulbrich
- * LOG       : getter-Methode fuer Queue eingebaut
- * LOG       :
- * LOG       : Revision 1.1  2012/05/07 06:15:19  schuster
- * LOG       : Alarm introduced
- * LOG       :
  */
 
 package org.jpac.alarm;

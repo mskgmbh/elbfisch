@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : JPac.java
- * VERSION   : $Revision: 1.19 $
- * DATE      : $Date: 2012/07/17 10:29:42 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,62 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: JPac.java,v $
- * LOG       : Revision 1.19  2012/07/17 10:29:42  nouza
- * LOG       : statistics updated
- * LOG       :
- * LOG       : Revision 1.18  2012/07/17 09:25:17  schuster
- * LOG       : logging adjusted
- * LOG       :
- * LOG       : Revision 1.17  2012/07/17 07:22:10  schuster
- * LOG       : logging adjusted
- * LOG       :
- * LOG       : Revision 1.16  2012/07/17 07:15:46  schuster
- * LOG       : some optimizations concerning remote connections
- * LOG       :
- * LOG       : Revision 1.15  2012/06/29 08:09:22  schuster
- * LOG       : jPac will shutdown, if an error occurs during intialization
- * LOG       :
- * LOG       : Revision 1.14  2012/06/18 11:20:53  schuster
- * LOG       : introducing cyclic tasks
- * LOG       :
- * LOG       : Revision 1.13  2012/05/07 15:29:23  schuster
- * LOG       : invokeLater() synchronized
- * LOG       :
- * LOG       : Revision 1.12  2012/05/07 06:13:33  schuster
- * LOG       : minor change
- * LOG       :
- * LOG       : Revision 1.11  2012/04/30 06:36:05  schuster
- * LOG       : introducing histogramm acquisition, some minor changes concerning toString()
- * LOG       :
- * LOG       : Revision 1.10  2012/04/02 06:32:18  schuster
- * LOG       : some improvements concerning remote signals
- * LOG       :
- * LOG       : Revision 1.9  2012/03/30 13:54:35  schuster
- * LOG       : introducing remote signal handling
- * LOG       :
- * LOG       : Revision 1.8  2012/03/09 12:09:10  schuster
- * LOG       : Log message "cycletime exceeded" inserted in LazyBound mode
- * LOG       :
- * LOG       : Revision 1.7  2012/03/09 09:24:24  schuster
- * LOG       : JPac handling breakpoints
- * LOG       :
- * LOG       : Revision 1.6  2012/03/06 10:57:50  schuster
- * LOG       : getCycleMode() added
- * LOG       :
- * LOG       : Revision 1.5  2012/03/05 07:22:49  schuster
- * LOG       : introducing Properties
- * LOG       :
- * LOG       : Revision 1.4  2012/03/02 08:04:54  schuster
- * LOG       : startup procedure optimized
- * LOG       :
- * LOG       : Revision 1.3  2012/02/27 07:41:19  schuster
- * LOG       : some minor changes
- * LOG       :
- * LOG       : Revision 1.2  2012/02/23 11:09:59  schuster
- * LOG       : invokeLater() made public
- * LOG       :
  */
 
 package org.jpac;

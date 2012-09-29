@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : AlarmRaised.java
- * VERSION   : $Revision: 1.1 $
- * DATE      : $Date: 2012/05/07 06:15:19 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,11 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: AlarmRaised.java,v $
- * LOG       : Revision 1.1  2012/05/07 06:15:19  schuster
- * LOG       : Alarm introduced
- * LOG       :
  */
 
 package org.jpac.alarm;

@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : BooleanProperty.java
- * VERSION   : $Revision: 1.2 $
- * DATE      : $Date: 2012/06/27 15:07:44 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,14 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: BooleanProperty.java,v $
- * LOG       : Revision 1.2  2012/06/27 15:07:44  schuster
- * LOG       : access of existing properties by foreign modules implemented
- * LOG       :
- * LOG       : Revision 1.1  2012/03/05 07:23:09  schuster
- * LOG       : introducing Properties
- * LOG       :
  */
 
 package org.jpac.configuration;

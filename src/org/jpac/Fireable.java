@@ -1,8 +1,8 @@
 /**
  * PROJECT   : jPac java process automation controller
  * MODULE    : Fireable.java
- * VERSION   : $Revision: 1.6 $
- * DATE      : $Date: 2012/07/23 07:36:12 $
+ * VERSION   : -
+ * DATE      : -
  * PURPOSE   : 
  * AUTHOR    : Bernd Schuster, MSK Gesellschaft fuer Automatisierung mbH, Schenefeld
  * REMARKS   : -
@@ -21,23 +21,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
- *
- * LOG       : $Log: Fireable.java,v $
- * LOG       : Revision 1.6  2012/07/23 07:36:12  nouza
- * LOG       : some corrections concerning inEveryCycleDo-exceptions
- * LOG       :
- * LOG       : Revision 1.5  2012/05/07 06:12:47  schuster
- * LOG       : logging optimized
- * LOG       :
- * LOG       : Revision 1.4  2012/03/09 10:30:29  schuster
- * LOG       : Firable.fire(), Fireable.reset() made public
- * LOG       :
- * LOG       : Revision 1.3  2012/03/09 09:24:24  schuster
- * LOG       : JPac handling breakpoints
- * LOG       :
- * LOG       : Revision 1.2  2012/02/27 07:41:19  schuster
- * LOG       : some minor changes
- * LOG       :
  */
 
 

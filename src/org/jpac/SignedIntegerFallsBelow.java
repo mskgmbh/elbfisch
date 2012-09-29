@@ -1,5 +1,5 @@
 /**
- * PROJECT   : jPac java process automation controller
+ * PROJECT   : Elbfisch - java process automation controller (jPac)
  * MODULE    : SignedIntegerFallsBelow.java
  * VERSION   : -
  * DATE      : -

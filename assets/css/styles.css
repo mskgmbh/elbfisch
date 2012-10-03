@@ -1,0 +1,179 @@
+@font-face {
+  font-family: 'Dosis';
+  src: url('Dosis-Bold.ttf') format('truetype');
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: 'Dosis';
+  src: url('Dosis-BoldItalic.ttf') format('truetype');
+  font-weight: bold;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Dosis';
+  src: url('Dosis-Italic.ttf') format('truetype');
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Dosis';
+  src: url('Dosis-Regular.ttf') format('truetype');
+}
+
+BODY {
+  color: #333333;
+  font-family: 'Dosis';
+  font-size: 14px;
+  background-color: #eeeeee;
+}
+.elbfischHeader {
+  height: 300px;
+  color: #ffffff;
+  background: teal url('../img/header_bg.jpg') repeat 0 44px;
+  margin-bottom: 0px;
+  padding-top: 44px;
+  padding-bottom: 0;
+  border-radius: 0;
+}
+.elbfischHeader H3 {
+  width: 410px;
+  text-shadow: 0 1px 4px #000000;
+  font-weight: normal;
+  font-size: 26px;
+  margin-top: 7%;
+}
+.elbfischHeader .btn-elbfisch-dl {
+  background-image: url('../img/btn_download_w_icon.png');
+  background-position: -2px -3px;
+  border: none;
+  font-size: 21px;
+  margin-top: 20px;
+  margin-right: 200px;
+}
+.navbar .fish {
+  background-image: url('../img/logo.png');
+  background-repeat: no-repeat;
+  height: 185px;
+  width: 218px;
+  position: absolute;
+  right: 25px;
+}
+.gitSocialInner IFRAME {
+  padding: 10px;
+}
+.hightlight {
+  color: teal;
+}
+.pos-relative {
+  position: relative;
+}
+.bottomTeaser H3,
+.mainContent H3 {
+  font-weight: normal;
+}
+.bottomTeaser P,
+.mainContent P {
+  font-family: Arial;
+}
+.mainContent .col2 P {
+  margin-left: 50px;
+}
+.mainContent H3.glyphe {
+  padding-left: 50px;
+  font-size: 19px;
+  margin-bottom: 0;
+}
+
+.glyphe-module {
+  background-image: url('../img/icon_modules.png');
+  background-repeat: no-repeat;
+  background-position: 0 9px;
+}
+.glyphe-signal {
+  background-image: url('../img/icon_signal.png');
+  background-repeat: no-repeat;
+  background-position: 0 9px;
+}
+.glyphe-gears {
+  background-image: url('../img/icon_gears.png');
+  background-repeat: no-repeat;
+  background-position: 0 9px;
+}
+.glyphe-stopwatch {
+  background-image: url('../img/icon_synchron.png');
+  background-repeat: no-repeat;
+  background-position: 0 9px;
+}
+.bottomTeaser .teaser {
+  margin: 0 auto;
+  height: 103px;
+  width: 103px;
+}
+.bottomTeaser .teaserCompany {
+  background-image: url('../img/icon_business.gif');
+}
+.bottomTeaser .teaserDeveloper {
+  background-image: url('../img/icon_developer.gif');
+}
+.bottomTeaser .teaserUser {
+  background-image: url('../img/icon_user.gif');
+}
+.footer {
+  border-top: 1px #bdbdbd solid;
+  height: 80px;
+  margin-top: 30px;
+  padding: 10px 30px 0;
+  background-color: #dedede;
+  position: relative;
+}
+.footer .copyNote {
+  background-image: url('../img/footer_bg.gif');
+  height: 90px;
+  width: 416px;
+  position: absolute;
+  right: 310px;
+  top: 0;
+}
+.footer .copyNote .copy {
+  margin-left: 20px;
+  margin-top: 40px;
+}
+.footer .copyNote .copy A {
+  color: #000000;
+  border-bottom: 1px #ff6633 solid;
+}
+.footer .copyNote .copy A:hover {
+  text-decoration: none;
+}
+.footer UL {
+  list-style: none;
+  margin: 0;
+  margin-left: 15px;
+  margin-bottom: 10px;
+}
+.footer UL LI {
+  float: left;
+  margin: 0 8px;
+}
+.footer UL.links {
+  margin: 0;
+  margin-left: 15px;
+}
+.footer UL.links LI  A {
+  color: #000000;
+  text-decoration: none;
+}
+.footer .gitSocialInner IFRAME {
+  padding: 0 10px;
+}
+.footer UL.social LI.tweetButton IFRAME {
+  width: 85px !important;
+}
+.footer UL.social LI.plusOneButton > DIV {
+  width: 65px !important;
+}
+.imprint {
+  font-family: Arial;
+}

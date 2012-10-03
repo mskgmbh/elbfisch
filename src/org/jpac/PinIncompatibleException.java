@@ -28,7 +28,7 @@ package org.jpac;
 import org.jpac.Pin;
 
 /**
- *
+ * not approved! do not use !!
  * @author berndschuster
  */
 public class PinIncompatibleException extends ProcessException {

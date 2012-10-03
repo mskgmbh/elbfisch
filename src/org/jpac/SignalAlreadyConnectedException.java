@@ -26,7 +26,7 @@
 package org.jpac;
 
 /**
- *
+ * thrown, if a attempt is made to connect a signal as a target more than once
  * @author berndschuster
  */
 public class SignalAlreadyConnectedException extends ProcessException{

@@ -28,7 +28,8 @@ package org.jpac.alarm;
 import org.jpac.ProcessException;
 
 /**
- *
+ * thrown, if an attempt is made to acknowledge an alarm which is still pending. Is not thrown, if
+ * the alarm is instantiated with resetOnAcknowledgement = true.
  * @author berndschuster
  */
 public class AlarmPendingException extends ProcessException {

@@ -31,7 +31,7 @@ import org.apache.log4j.Logger;
 import java.util.Map.Entry;
 
 /**
- *
+ * is called by JPac synchronized to the cycle to copy remote signals to local target signals
  * @author berndschuster
  */
 class RemoteSignalPusher{

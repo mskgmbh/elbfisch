@@ -31,7 +31,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * implementation of the RemoteSignalHandler
  * @author berndschuster
  */
 public class RemoteSignalHandlerImpl extends UnicastRemoteObject implements RemoteSignalHandler{

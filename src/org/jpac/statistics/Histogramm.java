@@ -27,10 +27,9 @@ package org.jpac.statistics;
 
 /**
  *
- * @author berndschuster
  * used to calculate statistical information concerning the 
  * time consumption of system internal or module actions
- * 
+ * @author berndschuster
  */
 public class Histogramm{
     private long[] histogramm;

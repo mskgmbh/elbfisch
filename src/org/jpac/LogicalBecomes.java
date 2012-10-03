@@ -25,6 +25,10 @@
 
 package org.jpac;
 
+/**
+ * process event indicating, that a logical becomes a given state
+ * @author berndschuster
+ */
 public class LogicalBecomes extends LogicalEvent{
     private boolean state;
     

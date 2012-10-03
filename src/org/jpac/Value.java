@@ -26,9 +26,8 @@
 package org.jpac;
 
 /**
- *
- * @author berndschuster
  * represents a value of a signal
+ * @author berndschuster
  */
 public interface Value {
     public void copy(Value aValue);

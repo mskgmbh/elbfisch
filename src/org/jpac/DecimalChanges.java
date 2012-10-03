@@ -25,18 +25,36 @@
 
 package org.jpac;
 
+/**
+ * process event indicating, that the value of a decimal signal has changed
+ * @author berndschuster
+ */
 public class DecimalChanges extends DecimalEvent{ 
     private double baseValue;
 
+    /**
+     * constructs a DecimalChanges
+     * @param decimal the decimal to supervise
+     * @param baseValue the value the deviation is related to
+     * @param threshold the deviation, which, if exceeded will be cause the process event
+     */
     public DecimalChanges(Decimal decimal, double baseValue, double threshold){
         super(decimal, threshold);
         this.baseValue = baseValue;
     }
     
+    /**
+     * set the value, the deviation is related to
+     * @param baseValue 
+     */
     public void setBaseValue(double baseValue){
         this.baseValue = baseValue;
     }
     
+    /**
+     * 
+     * @return the base value 
+     */
     public double getBaseValue(){
         return this.baseValue;
     }

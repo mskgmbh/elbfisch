@@ -28,9 +28,8 @@ package org.jpac;
 import java.io.Serializable;
 
 /**
- *
- * @author berndschuster
  * represents a Decimal value
+ * @author berndschuster
  */
 public class DecimalValue implements Value, Cloneable, Serializable{
     protected double value = 0.0;

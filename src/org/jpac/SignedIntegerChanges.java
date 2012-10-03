@@ -25,18 +25,36 @@
 
 package org.jpac;
 
+/**
+ * process event indicating, that the value of a signed integer signal has changed
+ * @author berndschuster
+ */
 public class SignedIntegerChanges extends SignedIntegerEvent{ 
     private int baseValue;
-
+    
+    /**
+     * constructs a SignedIntegerChanges
+     * @param signedInteger the SignedInteger to supervise
+     * @param baseValue the value the deviation is related to
+     * @param threshold the deviation, which, if exceeded will be cause the process event
+     */
     public SignedIntegerChanges(SignedInteger signedInteger, int baseValue, int threshold){
         super(signedInteger, threshold);
         this.baseValue = baseValue;
     }
     
+    /**
+     * set the value, the deviation is related to
+     * @param baseValue 
+     */
     public void setBaseValue(int baseValue){
         this.baseValue = baseValue;
     }
     
+    /**
+     * 
+     * @return the base value 
+     */
     public int getBaseValue(){
         return this.baseValue;
     }

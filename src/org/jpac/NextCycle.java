@@ -25,6 +25,10 @@
 
 package org.jpac;
 
+/**
+ * process event, indicating, that a new jPac cycle began
+ * @author berndschuster
+ */
 public class NextCycle extends ProcessEvent{
 
     public boolean fire() throws ProcessException{

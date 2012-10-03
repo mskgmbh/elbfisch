@@ -26,7 +26,7 @@
 package org.jpac;
 
 /**
- *
+ * thrown, if a value to be assigned to decimal or signed integer exceeds the signals range of values
  * @author berndschuster
  */
 public class NumberOutOfRangeException extends ProcessException{

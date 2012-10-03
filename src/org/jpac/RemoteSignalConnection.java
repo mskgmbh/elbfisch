@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- *
+ * represents a connection to a remote Jpac instance. Will be automatically created on instantiating remote signals
  * @author berndschuster
  */
 public class RemoteSignalConnection {

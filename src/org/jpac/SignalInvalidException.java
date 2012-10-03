@@ -25,7 +25,10 @@
 
 package org.jpac;
 
-
+/**
+ * thrown, if an attempt is made to read a signal which is invalid
+ * @author berndschuster
+ */
 public class SignalInvalidException extends ProcessException{
 
     public SignalInvalidException(String string) {

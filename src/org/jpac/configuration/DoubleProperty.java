@@ -28,34 +28,82 @@ package org.jpac.configuration;
 import org.apache.commons.configuration.ConfigurationException;
 
 /**
- *
+ * represents a double property stored inside the hierarchical xml configuration file ./cfg/org.jpac.Configuration.xml
+ * if not already present, this property will be automatically stored inside the configuration file on the next save() operation or on exit
+ * of the elbfisch application (if property "org.jpac.JPac.StoreConfigOnShutdown = true).
+ * If already present, the corresponding entry inside the configuration file is left untouched.
+ * 
  * @author berndschuster
  */
 public class DoubleProperty extends Property{
     public DoubleProperty(Object owningObject, String key, double defaultValue, String comment, boolean classProperty) throws ConfigurationException{  
         super(owningObject, key, defaultValue, comment, classProperty);
     }  
-
+    
+    /**
+     * constructs a double property
+     * @param owningObject the module which instantiated this property. All properties owned by a module are stored under its qualified name inside the
+     * configuration file.
+     * @param key the key under which this property is stored inside the hierarchical xml configuration file.
+     * @param defaultValue the value the property earns by default
+     * @param comment a comment describing the purpose of the property
+     * @param classProperty if true, this property is stored under the name of the modules class, instead of its qualified name. It than can be used by all
+     * instances of this module class
+     * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
+     */
     public DoubleProperty(Object owningObject, String key, double defaultValue, String comment) throws ConfigurationException{  
         super(owningObject, key, defaultValue, comment, false);
     }  
 
+    /**
+     * constructs an double property
+     * @param owningObject the module which instantiated this property. All properties owned by a module are stored under its qualified name inside the
+     * configuration file.
+     * @param key the key under which this property is stored inside the hierarchical xml configuration file.
+     * @param defaultValue the value the property earns by default
+     * @param classProperty if true, this property is stored under the name of the modules class, instead of its qualified name. It than can be used by all
+     * instances of this module class
+     * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
+     */
     public DoubleProperty(Object owningObject, String key, double defaultValue, boolean classProperty) throws ConfigurationException{  
         super(owningObject, key, defaultValue, null, classProperty);
     }  
 
+    /**
+     * constructs an double property
+     * @param owningObject the module which instantiated this property. All properties owned by a module are stored under its qualified name inside the
+     * configuration file.
+     * @param key the key under which this property is stored inside the hierarchical xml configuration file.
+     * @param defaultValue the value the property earns by default
+     * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
+     */
     public DoubleProperty(Object owningObject, String key, double defaultValue) throws ConfigurationException{  
         super(owningObject, key, defaultValue, null, false);
     }  
 
+    /**
+     * constructs an double property for read only access. The key must be fully qualified to access the property
+     * @param key the fully qualified key of the property
+     * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
+     */    
     public DoubleProperty(String key) throws ConfigurationException{  
         super(key);
     }      
     
+    /**
+     * returns the value of the property
+     * @return the value of the property
+     * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
+     */
     public double get() throws ConfigurationException{
         return Configuration.getInstance().getDouble(key);
     }
     
+    /**
+     * sets the value of the property
+     * @param value the value
+     * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
+     */
     public void set(double value) throws ConfigurationException{
         Configuration.getInstance().setProperty(key, value);
     }

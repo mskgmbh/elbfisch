@@ -25,6 +25,11 @@
 
 package org.jpac;
 
+/**
+ * base class of some process events concerning decimal signals
+ * @author berndschuster
+ */
+
 abstract class DecimalEvent extends ProcessEvent{
     protected Decimal decimal;
     protected double  threshold;
@@ -44,6 +49,10 @@ abstract class DecimalEvent extends ProcessEvent{
         return this.decimal;
     }
     
+    /**
+     * the threshold, which, if exceeded, causes the process event
+     * @param threshold 
+     */
     public void setThreshold(double threshold){
         this.threshold = threshold;
     }

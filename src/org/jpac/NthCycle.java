@@ -25,6 +25,10 @@
 
 package org.jpac;
 
+/**
+ * process event, indicating, that the n cycles passed since calling await()
+ * @author berndschuster
+ */
 public class NthCycle extends ProcessEvent{
     private int cycleCount;
     private int n;

@@ -31,6 +31,10 @@ import org.jpac.ProcessEvent;
 import org.jpac.ProcessException;
 import org.jpac.SignalInvalidException;
 
+/**
+ * process event indicating that an alarm has been raised by a module
+ * @author berndschuster
+ */
 public class AlarmRaised extends ProcessEvent{
     private Alarm alarm;
     private long  lastNotPendingCycle;

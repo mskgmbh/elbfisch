@@ -30,6 +30,10 @@ import org.jpac.JPac;
 import org.jpac.ProcessEvent;
 import org.jpac.ProcessException;
 
+/**
+ * process event indicating, that an alarm has been acknowledged by the user
+ * @author berndschuster
+ */
 public class AlarmAcknowledged extends ProcessEvent{
     private Alarm alarm;
     private long  lastNotAcknowledgedCycle;

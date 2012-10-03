@@ -26,7 +26,7 @@
 package org.jpac;
 
 /**
- *
+ * process event which is fired, if an emergency stop condition has been acknowledged
  * @author berndschuster
  */
 public class EmergencyStopAcknowledged extends ProcessEvent{

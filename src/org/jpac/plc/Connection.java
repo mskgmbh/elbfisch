@@ -32,7 +32,7 @@ import org.apache.log4j.Logger;
 import org.jpac.IndexOutOfRangeException;
 
 /**
- * represents a TCP/IP connection to a S7 plc. The connection uses the ISO protocol.
+ * represents a TCP/IP connection to a plc or to a i/o device.
  *
  */
 public abstract class Connection {
@@ -45,8 +45,8 @@ public abstract class Connection {
     protected boolean            autoConnect;
     
     /**
-     * an instance of Connection is created and the connection to given plc is initiated immediately
-     * @param host ip address of the plc (e.g. 192.168.0.1)
+     * an instance of Connection is created and the connection to given device is initiated immediately
+     * @param host ip address of the device (e.g. 192.168.0.1)
      * @param debug switch on/off generation of debug information
      * @throws IOException
      */
@@ -55,8 +55,8 @@ public abstract class Connection {
     }
 
     /**
-     * an instance of Connection is created and the connection to given plc is initiated immediately
-     * @param host ip address of the plc (e.g. 192.168.0.1)
+     * an instance of Connection is created and the connection to given device is initiated immediately
+     * @param host ip address of the device (e.g. 192.168.0.1)
      * @param debug switch on/off generation of debug information
      * @throws IOException
      */
@@ -118,25 +118,25 @@ public abstract class Connection {
     }
 
     /**
-     * used for writing PLCString data
+     * writes maxlength bytes to the device
      *
      */
     public abstract void write(int maxLength);
 
     /**
-     * used for writing PLCString data
+     * writes an array of bytes to the device
      *
      */
     public abstract void write(byte[] stringBytes);
 
     /**
-     * used for writing PLCString data
+     * reads one byte from the device
      *
      */
     public abstract int read();
 
     /**
-     * used for writing PLCString data
+     * reads an array of bytes from the device
      *
      */
     public abstract void read(byte[] stringBytes);

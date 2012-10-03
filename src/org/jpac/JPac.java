@@ -49,7 +49,10 @@ import org.jpac.configuration.LongProperty;
 import org.jpac.configuration.StringProperty;
 import org.jpac.statistics.Histogramm;
 
-//TODO invokeLater() implementieren, für asynchronen Datenaustausch
+/**
+ * central runtime engine of JPac
+ * @author berndschuster
+ */
 public class JPac extends Thread{
     static Logger Log = Logger.getLogger("jpac.JPac");
 

@@ -26,7 +26,7 @@
 package org.jpac;
 
 /**
- *
+ * used to map a signed integer signal to another signed integer signal.
  * @author Andreas Ulbrich<ulbrich@mskgmbh.com>
  */
 public abstract class SignedIntegerMapper{
@@ -41,6 +41,11 @@ public abstract class SignedIntegerMapper{
     public SignedIntegerMapper() {
     }
 
+    /**
+     * if constructed by this constructor, the SignedIntegerMapper uses the given signed integers min and max values for mapping
+     * @param source the source signed integer
+     * @param target the target signed integer the source signed integer is mapped to
+     */
     public SignedIntegerMapper(SignedInteger source, SignedInteger target) {
         this.minSourceValue = source.getMinValue();
         this.maxSourceValue = source.getMaxValue();
@@ -51,6 +56,13 @@ public abstract class SignedIntegerMapper{
         this.scale          = targetSpan / sourceSpan;
     }
 
+    /**
+     * 
+     * @param minSourceValue the minimum source value
+     * @param maxSourceValue the maximum source value
+     * @param minTargetValue the minimum target value
+     * @param maxTargetValue the maximum target value
+     */
     public SignedIntegerMapper(int minSourceValue, int maxSourceValue, int minTargetValue, int maxTargetValue) {
         this.minSourceValue = minSourceValue;
         this.maxSourceValue = maxSourceValue;
@@ -61,6 +73,12 @@ public abstract class SignedIntegerMapper{
         this.scale          = targetSpan / sourceSpan;
     }
 
+    /**
+     * maps an int value
+     * @param  the source value
+     * @return the mapped value
+     * @throws NumberOutOfRangeException thrown, if the sourceValue does not fit into the range given by min and max source value
+     */
     public int map(int sourceValue) throws NumberOutOfRangeException{
         if (sourceValue < minSourceValue || sourceValue > maxSourceValue){
             throw new NumberOutOfRangeException(sourceValue, minSourceValue, maxSourceValue);
@@ -69,6 +87,12 @@ public abstract class SignedIntegerMapper{
         return targetValue;
     }
 
+    /**
+     * maps a double value
+     * @param  the source value
+     * @return the mapped value
+     * @throws NumberOutOfRangeException thrown, if the sourceValue does not fit into the range given by min and max source value
+     */
     public int map(double sourceValue) throws NumberOutOfRangeException{
         int intSourceValue = (int)sourceValue;
         if (intSourceValue < minSourceValue || intSourceValue > maxSourceValue){

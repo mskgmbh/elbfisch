@@ -29,7 +29,7 @@ package org.jpac;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * base class of all event, which might occur during the life time of an elbfisch application
  * @author berndschuster
  */
 public abstract class Fireable{
@@ -55,8 +55,20 @@ public abstract class Fireable{
         setProcessException(null);
     }
 
+    /**
+     * is called by jPac in every cycle to check, if the fire condition occured
+     * the fire condition must be true for at least one call. on occurrence it is latched by the Fireable, until it is processed.
+     * Must not be called by the application directly.
+     * @return true, if the fire condition occured
+     * @throws ProcessException if the application code produces an process exception. It is passed onto the awaiting module.
+     */
     public abstract boolean fire() throws ProcessException;
 
+    /**
+     * used to check, if a fireable has been fired. Keeps its state, until reset() is called.
+     * @return true: the Fireable has been fired
+     * @throws ProcessException 
+     */
     public boolean isFired() throws ProcessException {
         //fired state persist for the whole process cycle
         //even though the fire-condition may change
@@ -159,10 +171,17 @@ public abstract class Fireable{
         }
     }
 
+    /**
+     * used to reset the Fireable to its initial state.
+     */
     public void reset(){
         initStates();
     }
 
+    /**
+     * used to set a monitor on a Fireable. If it is fired, a MonitorException is thrown to the monitoring module
+     * @throws InconsistencyException thrown, if an jpac internal problem arose 
+     */
     public void monitor() throws InconsistencyException{
         AbstractModule module = (AbstractModule)Thread.currentThread();
         //reinitialize state var's
@@ -184,6 +203,9 @@ public abstract class Fireable{
         }
     }
 
+    /**
+     * used to reset a monitor on a Fireable.
+     */
     public void unmonitor(){
         if (getObservingModule() != null){
             getObservingModule().getMonitoredEvents().remove(this);
@@ -242,10 +264,13 @@ public abstract class Fireable{
         return processException != null;
     }
     
+    /**
+     * used, to check, if this fireable implements the identical fire condition as f.
+     * 
+     * @param f the Fireable to check
+     * @return true, if both fire conditions match
+     */
     protected boolean equalsCondition(Fireable f){
-        //must be implemented in all derived fireables which should be monitored
-        //override this method in the derived class and implement the logic used to decide
-        //if the condition handled by two instances of your class are identical
         //Note: leave this code herein unchanged. It is implemented this way designedly.
         throw new UnsupportedOperationException("must be implemented if this fireable is to be monitored");
     }

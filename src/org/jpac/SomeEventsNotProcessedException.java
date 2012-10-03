@@ -26,7 +26,10 @@
 package org.jpac;
 
 import java.util.Iterator;
-
+/**
+ * thrown by jPac, if not all modules could have been processed in time
+ * @author berndschuster
+ */
 public class SomeEventsNotProcessedException extends ProcessException{
     FireableList processEvents;
     public SomeEventsNotProcessedException(FireableList processEvents){

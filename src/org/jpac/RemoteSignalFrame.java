@@ -31,7 +31,8 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * represents a collection of signals, which are connected to remote signals and changed during the same cycle.
+ * This frame is transported to the remote hosts on the whole
  * @author berndschuster
  */
 public class RemoteSignalFrame implements Serializable, Cloneable{

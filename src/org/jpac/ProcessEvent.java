@@ -27,6 +27,9 @@ package org.jpac;
 
 import java.util.ArrayList;
 
+/**
+ * base class for all process events which can be await()ed by modules
+ */
 public abstract class ProcessEvent extends Fireable{
 
     private   boolean                  timedout;
@@ -57,6 +60,11 @@ public abstract class ProcessEvent extends Fireable{
         monitoredEvents         = null;
     }
 
+    /**
+     * used to check, if an process event is currently fired
+     * @return true: the process event is currently fired
+     * @throws ProcessException  
+     */
     @Override
     public boolean isFired() throws ProcessException {
         //fired state persist for the whole process cycle
@@ -81,7 +89,20 @@ public abstract class ProcessEvent extends Fireable{
         return fired;
     }
 
-
+    /**
+     * used to await the process event. Can be called inside the work() method of a module. The module is suspended, until the awaited process event
+     * occured (is fired).
+     * @param nanoseconds: maximum period of time to wait [ns]. In module contexts use helper values ns,millis,ms,sec to specify: 1000 * ms, 1 * sec, 1000 * millis
+     * @return the process event itself
+     * @throws EventTimedoutException thrown, if a time out occured
+     * @throws EmergencyStopException thrown, if one of the other modules has encountered a emergency stop condition
+     * @throws ShutdownRequestException thrown, if one of the other modules or the OS requests a shutdown of the elbfisch application
+     * @throws ProcessException thrown, if an arbitrary process exception has been thrown
+     * @throws OutputInterlockException thrown, if postCheckInterlocks() encountered an error condition
+     * @throws InputInterlockException thrown, if preCheckInterlocks() encountered an error condition
+     * @throws MonitorException thrown, if a monitored event occured
+     * @throws InconsistencyException thrown, if JPac encountered an internal error
+     */
     public synchronized ProcessEvent await(long nanoseconds) throws EventTimedoutException, EmergencyStopException, ShutdownRequestException, ProcessException, OutputInterlockException, InputInterlockException, MonitorException, InconsistencyException{
         awaitImpl(true, nanoseconds, true);
         if (isTimedout())
@@ -89,6 +110,19 @@ public abstract class ProcessEvent extends Fireable{
         return this;
     }
 
+    /**
+     * used to await the process event. Can be called inside the work() method of a module. The module is suspended, until the awaited process event
+     * occured (is fired).
+     * @return the process event itself
+     * @throws EventTimedoutException thrown, if a time out occured
+     * @throws EmergencyStopException thrown, if one of the other modules has encountered a emergency stop condition
+     * @throws ShutdownRequestException thrown, if one of the other modules or the OS requests a shutdown of the elbfisch application
+     * @throws ProcessException thrown, if an arbitrary process exception has been thrown
+     * @throws OutputInterlockException thrown, if postCheckInterlocks() encountered an error condition
+     * @throws InputInterlockException thrown, if preCheckInterlocks() encountered an error condition
+     * @throws MonitorException thrown, if a monitored event occured
+     * @throws InconsistencyException thrown, if JPac encountered an internal error
+     */
     public synchronized ProcessEvent await() throws EmergencyStopException, ShutdownRequestException, ProcessException, OutputInterlockException, InputInterlockException, MonitorException, InconsistencyException{
         //do not propagate EventTimedoutException because
         //timeout conditions are not handled here
@@ -164,7 +198,12 @@ public abstract class ProcessEvent extends Fireable{
         module.preCheckInterlocks();
         return this;
     }
-    
+
+    /**
+     * used to implement a conjunctive process event inline
+     * @param anotherProcessEvent an process event which is "and'ed" to this process event 
+     * @return the combined (conjunctive event)
+     */
     public ConjunctiveEvent and(ProcessEvent anotherProcessEvent){
         //create a new conjunctive event and add myself as the first event
         ConjunctiveEvent conjEvent = new ConjunctiveEvent(this);
@@ -173,6 +212,11 @@ public abstract class ProcessEvent extends Fireable{
         return conjEvent;
     }
 
+    /**
+     * used to implement a disjunctive process event inline
+     * @param anotherProcessEvent an process event which is "or'ed" to this process event 
+     * @return the combined (disjunctive event)
+     */
     public DisjunctiveEvent or(ProcessEvent anotherProcessEvent){
         //create a new disjunctive event and add myself as the first event
         DisjunctiveEvent disjEvent = new DisjunctiveEvent(this);
@@ -181,6 +225,12 @@ public abstract class ProcessEvent extends Fireable{
         return disjEvent;
     }
 
+    /**
+     * used to implement a exclusive disjunctive process event inline
+     * @param anotherProcessEvent an process event which is "xor'ed" to this process event 
+     * @return the combined (exclusive disjunctive event)
+     */
+    
     public ExclusiveDisjunctiveEvent xor(ProcessEvent anotherProcessEvent){
         //create a new exclusive disjunctive event and add myself as the first event
         ExclusiveDisjunctiveEvent disjEvent = new ExclusiveDisjunctiveEvent(this);
@@ -189,6 +239,10 @@ public abstract class ProcessEvent extends Fireable{
         return disjEvent;
     }
 
+    /**
+     * used to check, if the process event timed out, while has been await()'ed by a module
+     * @return 
+     */
     public boolean isTimedout() {
         boolean localTimedout = false;
         if (timeoutActive){

@@ -28,7 +28,7 @@ package org.jpac.plc;
 import org.jpac.IndexOutOfRangeException;
 
 /**
- *
+ * represents the address of a data item stored in a plc or i/o device
  * @author berndschuster
  */
 public class Address implements org.jpac.Address, Cloneable{
@@ -36,6 +36,13 @@ public class Address implements org.jpac.Address, Cloneable{
     protected int byteIndex;
     protected int size;
 
+    /**
+     * constructs an address object
+     * @param byteIndex byte address of the data item
+     * @param bitIndex bit address of the data item
+     * @param size size of the data item [byte]
+     * @throws IndexOutOfRangeException 
+     */
     public Address(int byteIndex, int bitIndex, int size) throws IndexOutOfRangeException{
         //check for consistency
         if (byteIndex < NA)

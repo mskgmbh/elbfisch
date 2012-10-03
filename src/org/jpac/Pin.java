@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * not approved! do not use !!
  * @author berndschuster
  */
     public class Pin implements Assignable{

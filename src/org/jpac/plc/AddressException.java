@@ -26,7 +26,7 @@
 package org.jpac.plc;
 
 /**
- * is thrown, if address cannot be properly resolved, while accessing plc data
+ * is thrown, if the address of a data item cannot be properly resolved, while accessing data on external i/o device
  */
 public class AddressException extends Exception{
 

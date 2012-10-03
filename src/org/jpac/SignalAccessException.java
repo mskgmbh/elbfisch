@@ -26,7 +26,8 @@
 package org.jpac;
 
 /**
- *
+ * thrown, if a module tries to set() a signal, which does not belong to it (the module is not the containing module of the signal),
+ * or the signal is connected by another signal as a target signal.
  * @author berndschuster
  */
 public class SignalAccessException extends ProcessException {

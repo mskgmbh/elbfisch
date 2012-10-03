@@ -26,7 +26,7 @@
 package org.jpac;
 
 /**
- *
+ * not approved! do not use !!
  * @author berndschuster
  */
 public class PlugIncompatibleException extends ProcessException {

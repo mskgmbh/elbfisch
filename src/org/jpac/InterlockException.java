@@ -29,7 +29,7 @@ import java.util.Iterator;
 import java.util.ArrayList;
 
 /**
- *
+ * base class for interlock exceptions
  * @author berndschuster
  */
 abstract public class InterlockException extends ProcessException {

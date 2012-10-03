@@ -26,7 +26,7 @@
 package org.jpac;
 
 /**
- *
+ * thrown, if an internal error has been encountered by the runtime environment of jPac
  * @author berndschuster
  */
 public class InconsistencyException extends ProcessException{

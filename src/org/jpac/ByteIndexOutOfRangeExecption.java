@@ -24,7 +24,10 @@
  */
 package org.jpac;
 
-
+/**
+ * thrown, if some instance tries to access an invalid byte address inside an process image
+ * @author berndschuster
+ */
 class ByteIndexOutOfRangeExecption extends ProcessException{
 
     public ByteIndexOutOfRangeExecption() {

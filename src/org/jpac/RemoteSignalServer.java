@@ -36,7 +36,7 @@ import java.rmi.registry.LocateRegistry;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * serves incoming remote connections
  * @author berndschuster
  */
 public class RemoteSignalServer {

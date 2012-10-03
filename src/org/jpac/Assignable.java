@@ -26,11 +26,14 @@
 package org.jpac;
 
 /**
- *
+ * defines the basic properties of an assignable item, used in conjunction with plugs
  * @author berndschuster
  */
 public interface Assignable {
+        /** @return the identifier*/
         public String getIdentifier();
+        /** @return the containing module*/
         public AbstractModule getContainingModule();
+        /** @return true, if the Assignable can be assigned to item*/
         public boolean isCompatible(Assignable item);
 }

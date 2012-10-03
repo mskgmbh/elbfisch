@@ -25,8 +25,17 @@
 
 package org.jpac;
 
+/**
+ * process event indicating, that the value of a signed integer signal falls below a given threshold
+ * @author berndschuster
+ */
 public class SignedIntegerFallsBelow extends SignedIntegerEvent{
 
+    /**
+     * constructs a SignedIntegerFallsBelow
+     * @param signedInteger the SignedInteger to supervise
+     * @param threshold the threshold, which, if underrun, causes the process event
+     */
     public SignedIntegerFallsBelow(SignedInteger signedInteger, int threshold){
         super(signedInteger, threshold);
     }

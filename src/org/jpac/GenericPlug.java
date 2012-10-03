@@ -26,9 +26,8 @@
 package org.jpac;
 
 /**
- * 
+ * not approved! do not use !!
  * @author berndschuster
- * can be plugged into any plug
  */
 public class GenericPlug extends Plug{
     int  nextPinNumber;

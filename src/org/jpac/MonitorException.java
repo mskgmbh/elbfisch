@@ -28,7 +28,7 @@ package org.jpac;
 import java.util.ArrayList;
 
 /**
- *
+ * thrown at a module (inside work()), if an event (Fireable) has been fired, which is monitored by it
  * @author berndschuster
  */
 public class MonitorException extends ProcessException{

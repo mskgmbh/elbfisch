@@ -28,7 +28,10 @@ package org.jpac;
 import java.util.Iterator;
 import java.util.ArrayList;
 
-
+/**
+ * used to combine a number events in a disjunctive way. It is fired, if process event 1 OR process event 2 OR .... are fired at a given time
+ * @author berndschuster
+ */
 public class DisjunctiveEvent extends ProcessEvent{
     private ArrayList<ProcessEvent> combinedEvents;
     Iterator<ProcessEvent>       eventIterator;
@@ -41,11 +44,6 @@ public class DisjunctiveEvent extends ProcessEvent{
     @Override
     public DisjunctiveEvent or(ProcessEvent anEvent){
         combinedEvents.add(anEvent);
-        return this;
-    }
-
-    public DisjunctiveEvent clear(){
-        combinedEvents.clear();
         return this;
     }
 

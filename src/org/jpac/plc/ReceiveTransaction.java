@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 
 /**
- *
+ * represents a receive transaction
  * @author Ulbrich
  */
 public abstract class ReceiveTransaction extends Transaction {

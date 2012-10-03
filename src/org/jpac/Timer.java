@@ -24,7 +24,10 @@
  */
 
 package org.jpac;
-
+/**
+ * a timer
+ * @author berndschuster
+ */
 public class Timer {
     private long           lastPollCycle;
     private long           periodOfTime;

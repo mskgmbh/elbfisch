@@ -27,16 +27,23 @@
 package org.jpac;
 
 /**
- *
+ * defines an address of a data item which resides on a plc or another device
  * @author Bernd Schuster
  */
 
 public interface Address {
+    /**value not applicable in a given context*/
     public final static int NA = -1;
+    /**@return the bit index of bit value*/
     public int  getBitIndex();
+    /**@return the byte index of a data item*/
     public int  getByteIndex();
+    /**@return the size of a data item [byte]*/
     public int  getSize();
+    /**set the bit index of bit value*/
     public void setBitIndex(int bitIndex);
+    /**set the byte index of a data item value*/
     public void setByteIndex(int byteIndex);
+    /**set the size of a data item [byte]*/
     public void setSize(int size);
 }

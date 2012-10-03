@@ -28,7 +28,10 @@ package org.jpac;
 import java.util.Iterator;
 import java.util.ArrayList;
 
-
+/**
+ * used to combine a number events in a conjunctive way. It is fired, if process <event 1> AND process <event 2> AND .. AND .. are fired at the same time
+ * @author berndschuster
+ */
 public class ConjunctiveEvent extends ProcessEvent{
     private ArrayList<ProcessEvent> combinedEvents;
     Iterator<ProcessEvent>          eventIterator;
@@ -41,11 +44,6 @@ public class ConjunctiveEvent extends ProcessEvent{
     @Override
     public ConjunctiveEvent and(ProcessEvent anEvent){
         combinedEvents.add(anEvent);
-        return this;
-    }
-
-    public ConjunctiveEvent clear(){
-        combinedEvents.clear();
         return this;
     }
 

@@ -28,7 +28,7 @@ package org.jpac.alarm;
 import org.jpac.SignalInvalidException;
 
 /**
- *
+ * represents an alarm queue entry
  * @author berndschuster
  */
 public class AlarmQueueEntry {

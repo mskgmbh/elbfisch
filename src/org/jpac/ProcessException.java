@@ -26,7 +26,7 @@
 package org.jpac;
 
 /**
- *
+ * base class of all jPac related exceptions
  * @author berndschuster
  */
 public class ProcessException extends Exception{

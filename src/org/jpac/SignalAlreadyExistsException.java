@@ -25,7 +25,10 @@
 
 package org.jpac;
 
-
+/**
+ * thrown, if a signal with the same name already exists
+ * @author berndschuster
+ */
 public class SignalAlreadyExistsException extends ProcessException{
     Signal signal;
     public SignalAlreadyExistsException(Signal signal) {

@@ -25,6 +25,10 @@
 
 package org.jpac;
 
+/**
+ * basic process event concerning signed integers
+ * @author berndschuster
+ */
 abstract class SignedIntegerEvent extends ProcessEvent{
     protected SignedInteger signedInteger;
     protected int           threshold;
@@ -44,6 +48,10 @@ abstract class SignedIntegerEvent extends ProcessEvent{
         return this.signedInteger;
     }
     
+    /**
+     * the threshold, which, if exceeded, causes the process event
+     * @param threshold 
+     */
     public void setThreshold(int threshold){
         this.threshold = threshold;
     }

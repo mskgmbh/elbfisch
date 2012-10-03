@@ -25,7 +25,7 @@
 package org.jpac;
 
 /**
- *
+ * thrown, if some instance tries to put a new item into a cyclic buffer, which is already full
  * @author berndschuster
  */
 class BufferFullException extends Exception {

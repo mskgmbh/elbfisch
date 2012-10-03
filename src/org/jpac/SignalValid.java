@@ -26,7 +26,7 @@
 package org.jpac;
 
 /**
- *
+ * process event indicating, that a signal went valid
  * @author berndschuster
  */
 public class SignalValid extends ProcessEvent{

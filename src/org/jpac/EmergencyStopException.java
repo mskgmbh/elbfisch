@@ -25,7 +25,10 @@
 
 package org.jpac;
 
-
+/**
+ * thrown, if an emergency stop condition arises. Can be thrown by any module. Once thrown, all other modules will receive the EmergencyStopException in the next cycle
+ * @author berndschuster
+ */
 public class EmergencyStopException extends ProcessException{
   
     public EmergencyStopException(String message){

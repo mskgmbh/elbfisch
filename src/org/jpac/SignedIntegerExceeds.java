@@ -25,8 +25,17 @@
 
 package org.jpac;
 
+/**
+ * process event indicating, that the value of a signed integer signal exceeds a given threshold
+ * @author berndschuster
+ */
 public class SignedIntegerExceeds extends SignedIntegerEvent{
 
+    /**
+     * constructs a SignedIntegerExceeds
+     * @param signedInteger the SignedInteger to supervise
+     * @param threshold the threshold, which, if exceeded, causes the process event
+     */
     public SignedIntegerExceeds(SignedInteger signedInteger, int threshold){
         super(signedInteger, threshold);
     }

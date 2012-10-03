@@ -32,7 +32,8 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 
 /**
- *
+ * represents the central hierarchical configuration of an elbfisch application. All modules store there properties here
+ * Will be automatically instantiated on the first instantiation of a property by any module
  * @author berndschuster
  */
 public class Configuration extends XMLConfiguration{

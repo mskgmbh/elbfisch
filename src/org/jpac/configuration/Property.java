@@ -29,7 +29,7 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.jpac.AbstractModule;
 
 /**
- *
+ * base class of all elbfisch property classes
  * @author berndschuster
  */
 public abstract class Property {

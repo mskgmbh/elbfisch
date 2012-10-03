@@ -31,7 +31,7 @@ import java.util.Observer;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * represents a remote output signal
  * @author berndschuster
  */
 public class RemoteSignalOutput implements Observer, Serializable{
@@ -88,26 +88,49 @@ public class RemoteSignalOutput implements Observer, Serializable{
         this.connectedAsTarget = connectedAsTarget;
     }
     
+    /**
+     * 
+     * @return the host, the remote connection refers to 
+     */
     public String getHost(){
         return remoteHost;
     }
     
+    /**
+     * 
+     * @return the network port, the remote connection is refers to
+     */
     public int getPort(){
         return remotePort;
     }
     
+    /**
+     * 
+     * @return the name of the remote signal 
+     */
     public String getSignalName(){
         return remoteSignalName;
     }
     
+    /**
+     * 
+     * @return the remote transport used by this 
+     */
     RemoteSignalTransport getTransport(){
         return transport;
     }
     
+    /**
+     * used to invalidate the remote input signal
+     */
     public void invalidate(){
         transport.setValid(false);
     }
     
+    /**
+     * used to set the index
+     * @param index 
+     */
     public void setIndex(int index){
         this.index = index;
     }
@@ -117,10 +140,19 @@ public class RemoteSignalOutput implements Observer, Serializable{
         return getClass().getSimpleName() + "(//" + remoteHost + ':' + remotePort + '/' + remoteSignalName + ")";
     }
 
+    /**
+     * 
+     * @return the identifier 
+     */
     public String getIdentifier() {
         return identifier;
     }
 
+    /**
+     * checks, if this is compatible to a given Assignable
+     * @param item the Assignable
+     * @return true, if this and item are assignable
+     */
     public boolean isCompatible(Assignable item) {
         return true;//RemoteSignalOutput is independent of type
     }

@@ -25,6 +25,12 @@
 
 package org.jpac;
 
+/**
+ * deprecated
+ * @author berndschuster
+ * @deprecated
+ */
+
 public abstract class SimulationModule extends AbstractModule{
 
     protected SimulationModule(AbstractModule containingModule){

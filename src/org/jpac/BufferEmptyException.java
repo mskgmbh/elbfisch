@@ -25,7 +25,7 @@
 package org.jpac;
 
 /**
- *
+ * thrown, if some instance tries to read an item from a cyclic buffer, which is empty
  * @author berndschuster
  */
 class BufferEmptyException extends Exception {

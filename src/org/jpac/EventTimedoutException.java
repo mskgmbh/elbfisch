@@ -25,7 +25,10 @@
 
 package org.jpac;
 
-
+/**
+ * thrown, if an awaited event, did not occur in time
+ * @author berndschuster
+ */
 public class EventTimedoutException extends ProcessException{
     ProcessEvent processEvent;
     public EventTimedoutException(ProcessEvent processEvent){

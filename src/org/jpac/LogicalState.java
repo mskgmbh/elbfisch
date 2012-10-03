@@ -25,6 +25,10 @@
 
 package org.jpac;
 
+/**
+ * process event indicating, that a logical signal has a given state
+ * @author berndschuster
+ */
 public class LogicalState extends LogicalEvent{
     private boolean state;
     

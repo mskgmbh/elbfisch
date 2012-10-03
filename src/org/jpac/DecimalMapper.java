@@ -26,7 +26,7 @@
 package org.jpac;
 
 /**
- *
+ * used to map a decimal signal to another decimal signal.
  * @author Andreas Ulbrich<ulbrich@mskgmbh.com>
  */
 public abstract class DecimalMapper{
@@ -41,6 +41,11 @@ public abstract class DecimalMapper{
     public DecimalMapper() {
     }
 
+    /**
+     * if constructed by this constructor, the DecimalMapper uses the given decimals min and max values for mapping
+     * @param source the source decimal
+     * @param target the target decimal the source decimal is mapped to
+     */
     public DecimalMapper(Decimal source, Decimal target) {
         this.minSourceValue = source.getMinValue();
         this.maxSourceValue = source.getMaxValue();
@@ -51,6 +56,13 @@ public abstract class DecimalMapper{
         this.scale          = targetSpan / sourceSpan;
     }
 
+    /**
+     * 
+     * @param minSourceValue the minimum source value
+     * @param maxSourceValue the maximum source value
+     * @param minTargetValue the minimum target value
+     * @param maxTargetValue the maximum target value
+     */
     public DecimalMapper(double minSourceValue, double maxSourceValue, double minTargetValue, double maxTargetValue) {
         this.minSourceValue = minSourceValue;
         this.maxSourceValue = maxSourceValue;
@@ -60,7 +72,13 @@ public abstract class DecimalMapper{
         this.targetSpan     = maxTargetValue - minTargetValue;
         this.scale          = targetSpan / sourceSpan;
     }
-
+    
+    /**
+     * maps a double value
+     * @param  the source value
+     * @return the mapped value
+     * @throws NumberOutOfRangeException thrown, if the sourceValue does not fit into the range given by min and max source value
+     */
     public double map(double sourceValue) throws NumberOutOfRangeException{
         if (sourceValue < minSourceValue || sourceValue > maxSourceValue){
             throw new NumberOutOfRangeException(sourceValue, minSourceValue, maxSourceValue);
@@ -69,6 +87,12 @@ public abstract class DecimalMapper{
         return targetValue;
     }
 
+    /**
+     * maps an int value
+     * @param  the source value
+     * @return the mapped value
+     * @throws NumberOutOfRangeException thrown, if the sourceValue does not fit into the range given by min and max source value
+     */
     public double map(int sourceValue) throws NumberOutOfRangeException{
         double doubleSourceValue = (double)sourceValue;
         if (doubleSourceValue < minSourceValue || doubleSourceValue > maxSourceValue){

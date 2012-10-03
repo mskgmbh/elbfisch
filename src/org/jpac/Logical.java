@@ -28,7 +28,7 @@ package org.jpac;
 import org.jpac.alarm.Alarm;
 
 /**
- * represents a bit signal
+ * represents a boolean signal
  */
 
 public class Logical extends Signal{
@@ -36,7 +36,7 @@ public class Logical extends Signal{
     private boolean      invertOnUpdate;
 
     /**
-     * constructs a bit signal
+     * constructs a logical signal
      * @param containingModule: module, this signal is contained in
      * @param identifier: identifier of the signal
      */
@@ -49,8 +49,8 @@ public class Logical extends Signal{
     }
     
     /**
-     * used to set the bit to the given state
-     * @param state: state, the bit is set to
+     * used to set the logical to the given state
+     * @param state: state, the logical is set to
      * @throws SignalAccessException, if the module invoking this method is
      *         not the containing module
      */

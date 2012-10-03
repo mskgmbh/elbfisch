@@ -26,7 +26,7 @@
 package org.jpac;
 
 /**
- *
+ * process event indicating, that a timer expired
  * @author berndschuster
  */
 public class TimerExpires extends ProcessEvent{

@@ -28,7 +28,7 @@ package org.jpac;
 import java.io.Serializable;
 
 /**
- *
+ * represents the value of a signed integer signal
  * @author berndschuster
  * represents a Decimal value
  */

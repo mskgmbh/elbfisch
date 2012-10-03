@@ -36,7 +36,11 @@ import org.jpac.SignalInvalidException;
 
 
 /**
- *
+ * represents an alarm which can be raised by 
+ * - a module or 
+ * - by a logical signal which is connected to the alarm as a source signal.
+ * Alarms can be shown up to the user over the GUI and acknowledged by him, after they have gone. Alarms have an unique identifier 
+ * and a message text, which can be part of a resource bundle to manage internationalization
  * @author berndschuster
  */
 public class Alarm extends Signal{
@@ -58,10 +62,11 @@ public class Alarm extends Signal{
     private boolean            invertOnUpdate;    
     
     /**
-     * constructs a bit signal
-     * @param containingModule: module, this signal is contained in
+     * constructs an alarm
+     * @param containingModule: module which instantiated the alarm
      * @param identifier: identifier of the signal
      * @param message: a message, that can be displayed over a GUI
+     * @param resetOnAcknowledgement: if true, the alarm will be automatically reset on acknowledgement by the user
      */
     public Alarm(AbstractModule containingModule, String identifier, String message, boolean resetOnAcknowledgement){
         super(containingModule, identifier);
@@ -113,8 +118,7 @@ public class Alarm extends Signal{
     }
 
     /**
-     * returns true, if the alarm is pending.
-     * @return see above
+     * @return true, if the alarm is pending.
      */
     public boolean isPending() throws SignalInvalidException{
         boolean pending = false;
@@ -128,8 +132,7 @@ public class Alarm extends Signal{
     }
     
     /**
-     * returns true, if the alarm is pending.
-     * @return see above
+     * @return true, if the alarm is acknowledged.
      */
     public boolean isAcknowledged(){
         boolean state = false;
@@ -204,14 +207,23 @@ public class Alarm extends Signal{
         propagatedAcknowledged.copy(acknowledged);
     }
     
+    /**
+     * @return process event indicatimg, that an alarm has gone 
+     */
     public AlarmGone gone(){
         return new AlarmGone(this);        
     }
 
+    /**
+     * @return process event indicatimg, that an alarm has been acknowledged 
+     */
     public AlarmAcknowledged acknowledged(){
         return new AlarmAcknowledged(this);        
     }
     
+    /**
+     * @return process event indicatimg, that an alarm has been raised 
+     */
     public AlarmRaised raised(){
         return new AlarmRaised(this);        
     }
@@ -221,10 +233,17 @@ public class Alarm extends Signal{
         return getClass().getSimpleName() + "(" + containingModule.getName() + '.' + getIdentifier() + " = " + (isValid() ? getValue() : "???") + ", ack = " + acknowledged.is(true) + ")";
     }    
     
+    /**
+     * if the alarm is connected to a logical source signal, the state of the signal is inverted before transfer to the alarm 
+     * @param invert 
+     */
     public void setInvertOnUpdate(boolean invert){
         this.invertOnUpdate = invert;
     }
-
+    
+    /**
+     * @return the message of the alarm
+     */
     public String getMessage() {
         return message;
     }

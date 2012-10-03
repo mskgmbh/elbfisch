@@ -32,7 +32,7 @@ import org.apache.log4j.Logger;
 import org.jpac.Pin.Direction;
 
 /**
- * 
+ * not approved! do not use !!
  * @author berndschuster
  * used to bundle a number of signals or subordinate plugs to a logical item
  * Because it is defined to take plugs as members, it can be used

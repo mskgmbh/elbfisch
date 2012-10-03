@@ -30,10 +30,10 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
- * @author berndschuster
  * used to synchronize two threads having a producer - consumer relation
  * the data objects stored inside the buffer are recycled as far as possible
+ * @author berndschuster
+ * 
  */
 public class CyclicBuffer<T> {
     private int       length;
@@ -69,12 +69,21 @@ public class CyclicBuffer<T> {
         }
     }
     
+    /**
+     * used to clear the buffer
+     */
     public void clear(){
         synchronized(this){
             init();
         }
     }
     
+    /**
+     * returns the next free item inside the buffer to the producer. The item stored inside the cyclic buffer is returned for recycling purposes. 
+     * The item cannot be accessed by the consumer, until it is put() again by the producer.
+     * @return the item
+     * @throws BufferFullException - thrown, if the cyclic buffer is full 
+     */
     public T occupy() throws BufferFullException{
         synchronized(this){
             T item = null;
@@ -88,6 +97,11 @@ public class CyclicBuffer<T> {
         }
     }
         
+    /**
+     * used to put a new item into the cyclic buffer. Called by the producer 
+     * @param t
+     * @throws BufferFullException 
+     */
     public void put(T t) throws BufferFullException{
         synchronized(this){
             if (!full){
@@ -106,6 +120,10 @@ public class CyclicBuffer<T> {
         }
     }
     
+    /**
+     * used to release a data item, which has been fetched by calling get() (consumer)
+     * @throws BufferEmptyException thrown, if the buffer does not contain any item
+     */
     public void release() throws BufferEmptyException{
         synchronized(this){
             if (!empty){
@@ -122,7 +140,12 @@ public class CyclicBuffer<T> {
             }
         }
     }
-
+    
+    /**
+     * used to fetch the next item from the cyclic buffer on the consumer side
+     * @return the item
+     * @throws BufferEmptyException thrown, if the cyclic buffer does not contain at least one item 
+     */
     public T get() throws BufferEmptyException{
         synchronized(this){
             T item = null;
@@ -136,6 +159,11 @@ public class CyclicBuffer<T> {
         }
     }
     
+    /**
+     * blocks a calling thread, until the cyclic buffer contains free items
+     * @param timeout maximum period of time to wait [ms]
+     * @return true, if a timeout occurred
+     */
     public boolean waitUntilFreed(int timeout){
         boolean interrupted = false;
         boolean timedout    = false;
@@ -150,6 +178,11 @@ public class CyclicBuffer<T> {
         return timedout;
     }
         
+    /**
+     * blocks a calling thread, until the cyclic buffer contains new items
+     * @param timeout maximum period of time to wait [ms]
+     * @return true, if a timeout occurred
+     */
     public boolean waitUntilFilled(int timeout){
         boolean interrupted = false;
         boolean timedout    = false;
@@ -163,11 +196,19 @@ public class CyclicBuffer<T> {
         while(interrupted);
         return timedout;
     }
-
+    
+    /**
+     * used to check, if the cyclic buffer is empty
+     * @return true: the buffer is empty
+     */
     public boolean isEmpty(){
         return empty;
     }
     
+    /**
+     * used to check, if the cyclic buffer is full
+     * @return true: the buffer is full
+     */
     public boolean isFull(){
         return full;
     }    

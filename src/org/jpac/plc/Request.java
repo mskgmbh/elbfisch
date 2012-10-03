@@ -31,7 +31,7 @@ import org.apache.log4j.Logger;
 import org.jpac.Address;
 
 /**
- *
+ * represents a i/o request
  * @author berndschuster
  */
 public abstract class Request {

@@ -25,8 +25,18 @@
 
 package org.jpac;
 
+/**
+ * process event indicating, that the value of a decimal signal has fallen below a given value
+ * @author berndschuster
+ */
+
 public class DecimalFallsBelow extends DecimalEvent{
 
+    /**
+     * constructs a DecimalFallsBelow
+     * @param decimal the decimal to supervise
+     * @param threshold the threshold, which, if underrun, causes the process event
+     */
     public DecimalFallsBelow(Decimal decimal, double threshold){
         super(decimal, threshold);
     }

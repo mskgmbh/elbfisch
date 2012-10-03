@@ -28,6 +28,9 @@ package org.jpac;
 import java.util.Iterator;
 import java.util.ArrayList;
 
+/**
+ * used by jPac internally 
+ */
 public class FiredProcessEventList {
     private static ArrayList<ProcessEvent>  processEventArrayList;
     private static FiredProcessEventList processEventList = null;

@@ -32,7 +32,7 @@ import java.util.Observable;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * represents a remote input signal
  * @author berndschuster
  */
 public class RemoteSignalInput extends Observable implements Assignable{
@@ -116,7 +116,7 @@ public class RemoteSignalInput extends Observable implements Assignable{
     }
     
     /**
-     * used to disconnect a signal from another signal
+     * used to disconnect this from a connected signal
      * @param targetSignal
      */
     public void disconnect(Signal targetSignal){
@@ -143,38 +143,74 @@ public class RemoteSignalInput extends Observable implements Assignable{
         observingSignals.remove(targetSignal);
     }
     
+    /**
+     * 
+     * @return the identifier 
+     */
     public String getIdentifier() {
         return identifier;
     }
 
+    /**
+     * 
+     * @return the containing module 
+     */
     public AbstractModule getContainingModule() {
         return containingModule;
     }
     
+    /**
+     * 
+     * @return the host, the remote connection refers to 
+     */
     public String getHost(){
         return host;
     }
     
+    /**
+     * 
+     * @return the network port, the remote connection is refers to
+     */
     public int getPort(){
         return port;
     }
     
+    /**
+     * 
+     * @return the name of the remote signal 
+     */
     public String getSignalName(){
         return signalName;
     }
     
+    /**
+     * used to invalidate the remote input signal
+     */
     public void invalidate(){
         transport.setValid(false);
     }
     
+    /**
+     * checks, if this is compatible to a given Assignable
+     * @param item the Assignable
+     * @return true, if this and item are assignable
+     */
     public boolean isCompatible(Assignable item) {
         return true;//RemoteSignalOutput is independent of type
     }
     
+    /**
+     * used to set the index
+     * @param index 
+     */
     public void setIndex(int index){
         this.index = index;
     }
     
+    /**
+     * 
+     * @return the remote transport used by this 
+     */
     RemoteSignalTransport getTransport(){
         return transport;
     }

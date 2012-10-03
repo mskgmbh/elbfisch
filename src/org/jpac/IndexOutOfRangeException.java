@@ -25,7 +25,10 @@
 
 package org.jpac;
 
-
+/**
+ * thrown, if an index is out of range, while accessing data of a process image
+ * @author berndschuster
+ */
 public class IndexOutOfRangeException extends ProcessException {
     public IndexOutOfRangeException(){
         super();

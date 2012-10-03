@@ -29,7 +29,7 @@ import java.rmi.RemoteException;
 import java.util.List;
 
 /**
- *
+ * rmi skeleton of the RemoteSignalHandler
  * @author berndschuster
  */
 public interface RemoteSignalHandler extends java.rmi.Remote{

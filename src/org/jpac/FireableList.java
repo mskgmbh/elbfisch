@@ -29,6 +29,9 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import org.apache.log4j.Logger;
 
+/**
+ * used by jPac internally 
+ */
 public class FireableList extends ArrayList<Fireable>{
     static Logger Log = Logger.getLogger("jpac.fireable");
     private int ActiveEventsCount;

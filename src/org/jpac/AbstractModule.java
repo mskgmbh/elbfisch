@@ -32,6 +32,10 @@ import java.util.ArrayList;
 import org.apache.log4j.Logger;
 import org.jpac.statistics.Histogramm;
 
+/**
+ * base class of elbfisch modules
+ * @author berndschuster
+ */
 public abstract class AbstractModule extends Thread{
 
     public class StatusStack{
@@ -82,23 +86,32 @@ public abstract class AbstractModule extends Thread{
         }
     }
 
-    public enum Status {DORMANT,      //inital status, module is inactive
-                        READY,        //module is ready to run and waits for the beginning of the next cycle
-                        RUNNING,      //module is running
+    public enum Status {/**initial state of a module*/
+                        DORMANT,
+                        /**module is ready to run and waits for the beginning of the first jpac cylce*/
+                        READY,
+                        /**module is running*/
+                        RUNNING,
+                        /**module has stopped running, it is halted*/
                         HALTED};      //module is halted
                           
     protected static Logger Log = Logger.getLogger("jpac.Module");
 
+    /**used to denote a span of time in nanoseconds*/
     public  static final long nanos =  1L;
+    /**used to denote a span of time in microseconds*/
     public  static final long micros = 1000L;
+    /**used to denote a span of time in milliseconds*/
     public  static final long ms     = 1000000L;
+    /**used to denote a span of time in milliseconds*/
     public  static final long millis = 1000000L;
+    /**used to denote a span of time in seconds*/
     public  static final long sec    = 1000000000L;
 
     private JPac                  jPac;
     private int                   moduleIndex;
     private ProcessEvent          awaitedEvent;
-    private ArrayList<Fireable>   monitoredEvents;//TODO how can multiple registration of the same event be avoided (for example in a loop) ????
+    private ArrayList<Fireable>   monitoredEvents;
     private String                simpleName;
     private String                qualifiedName;
 
@@ -115,17 +128,27 @@ public abstract class AbstractModule extends Thread{
     private  boolean              requestingEmergencyStop;
     private  boolean              inEveryCycleDoActive;
 
-    public AbstractModule(AbstractModule containingModule){
-        super();
-        this.containingModule   = containingModule;
-        setSimpleName(getClass().getSimpleName());
-        init();
-    }
-
+    /**
+     * used to construct a module
+     * @param containingModule null  : module is the top most module, which by definition must contain all other modules of the application.
+     *                         <>null: module, which instantiated this module and therefor is the containing module
+     * @param name: the short name of the module. This name will be supplemented by the name of all containing module in a given hierarchical order
+     */
     public AbstractModule(AbstractModule containingModule, String name){
         super();
         this.containingModule   = containingModule;
         setSimpleName(name);
+        init();
+    }
+
+    /**
+     * used to construct a module. It receives the name of it's class
+     * @param containingModule the containing (instantiating module) if null, the module is the top most module, which by definition must contain all other modules of the application
+     */
+    public AbstractModule(AbstractModule containingModule){
+        super();
+        this.containingModule   = containingModule;
+        setSimpleName(getClass().getSimpleName());
         init();
     }
 
@@ -151,6 +174,9 @@ public abstract class AbstractModule extends Thread{
         histogramm  = new Histogramm(getJPac().getCycleTime());
     }
 
+    /**
+     * is not called directly by an elbfisch application
+     */
     @Override
     public void run() {
         try {
@@ -191,6 +217,12 @@ public abstract class AbstractModule extends Thread{
         }
     }
 
+    /**
+     * used to shutdown the the elbfisch application. If called by one of the modules, every module will receive 
+     * a ShutdownRequestedException in the next following cycle.
+     * @param exitCode exit code returned to the system (OS)
+     * @throws ProcessException thrown, if an elbfisch specific condition arises
+     */
     public void shutdown(final int exitCode) throws ProcessException{
         if (Log.isInfoEnabled()) Log.debug("SHUTDOWN OF APPLICATION INVOKED BY " + this);
         Thread shutdownThread = new Thread(){
@@ -206,6 +238,11 @@ public abstract class AbstractModule extends Thread{
         }
     }
 
+    /**
+     * central working method of the module. All real time actions of the module are implemented herein.
+     * @throws ProcessException if an arising process exception is not handled by the application of work(), the module will stop running
+     * and perform some default handling
+     */ 
     abstract protected void work() throws ProcessException;
 
     void setJPac(JPac jPac) {
@@ -216,46 +253,45 @@ public abstract class AbstractModule extends Thread{
         return this.jPac;
     }
 
-    /**
-     * @return the awaitedEvent
-     */
     public ProcessEvent getAwaitedProcessEvent() {
         return awaitedEvent;
     }
 
-    /**
-     * @param awaitedEvent the awaitedEvent to set
-     */
     public void setAwaitedEvent(ProcessEvent awaitedEvent) {
         this.awaitedEvent = awaitedEvent;
     }
 
     /**
-     * @return the simpleName
+     * @return the simple name of the module
      */
     public String getSimpleName() {
         return simpleName;
     }
 
     /**
-     * 
-     * @return status
+     * @return status used to retrieve the status stack of the module.
+     * a module can enter.
      */
     public StatusStack getStatus(){
         return status;
     }
 
+    /**
+     * @return the containing module
+     */
     public AbstractModule getContainingModule(){
         return this.containingModule;
     }
     
-    /**
-     * @param simpleName the simpleName to set
-     */
     protected void setSimpleName(String simpleName) {
         this.simpleName = simpleName;
     }
 
+    /**
+     * 
+     * @return the qualified name of the module which is dot separated string of the modules simple name and the names 
+     * of all containing modules
+     */
     public String getQualifiedName(){
         return qualifiedName;
     }
@@ -290,9 +326,12 @@ public abstract class AbstractModule extends Thread{
         }
     }
 
+    /**
+     * used to acknowledge an emergency stop condition
+     */
     public void acknowledgeEmergencyStop(){
         if (Log.isInfoEnabled()) Log.debug("emergency stop acknowledged by " + this);
-                        jPac.acknowledgeEmergencyStop();
+        jPac.acknowledgeEmergencyStop();
     }
    
     public long getSleepNanoTime(){
@@ -332,13 +371,19 @@ public abstract class AbstractModule extends Thread{
     public String toString(){
         return getName();
     }
-
+    /**
+     * Is used to check if pre conditions before invoking await() are fulfilled.
+     * Is called, whenever a module returns from ProcessEvent.await().
+     * @throws InputInterlockException will be thrown by ProcessEvent.await(), if an interlock violation occurs
+     */
     abstract protected void preCheckInterlocks() throws InputInterlockException;
-    abstract protected void postCheckInterlocks() throws OutputInterlockException;
 
     /**
-     * @return the moduleIndex
+     * Is used to check if all post conditions are fulfilled when calling a ProcessEvent.await()
+     * @throws OutputInterlockException will be thrown by ProcessEvent.await(), if an interlock violation occurs
      */
+    abstract protected void postCheckInterlocks() throws OutputInterlockException;
+
     public int getModuleIndex() {
         return moduleIndex;
     }
@@ -351,6 +396,9 @@ public abstract class AbstractModule extends Thread{
         return this.debugIndex;
     }
         
+    /**
+     * used to start a module. Before starting itself it starts all containing modules
+     */
     @Override
     public void start(){
         //start myself on my own thread
@@ -409,6 +457,11 @@ public abstract class AbstractModule extends Thread{
         this.inEveryCycleDoActive = enable;
     }
     
+    /**
+     * is invoked by jPac in every cycle to let it handle application specific code, which must be
+     * run continously. the application code inside inEveryCycleDo() is stateless. 
+     * It must not contain any ProcessEvent.await() calls.
+     */
     abstract protected void inEveryCycleDo() throws ProcessException;
 
 }

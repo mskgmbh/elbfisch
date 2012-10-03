@@ -28,6 +28,10 @@ package org.jpac;
 import java.util.Iterator;
 import java.util.ArrayList;
 
+/**
+ * used to combine a number events in a exclusive disjunctive way. It is fired, if process event 1 XOR process event 2 XOR .... are fired
+ * @author berndschuster
+ */
 
 public class ExclusiveDisjunctiveEvent extends ProcessEvent{
     private ArrayList<ProcessEvent> combinedEvents;
@@ -41,11 +45,6 @@ public class ExclusiveDisjunctiveEvent extends ProcessEvent{
     @Override
     public ExclusiveDisjunctiveEvent xor(ProcessEvent anEvent){
         combinedEvents.add(anEvent);
-        return this;
-    }
-
-    public ExclusiveDisjunctiveEvent clear(){
-        combinedEvents.clear();
         return this;
     }
 
@@ -79,7 +78,6 @@ public class ExclusiveDisjunctiveEvent extends ProcessEvent{
             while(eventIterator.hasNext()){
                 ProcessEvent event = eventIterator.next();
                 if (event.isFired()){
-                    //all events must occur simultaneously
                     event.reset();
                 }
             }

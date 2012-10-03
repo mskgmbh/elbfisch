@@ -28,7 +28,7 @@ package org.jpac;
 import java.io.Serializable;
 
 /**
- *
+ * represents the value of a logical signal
  * @author berndschuster
  */
 public class LogicalValue implements Value, Cloneable, Serializable{

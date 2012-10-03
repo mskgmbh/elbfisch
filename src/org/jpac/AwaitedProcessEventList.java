@@ -28,6 +28,10 @@ package org.jpac;
 import java.util.ArrayList;
 import org.apache.log4j.Logger;
 
+/**
+ * used to maintain process events which are awaited at a given time. Used by jPac internally
+ * @author berndschuster
+ */
 class AwaitedProcessEventList extends ArrayList<Fireable>{
     static Logger Log = Logger.getLogger("jpac.fireable");
 

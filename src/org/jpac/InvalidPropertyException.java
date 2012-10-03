@@ -26,7 +26,7 @@
 package org.jpac;
 
 /**
- *
+ * thrown, if an error occurs, while accessing a property
  * @author berndschuster
  */
 public class InvalidPropertyException extends Exception{

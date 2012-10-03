@@ -31,6 +31,10 @@ import org.jpac.ProcessEvent;
 import org.jpac.ProcessException;
 import org.jpac.SignalInvalidException;
 
+/**
+ * process event indicating that an alarm condition has been gone
+ * @author berndschuster
+ */
 public class AlarmGone extends ProcessEvent{
     private Alarm alarm;
     private long  lastPendingCycle;

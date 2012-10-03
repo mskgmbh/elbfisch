@@ -34,7 +34,7 @@ import java.rmi.RemoteException;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * handles the communication with a remote jPac instance. Will be automatically started, if a remote jPac instance is involved.
  * @author berndschuster
  */
 public class RemoteSignalOutputDaemon extends Thread{

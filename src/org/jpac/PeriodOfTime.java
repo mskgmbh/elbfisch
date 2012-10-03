@@ -25,12 +25,20 @@
 
 package org.jpac;
 
+/**
+ * process event indicating, that a given period of time passed
+ * @author berndschuster
+ */
 public class PeriodOfTime extends ProcessEvent{
     private long           periodOfTime;
     private long           timeoutTime;
     private JPac.CycleMode cycleMode;
     private NthCycle       nthCycle;
 
+    /**
+     * 
+     * @param periodOfTime period of time in nano seconds. In module contexts use helper values ns,millis,ms,sec to specify: 1000 * ms, 1 * sec, 1000 * millis
+     */
     public PeriodOfTime(long periodOfTime){
         if (periodOfTime < 0){
             periodOfTime = 0;

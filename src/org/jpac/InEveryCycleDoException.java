@@ -26,7 +26,7 @@
 package org.jpac;
 
 /**
- *
+ * thrown to the work() method of a module, if an exception condition has been encountered while processing inEveryCycleDo().
  * @author berndschuster
  */
 public class InEveryCycleDoException extends ProcessException{

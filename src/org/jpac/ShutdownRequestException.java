@@ -24,7 +24,11 @@
  */
 
 package org.jpac;
-
+/**
+ * is thrown at every module (inside work()), if some instance (another module calling shutdown() or the OS) requests a shutdown of the 
+ * elbfisch application.
+ * @author berndschuster
+ */
 public class ShutdownRequestException extends ProcessException{
     public ShutdownRequestException(){
         super();

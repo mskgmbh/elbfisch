@@ -31,7 +31,7 @@ import org.apache.log4j.Logger;
 import org.jpac.ProcessException;
 
 /**
- *
+ * represents an i/o transaction
  * @author Ulbrich
  */
 public abstract class Transaction {

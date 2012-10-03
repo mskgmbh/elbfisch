@@ -25,8 +25,18 @@
 
 package org.jpac;
 
+/**
+ * process event indicating, that the value of a decimal signal exceeds a given value
+ * @author berndschuster
+ */
+
 public class DecimalExceeds extends DecimalEvent{
 
+    /**
+     * constructs a DecimalExceeds
+     * @param decimal the decimal to supervise
+     * @param threshold the threshold, which, if exceeded, causes the process event
+     */
     public DecimalExceeds(Decimal decimal, double threshold){
         super(decimal, threshold);
     }

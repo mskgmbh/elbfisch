@@ -25,7 +25,10 @@
 
 package org.jpac;
 
-
+/**
+ * thrown, if an attempt is made to fetch a signal, which is not present (registered) yet
+ * @author berndschuster
+ */
 public class SignalNotRegisteredException extends ProcessException {
 
     public SignalNotRegisteredException(String message) {

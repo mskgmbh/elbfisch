@@ -26,7 +26,7 @@
 package org.jpac;
 
 /**
- *
+ * thrown, if a problem with a remote signal arises
  * @author berndschuster
  */
 public class RemoteSignalException extends Exception{

@@ -25,6 +25,10 @@
 
 package org.jpac;
 
+/**
+ * base class for process events concerning logical signals
+ * @author berndschuster
+ */
 abstract class LogicalEvent extends ProcessEvent{
     protected Logical logical;
     

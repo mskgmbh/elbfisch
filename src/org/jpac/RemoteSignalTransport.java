@@ -27,10 +27,9 @@ package org.jpac;
 
 import java.io.Serializable;
 import org.apache.log4j.Logger;
-import org.jpac.Value;
 
 /**
- *
+ * used to transport signals between jPac instances
  * @author berndschuster
  */
 class RemoteSignalTransport implements Serializable, Cloneable{

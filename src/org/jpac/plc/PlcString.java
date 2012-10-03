@@ -25,8 +25,6 @@
 
 package org.jpac.plc;
 
-import java.io.IOException;
-
 /**
  * represents a plc string<br>
  * a plc string consists of a byte array containing the string<br>

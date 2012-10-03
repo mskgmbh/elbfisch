@@ -25,6 +25,10 @@
 
 package org.jpac;
 
+/**
+ * process event indicating, that a logical signal has toggled its state
+ * @author berndschuster
+ */
 public class LogicalToggles extends LogicalEvent{
 
     public LogicalToggles(Logical logical){

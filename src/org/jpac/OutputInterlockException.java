@@ -26,7 +26,7 @@
 package org.jpac;
 
 /**
- *
+ * thrown at a module (inside work()), if the application code implemented inside AbstractModule.postCheckInterlocks() encounters an error condition
  * @author berndschuster
  */
 public class OutputInterlockException extends InterlockException{

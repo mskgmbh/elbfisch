@@ -25,6 +25,10 @@
 
 package org.jpac;
 
+/**
+ * an elbfisch module
+ * @author berndschuster
+ */
 public abstract class Module extends AbstractModule{
 
     protected Module(AbstractModule containingModule){

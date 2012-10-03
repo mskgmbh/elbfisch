@@ -25,7 +25,8 @@
 package org.jpac;
 
 /**
- *
+ * a process event which cannot occur. Useful in situations, in which a module has nothing to do
+ * until the application is closed.
  * @author berndschuster
  */
 public class ImpossibleEvent extends ProcessEvent{

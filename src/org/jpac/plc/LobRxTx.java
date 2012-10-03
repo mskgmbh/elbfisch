@@ -31,7 +31,7 @@ import java.io.IOException;
 import org.apache.log4j.Logger;
 
 /**
- * Used to transfer a large data item between the java application and the plc.<br>
+ * Used to transfer a large data item between the java application and the plc or other device.<br>
  * "Large" means, that the size of the data item exceeds the maximum pdu size, <br>
  * which is the size of the chunk of data which can be transferred by a<br>
  * single transaction.<br>
@@ -41,7 +41,6 @@ import org.apache.log4j.Logger;
  *          the partcular receiving side (critical section). Make sure, that the software <br>
  *          of the receiving side waits until the transmission completed, before<br>
  *          processing the data <br><br>
- * Can be used standalone or in the context of a complex data structure (STRUCT)
  */
 abstract public class LobRxTx {
     static Logger Log = Logger.getLogger("jpac.plc");
@@ -57,11 +56,11 @@ abstract public class LobRxTx {
 
    /**
     * useful in situations, where the instance is part of complex data structure (STRUCT)
-    * @param conn an open TCP/IP connection to the plc
+    * @param conn an open TCP/IP connection to the plc or other device
     * @param db the data block (DB) to be accessed
-    * @param address the address of the data item inside the plc
-    * @param dataOffset the byte offset inside {@link #data}, holding the data item to be exchanged with the plc
-    * @param data instance of {@link Data} used to hold the data item exchanged with the plc.
+    * @param address the address of the data item inside the plc or other device
+    * @param dataOffset the byte offset inside {@link #data}, holding the data item to be exchanged with the plc or other device
+    * @param data instance of {@link Data} used to hold the data item exchanged with the plc or other device.
     * @throws IndexOutOfRangeException
     */
     public LobRxTx(Connection conn, Address address, int dataOffset, Data data) throws IndexOutOfRangeException{
@@ -82,7 +81,7 @@ abstract public class LobRxTx {
     }
 
    /**
-     * used to write the represented data item to the plc.
+     * used to write the represented data item to the plc or other device.
      * @throws IOException
      */
     public void write() throws IOException {
@@ -121,7 +120,7 @@ abstract public class LobRxTx {
                     }
                     requestAssigned = true;
                 }
-                //write the chunk out to the plc
+                //write the chunk out to the plc or other device
                 trans.transact();
             }
             while(!done);
@@ -135,7 +134,7 @@ abstract public class LobRxTx {
     }
 
     /**
-     * used to read the represented data item from the plc.
+     * used to read the represented data item from the plc or other device.
      * @throws IOException
      */
     public LobRxTx read() throws IOException {
@@ -169,7 +168,7 @@ abstract public class LobRxTx {
                     trans.addRequest(req);
                     requestAssigned = true;
                 }
-                //write the chunk out to the plc
+                //write the chunk out to the plc or other device
                 trans.transact();
             }
             while(!done);
@@ -196,7 +195,7 @@ abstract public class LobRxTx {
     }
 
     /**
-     * returns the {@link WriteRequest}, used to write the data item to the plc
+     * returns the {@link WriteRequest}, used to write the data item to the plc or other device
      */
     @SuppressWarnings("empty-statement")
     public WriteRequest getWriteRequest() throws ValueOutOfRangeException, IndexOutOfRangeException{
@@ -209,7 +208,7 @@ abstract public class LobRxTx {
     }
 
     /**
-     * returns the {@link ReadRequest}, used to read the data item from the plc
+     * returns the {@link ReadRequest}, used to read the data item from the plc or other device
      */
     @SuppressWarnings("empty-statement")
     public ReadRequest getReadRequest() throws ValueOutOfRangeException, IndexOutOfRangeException{

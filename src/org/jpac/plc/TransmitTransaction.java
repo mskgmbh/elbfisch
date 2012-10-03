@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 
 /**
- *
+ * represents a transmit transaction
  * @author Ulbrich
  */
 public abstract class TransmitTransaction extends Transaction {

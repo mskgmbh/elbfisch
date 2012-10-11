@@ -1,0 +1,87 @@
+<div class="container">
+  <div class="row socialBar">
+    <div class="span12">
+      <div class="gitSocialInner pull-right">
+        <iframe src="/github-btn.html?user=mskgmbh&repo=elbfisch&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="85px" height="20px"></iframe>
+        <iframe src="/github-btn.html?user=mskgmbh&repo=elbfisch&type=fork&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="95px" height="20px"></iframe>
+      </div>
+    </div>
+  </div>
+  <div class="row mainContent">
+    <div class="span4">
+      <h3>About <span class="hightlight">Elbfisch</h3>
+      <p>
+        Embedded PC systems are increasingly being implemented in automation technology, encouraging the design of object-orientated software development processes, a step which is long overdue. To assist with this, Elbfisch offers a runtime environment and a canon of basic functions that allow complex automation tasks to be implemented on inexpensive hardware platforms in Java.
+      </p>
+      <p>
+        We are now handing over our project to the open-source community. We are doing this with gratitude to the many people and businesses who have been sharing their knowledge and products with others for years. We have been using open-source products ourselves for many years. The  time has now come for us to make a large part of our knowledge available to the community. We hope that others find this useful – and that it contributes to peace in the world. The latter much less through the content, but more through the way in which people work together on this project – with mutual respect, with the necessary regard for the perspectives of others and with recognition of every person’s wish to use their work to make the world a better place – each providing according to their ability, with the dedication they are individually prepared to invest, regardless of their background or religion. Elbfisch has emerged from our professional work on a variety of projects and covers a range of functions that we consider useful for our particular purposes. We hope that Elbfisch will now grow beyond this scope, enriched by new perspectives, with added functions that will broaden its range of applications.
+      </p>
+      <p>
+        <strong>Bernd Schuster</strong><br />
+        MSK Gesellschaft für Automatisierung mbH
+      </p>
+    </div>
+    <div class="span8">
+      <div class="row">
+        <div class="span8">
+          <h3>Elbfisch <span class="hightlight">functions</h3>
+          <p>
+            Elbfisch offers a runtime environment and a canon of basic functions that enable the team-based development of object-orientated automation applications when used in conjunction with common open-source products (such as the integrated development environments ‘Netbeans’ and ‘Eclipse’), Linux as operating system and ‘git’ as distributed version management system. Java is used for the programming.
+          </p>
+        </div>
+      </div>
+      <div class="row col2">
+        <div class="span4">
+          <h3 class="glyphe glyphe-module"><span class="hightlight">Modularity</h3>
+          <p>
+            The Elbfisch concept is based on the principle that an automation application needs to represent a copy of the process that it controls. A process (a system) is made up of aggregates that interact with each other and may themselves be made up of subordinate aggregates. Elbfisch modules can be used to represent this hierarchy of aggregates. Modules can be implemented independently, have defined interfaces with no side-effects and, when implemented universally, can be re-used in any implementations.
+          </p>
+        </div>
+        <div class="span4">
+          <h3 class="glyphe glyphe-signal"><span class="hightlight">Signals</h3>
+          <p>
+            Like the aggregates that have to interact in a system that is being automated, the representative Elbfisch modules must also exchange information with one another. To make this possible, Elbfisch uses the concept of signals. A module receives information from other modules via signals and uses signals to send information to other modules.
+          </p>
+        </div>
+      </div>
+      <div class="row col2">
+        <div class="span4">
+          <h3 class="glyphe glyphe-gears"><span class="hightlight">Process events</h3>
+          <p>
+            One of Elbfisch’s main features is the modules’ ability to react to process events and process them. The range of possible process events is unlimited. For example, possible events include: the end of a set time period, a signal change at an input terminal, an analogue value being exceeded, combined events, an event not taking place within a set time frame, emergency stop situations, a system being shut down. Modules can explicitly wait for events to occur, at which point they are activated by Elbfisch.
+          </p>
+        </div>
+        <div class="span4">
+          <h3 class="glyphe glyphe-stopwatch"><span class="hightlight">Synchronous design</h3>
+          <p>
+            Elbfisch uses a time-slicing process (a cycle) to control an application’s modules, occurring events and the exchange of signals. For example, a module will wait until the next cycle to forward a signal change to all consuming modules. This allows all input signals for all modules to remain unchanged and consistent in any given cycle. This in turn ensures that the module workflow allows freedom for interaction. The modules can run in any order within a cycle, and even interrupt each other. The signals that are exchanged remain consistent in all cases.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <hr />
+  <div class="row bottomTeaser">
+    <div class="span4">
+      <div class="teaser teaserCompany"></div>
+      <h3>For <span class="hightlight">companies</h3>
+      <p>
+        We can develop customised Elbfisch-based solutions for you, from libraries/drivers for your hardware products to complete automation applications for your projects. Get in touch: <a href="mailto:info@elbfisch.org">info@elbfisch.org</a>
+      </p>
+    </div>
+    <div class="span4">
+      <div class="teaser teaserDeveloper"></div>
+      <h3>For <span class="hightlight">developers</h3>
+      <p>
+        There is a lot that needs doing. Take a look at the <a href="https://github.com/mskgmbh/elbfisch/wiki">Elbfisch wiki</a>. The roadmap for the development of the project can be found there. Or do you have concrete ideas yourself? Please share them with us.
+      </p>
+    </div>
+    <div class="span4">
+      <div class="teaser teaserUser"></div>
+      <h3>For <span class="hightlight">users</h3>
+      <p>
+        Follow the simple examples given in the <a href="https://github.com/mskgmbh/elbfisch/wiki">Elbfisch wiki</a>. Before you know it, you will have written your first Elbfisch application.
+      </p>
+    </div>
+  </div>
+</div>

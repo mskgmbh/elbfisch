@@ -21,17 +21,16 @@
         </script>
       </ul>
       <div class="gitSocialInner pull-left">
-        <iframe src="/github-btn.html?user=mskgmbh&repo=elbfisch&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="85px" height="20px"></iframe>
-        <iframe src="/github-btn.html?user=mskgmbh&repo=elbfisch&type=fork&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="95px" height="20px"></iframe>
+        {% include githubsocial.html %}
       </div>
     </div>
     <div class="row">
       <ul class="links pull-left">
-        <li><a href="/index-de.html">Home</a></li>
+        <li><a href="{{ page.langHomeLink }}">Home</a></li>
         <li> | </li>
         <li><a href="https://github.com/mskgmbh/elbfisch">GitHub Project</a></li>
         <li> | </li>
-        <li><a href="/impressum.html">Impressum</a></li>
+        <li><a href="{{ page.imprintLink }}">{{ page.imprintLabel }}</a></li>
       </ul>
       <div class="copyNote pull-right">
         <div class="copy">

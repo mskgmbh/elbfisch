@@ -29,7 +29,7 @@ import java.util.Iterator;
 import java.util.ArrayList;
 
 /**
- * used to combine a number events in a disjunctive way. It is fired, if process event 1 OR process event 2 OR .... are fired at a given time
+ * used to combine a number events in a disjunctive way. It is fired, if "process event 1" OR "process event 2" OR .... are fired at a given time
  * @author berndschuster
  */
 public class DisjunctiveEvent extends ProcessEvent{

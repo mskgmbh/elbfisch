@@ -224,6 +224,7 @@ public abstract class AbstractModule extends Thread{
      * @throws ProcessException thrown, if an elbfisch specific condition arises
      */
     public void shutdown(final int exitCode) throws ProcessException{
+        boolean shutdownInitiated = false;
         if (Log.isInfoEnabled()) Log.debug("SHUTDOWN OF APPLICATION INVOKED BY " + this);
         Thread shutdownThread = new Thread(){
             @Override
@@ -234,7 +235,16 @@ public abstract class AbstractModule extends Thread{
         shutdownThread.start();
         if (Thread.currentThread() instanceof AbstractModule){
             //wait, until the automation controller signals its shutdown
-            new ImpossibleEvent().await();
+            ImpossibleEvent infinity = new ImpossibleEvent();
+            do{
+                try{
+                    infinity.await();
+                }
+                catch(ProcessException exc){
+                    shutdownInitiated = exc instanceof ShutdownRequestException;
+                }
+            }
+            while(!shutdownInitiated);
         }
     }
 

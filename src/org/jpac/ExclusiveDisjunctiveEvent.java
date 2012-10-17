@@ -29,7 +29,7 @@ import java.util.Iterator;
 import java.util.ArrayList;
 
 /**
- * used to combine a number events in a exclusive disjunctive way. It is fired, if process event 1 XOR process event 2 XOR .... are fired
+ * used to combine a number events in a exclusive disjunctive way. It is fired, if "process event 1" XOR "process event 2" XOR .... are fired
  * @author berndschuster
  */
 

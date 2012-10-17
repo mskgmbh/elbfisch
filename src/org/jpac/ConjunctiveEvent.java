@@ -29,7 +29,7 @@ import java.util.Iterator;
 import java.util.ArrayList;
 
 /**
- * used to combine a number events in a conjunctive way. It is fired, if process <event 1> AND process <event 2> AND .. AND .. are fired at the same time
+ * used to combine a number events in a conjunctive way. It is fired, if "process event 1" AND "process event 2" AND .. AND .. are fired at the same time
  * @author berndschuster
  */
 public class ConjunctiveEvent extends ProcessEvent{

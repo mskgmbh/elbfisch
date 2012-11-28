@@ -147,6 +147,7 @@ public class RemoteSignalInput extends Observable implements Assignable{
      * 
      * @return the identifier 
      */
+    @Override
     public String getIdentifier() {
         return identifier;
     }
@@ -155,6 +156,7 @@ public class RemoteSignalInput extends Observable implements Assignable{
      * 
      * @return the containing module 
      */
+    @Override
     public AbstractModule getContainingModule() {
         return containingModule;
     }
@@ -195,6 +197,7 @@ public class RemoteSignalInput extends Observable implements Assignable{
      * @param item the Assignable
      * @return true, if this and item are assignable
      */
+    @Override
     public boolean isCompatible(Assignable item) {
         return true;//RemoteSignalOutput is independent of type
     }

@@ -75,6 +75,9 @@ public class RemoteSignalConnection {
     int addOutput(RemoteSignalOutput remoteOutputSignal){
         remoteOutputSignal.setIndex(outputIndex);
         outputSignals.add(outputIndex, remoteOutputSignal);
+        //TODO check, if output signal already registered
+        //TODO check, if connection already opened. If so,
+        //     register this signal subsequently
         return outputIndex++;
     }
     
@@ -91,7 +94,6 @@ public class RemoteSignalConnection {
     }
     
     public void open() throws RemoteSignalException{
-        RemoteSignalHandler remoteSignalHandler = null;
         try{
             //before this method can be called, all remote signals 
             //for this connection must have been properly registered.

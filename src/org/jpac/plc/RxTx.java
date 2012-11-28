@@ -116,6 +116,33 @@ public abstract class RxTx {
         return this;
     }
 
+    /**
+     * adds this rxtx to the data items to be written to the plc on next getTxTrans().transact() operation
+     * multiple writeDeferred() calls for different parts of a complex data item may be issued before transacting them collectively
+     * CAUTION: the transaction buffer must be cleared before the first writeDeferred() call.
+     * somedata.getTxTrans().removeAllRequests();
+     *      ...
+     *      somedata.something.set(...);
+     *      somedata.something.writeDeferred();
+     *      ...
+     *      somedata.somethingelse.set(...);
+     *      somedata.somethingelse.writeDeferred();
+     *      ...
+     * somedata.getTxTrans().transact(); 
+     * @throws IOException
+     */
+    public void writeDeferred() throws IOException{
+        TransmitTransaction trans = getTxTrans();
+        try{
+            WriteRequest req = getWriteRequest();
+            trans.addRequest(req);
+        }
+        catch(Exception exc)
+        {Log.error("Error:",exc);
+         throw new IOException(exc);
+        }
+    }
+
     protected Connection getConnection() {
         return conn;
     }

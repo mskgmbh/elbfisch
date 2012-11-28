@@ -61,6 +61,8 @@ public class JPac extends Thread{
     private     final long      DEFAULTCYCLETIMEOUTTIME = 1000000000L;// 1 s
     private     final long      MAXSHUTDOWNTIME         = 2000;       // 2 s
     private     final CycleMode DEFAULTCYCLEMODE        = CycleMode.FreeRunning;//TODO !!!! CycleMode.FreeRunning;
+    private     final int       EXITCODEINITIALIZATIONERROR = 100;
+    private     final int       EXITCODEINTERNALERROR       = 101;
 
     public enum CycleMode{OneCycle, Bound, LazyBound, FreeRunning}
     
@@ -129,6 +131,7 @@ public class JPac extends Thread{
     private Synchronisation shutdownRequest;
     
     private boolean         shutdownByMySelf;
+    private int             exitCode;
         
     private ProcessEvent    awaitedEventOfLastModule;
     
@@ -140,6 +143,9 @@ public class JPac extends Thread{
     private Histogramm      modulesHistogramm; //used to determine the load produced by the application modules during a cycle
     
     private AbstractModule  processedModule;   //
+    
+    private int             incrementCounter;
+    private int             decrementCounter;
     
     class ShutdownHook extends Thread{
 
@@ -169,12 +175,14 @@ public class JPac extends Thread{
     }
         
     protected class CountingLock{
-        private       int    count = 0;
-        private final Object zeroReached    = new Object();
+        private       int    count       = 0;
+        private       int    maxcount    = 0;
+        private final Object zeroReached = new Object();
         
         protected void increment(){
             synchronized(zeroReached){
                 count++;
+                maxcount++;
             }
         }
         
@@ -199,9 +207,18 @@ public class JPac extends Thread{
             return localCount;
         }
         
+        protected int getMaxCount(){
+            int localCount = 0;
+            synchronized(zeroReached){
+                localCount = maxcount;
+            }
+            return localCount;
+        }
+
         protected void reset(){
             synchronized(zeroReached){
-                count = 0;
+                count    = 0;
+                maxcount = 0;
             }
         }
         
@@ -227,7 +244,7 @@ public class JPac extends Thread{
                 }
             }
             else{
-                Log.error("cylce time expired before synchronization on modules !!!!!!");
+                Log.error("cycle time expired before synchronization on modules !!!!!!");
             }
         }
     }
@@ -395,6 +412,12 @@ public class JPac extends Thread{
         modulesHistogramm           = null;
         processedModule             = null;
         
+        exitCode                    = 0;
+        
+        incrementCounter            = 0;
+        decrementCounter            = 0;
+        
+        
         try{
             propCycleTime                  = new LongProperty(this,"CycleTime",DEFAULTCYCLETIME,"[ns]",true);
             propCycleTimeoutTime           = new LongProperty(this,"CycleTimeoutTime",DEFAULTCYCLETIMEOUTTIME,"[ns]",true);
@@ -471,12 +494,12 @@ public class JPac extends Thread{
             catch(Exception exc){
                 //if an error occured during preparation of the system, shutdown immediately
                 Log.error("Error: ", exc);
-                invokeShutdownByMySelf();
+                invokeShutdownByMySelf(EXITCODEINITIALIZATIONERROR);
             }
             catch(Error exc){
                 //if an error occured during preparation of the system, shutdown immediately
                 Log.error("Error: ", exc);
-                invokeShutdownByMySelf();
+                invokeShutdownByMySelf(EXITCODEINITIALIZATIONERROR);
             }
             
             setStatus(Status.running);
@@ -542,11 +565,11 @@ public class JPac extends Thread{
                 }
                 catch (Exception ex){
                     Log.error("Error",ex);
-                    invokeShutdownByMySelf();
+                    invokeShutdownByMySelf(EXITCODEINTERNALERROR);
                 }
                 catch (Error ex){
                     Log.error("Error",ex);
-                    invokeShutdownByMySelf();
+                    invokeShutdownByMySelf(EXITCODEINTERNALERROR);
                 }
                 //check, if the application is to be shutdown
                 if (isShutdownRequested()){
@@ -593,7 +616,7 @@ public class JPac extends Thread{
             try{sleep(MAXSHUTDOWNTIME);} catch (InterruptedException ex){}
             //jUnit test need special handling
             if (!runningInjUnitTest){
-                System.exit(0);
+                System.exit(exitCode);
             }
         }
         catch(Exception exc){
@@ -676,9 +699,19 @@ public class JPac extends Thread{
                      //wait until all modules have completed their tasks but not beyond the end of the cycle
                      activeEventsLock.waitForUnlock(expectedCycleEndTime - System.nanoTime());
                      if (activeEventsLock.getCount() > 0){
-                        //if some modules are still running, give them an additional period of time
-                        activeEventsLock.waitForUnlock(cycleTimeoutTime);
-                        if (Log.isInfoEnabled()) Log.info("cycle time exceeded for " + (System.nanoTime()- expectedCycleEndTime) + ", cycle# " + getCycleNumber());
+                        if (atLeastOneHangingModuleFound()){//TODO check, why this somtimes is not true
+                            //if some modules are still running, give them an additional period of time
+                            activeEventsLock.waitForUnlock(cycleTimeoutTime);
+                            if (Log.isInfoEnabled()) Log.info("cycle time exceeded for " + (System.nanoTime()- expectedCycleEndTime) + ", cycle# " + getCycleNumber());
+                        }
+                        else{
+                            Log.error("activeEventsLock problem encountered !!!");
+                            Log.error("  activeEventsCount      : " + activeEventsLock.getCount());
+                            Log.error("  max. activeEventsCount : " + activeEventsLock.getMaxCount());
+                            Log.error("  incrementCounter       : " + incrementCounter);
+                            Log.error("  decrementCounter       : " + decrementCounter);
+                            activeEventsLock.reset();
+                        }
                      }
                      break;
                 case FreeRunning:
@@ -698,15 +731,25 @@ public class JPac extends Thread{
                     //assert failure, if at least one fired event
                     //has failed to be properly handled during the last cycle
                     Log.error("at least one module hung up !!!!: ");
-                    Log.error("  elapsed cycle time : " + (System.nanoTime() - cycleStartTime ));
-                    Log.error("  trace point        : " + tracePoint);
+                    Log.error("  elapsed cycle time     : " + (System.nanoTime() - cycleStartTime ));
+                    Log.error("  trace point            : " + tracePoint);
+                    Log.error("  activeEventsCount      : " + activeEventsLock.getCount());
+                    Log.error("  max. activeEventsCount : " + activeEventsLock.getMaxCount());
+                    Log.error("  incrementCounter       : " + incrementCounter);
+                    Log.error("  decrementCounter       : " + decrementCounter);
+                    
                     for (Fireable f: getFiredEventList()){
                         AbstractModule module = ((ProcessEvent)f).getObservingModule();
                         if (module.getState() != Thread.State.WAITING){
                             Log.error("  module '" + module + "' invoked by " + f + " hung up in state " + module.getStatus());                        
                         }
+                        else{
+                            Log.info("  module '" + module + "' invoked by " + f + " state " + module.getStatus());                                                    
+                        }
                     }
-                    throw new SomeEventsNotProcessedException(getFiredEventList());
+                    if (atLeastOneHangingModuleFound()){//TODO check, why this sometimes is not the case
+                        throw new SomeEventsNotProcessedException(getFiredEventList());
+                    }
                 }
             }
             else{
@@ -840,8 +883,9 @@ public class JPac extends Thread{
         instance = null; //discard actual instance
     }
 
-    public void invokeShutdownByMySelf() {
+    public void invokeShutdownByMySelf(int exitCode) {
         shutdownByMySelf = true;
+        this.exitCode    = exitCode; 
     }
 
     public void startCycling() {
@@ -912,10 +956,12 @@ public class JPac extends Thread{
     }
 
     protected void incrementAwakenedModulesCount() {
+        incrementCounter++;// debug
         activeEventsLock.increment();
     }    
 
     protected void decrementAwakenedModulesCount(ProcessEvent awaitedEvent) throws InconsistencyException {
+        decrementCounter++;// debug
         if (activeEventsLock.decrement()){
             //if last module went to sleep, store its awaited event
             awaitedEventOfLastModule = awaitedEvent;
@@ -998,6 +1044,10 @@ public class JPac extends Thread{
         activeEventsLock.reset();  
         //reset awaited event of last module
         awaitedEventOfLastModule = null;
+        
+        //debugging info
+        incrementCounter = 0;
+        decrementCounter = 0;
     }
     
     protected void traceCycle(){
@@ -1174,6 +1224,18 @@ public class JPac extends Thread{
         systemHistogramm  = new Histogramm(cycleTime);
         modulesHistogramm = new Histogramm(cycleTime);
     }
+    
+    private boolean atLeastOneHangingModuleFound(){
+        boolean found = false;
+        for (Fireable f: getFiredEventList()){
+            AbstractModule module = ((ProcessEvent)f).getObservingModule();
+            if (module.getState() != Thread.State.WAITING){
+                found = true;
+            }
+        }
+        return found;
+    }    
+    
     
     public Histogramm getSystemHistogramm(){
         return systemHistogramm;

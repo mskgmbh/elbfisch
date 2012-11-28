@@ -102,7 +102,7 @@ public abstract class Signal extends Observable implements Observer, Assignable{
             propagatedLastChangeCycleNumber = JPac.getInstance().getCycleNumber();
             if (signalValid){
                 //if signal valid, then propagate its value, too
-                if (Log.isDebugEnabled()) Log.debug ("propagate signal " + this + " <- " + getPropagatedValue());
+                if (Log.isDebugEnabled()) Log.debug ("propagate signal " + this);
                 propagateSignalInternally();
             }
             notifyObservers();
@@ -290,7 +290,7 @@ public abstract class Signal extends Observable implements Observer, Assignable{
      * @return the signalValid
      */
     public boolean isValid() {
-        return accessedByForeignModule() ? propagatedSignalValid : signalValid;
+        return accessedByForeignModule() || accessedByJPac() ? propagatedSignalValid : signalValid;
     }
 
     /**
@@ -366,7 +366,7 @@ public abstract class Signal extends Observable implements Observer, Assignable{
      * will return true on the following cycle regardless if the accessing module is the containing one or not 
      */
     public boolean isChanged(){
-        return accessedByForeignModule() ? propagatedLastChangeCycleNumber == jPac.getCycleNumber() : lastChangeCycleNumber == jPac.getCycleNumber();
+        return accessedByForeignModule() || accessedByJPac() ? propagatedLastChangeCycleNumber == jPac.getCycleNumber() : lastChangeCycleNumber == jPac.getCycleNumber();
     }
     
     protected void assertContainingModule() throws SignalAccessException{
@@ -380,7 +380,7 @@ public abstract class Signal extends Observable implements Observer, Assignable{
             throw new SignalAccessException("signal " + this + " cannot be set() by foreign modules");
         }
         //if connected as a target signal, it cannot be accessed by a module using set(...) directly
-        if (isConnectedAsTarget() && !(Thread.currentThread().equals(jPac) && jPac.getProcessedModule() == null)){
+        if (isConnectedAsTarget() && !accessedByJPac()){
             throw new SignalAccessException("signal " + this + " cannot be set() directly, because it's connected as target ");
         }
     }
@@ -427,10 +427,16 @@ public abstract class Signal extends Observable implements Observer, Assignable{
     private boolean accessedByForeignModule(){
         boolean isForeignModule;
         Thread  thread = Thread.currentThread();
-        isForeignModule = !(thread.equals(containingModule) || 
-                            (thread.equals(jPac) && (jPac.getProcessedModule() == null || jPac.getProcessedModule() == containingModule))
-                           );
+        isForeignModule = !thread.equals(jPac) && !thread.equals(containingModule) || //access inside work
+                          thread.equals(jPac) && jPac.getProcessedModule() != null && jPac.getProcessedModule() != containingModule; //access inside inEveryCycleDo()
+//        isForeignModule = !(thread.equals(containingModule) || 
+//                            (thread.equals(jPac) && (jPac.getProcessedModule() == null || jPac.getProcessedModule() == containingModule))
+//                           );
         return isForeignModule;
+    }
+    
+    private boolean accessedByJPac(){
+        return Thread.currentThread().equals(jPac) && (jPac.getProcessedModule() == null);
     }
     
     abstract protected boolean isCompatibleSignal(Signal signal);

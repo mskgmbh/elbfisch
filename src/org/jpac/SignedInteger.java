@@ -257,9 +257,9 @@ public class SignedInteger extends Signal{
     @Override
     protected void updateValue(Object o, Object arg) throws SignalAccessException {
         try{
-            if (o instanceof SignedInteger){
+            if (o instanceof Decimal){
                 if (getMapper() != null){
-                    set(getMapper().map(((SignedInteger)o).get()));
+                    set(getMapper().map(((Decimal)o).get()));
                 }
                 else{
                     set(((SignedInteger)o).get());

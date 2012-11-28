@@ -45,8 +45,6 @@ public class RemoteSignalServer {
    private static final String SERVICENAME = "RemoteSignalService";
    static               int    port        = DEFAULTPORT;
     
-    
- // Constructor
    public static void start(int serverPort) throws RemoteException {
       try{
       System.setSecurityManager( new RMISecurityManager() );       

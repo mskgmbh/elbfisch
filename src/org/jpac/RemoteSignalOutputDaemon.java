@@ -157,7 +157,7 @@ public class RemoteSignalOutputDaemon extends Thread{
                   //if the connection to the remote JPac instance is offline
                   //first remove the contence of the frame buffer,
                   //so that the remote host will receive the recent state of
-                  //the pushed signals, when he goes online again
+                  //the pushed signals, when it goes online again
                   frameBuffer.clear();
                }
                //if online check, if at least one of the signals to be transported has changed to avoid needless traffic

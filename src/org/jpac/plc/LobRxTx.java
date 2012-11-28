@@ -181,7 +181,39 @@ abstract public class LobRxTx {
         trans.removeAllRequests();
         return this;
     }
-
+    
+    /**
+     * adds this LobRxTx to the data items to be written to the plc on next getTxTrans().transact() operation
+     * multiple writeDeferred() calls for different parts of a complex data item may be issued before transacting them collectively
+     * CAUTION: the transaction buffer must be cleared before the first writeDeferred() call.
+     *          Intermediate write() operations are not permitted.
+     *          The size of the LobRxtx must not exceed the maximum transfer length of the connection
+     * somedata.getTxTrans().removeAllRequests();
+     *      ...
+     *      somedata.something.set(...);
+     *      somedata.something.writeDeferred();
+     *      ...
+     *      somedata.somethingelse.set(...);
+     *      somedata.somethingelse.writeDeferred();
+     *      ...
+     * somedata.getTxTrans().transact(); 
+     * @throws IOException
+     */
+    public void writeDeferred() throws IOException{
+        if (address.getSize() > conn.getMaxTransferLength()){
+            throw new IOException("size of data structure exceeds max. transfer length: " + getSize() + " > " + conn.getMaxTransferLength());
+        }
+        TransmitTransaction trans = getTxTrans();        
+        try{
+            WriteRequest req = getWriteRequest();
+            trans.addRequest(req);
+        }
+        catch(Exception exc)
+        {Log.error("Error:",exc);
+         throw new IOException(exc);
+        }
+    }
+        
     protected Connection getConnection() {
         return conn;
     }

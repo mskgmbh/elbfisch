@@ -45,6 +45,7 @@ public class RemoteSignalHandlerImpl extends UnicastRemoteObject implements Remo
         registry = RemoteSignalRegistry.getInstance();
     }
 
+    @Override
     public void connect(String jPacInstance, List<RemoteSignalOutput> remoteSignalOutputs) throws RemoteException {
         try {
              if (Log.isDebugEnabled()) Log.debug("remote signal connection requested by " + jPacInstance);
@@ -67,6 +68,7 @@ public class RemoteSignalHandlerImpl extends UnicastRemoteObject implements Remo
         }
     }
 
+    @Override
     public void disconnect(String jPacInstance) throws RemoteException {
         try {
              if (Log.isDebugEnabled()) Log.debug("remote signal disconnection requested by " + jPacInstance);
@@ -89,6 +91,7 @@ public class RemoteSignalHandlerImpl extends UnicastRemoteObject implements Remo
         }
     }
 
+    @Override
     public void push(String jPacInstance, RemoteSignalFrame frame) throws RemoteException {
         try {
              if (Log.isDebugEnabled()) Log.debug("JPac instance " + jPacInstance + " pushing frame " + frame);
@@ -109,8 +112,8 @@ public class RemoteSignalHandlerImpl extends UnicastRemoteObject implements Remo
         }
     }
 
-    public RemoteSignalFrame pull() throws RemoteException {
+    @Override
+    public void reverseConnect(String jPacInstance, List<RemoteSignalInput> remoteSignalInput) throws RemoteException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-    
 }

@@ -35,8 +35,10 @@ import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
@@ -71,9 +73,9 @@ public class JPac extends Thread{
     protected   static JPac  instance   = null;
 
     private     int                    tracePoint;//used for internal trace purposes
-    private     FireableList           awaitedEventList;
-    private     FireableList           awaitedSimEventList;
-    private     FireableList           firedEventList;
+    private     Set<Fireable>          awaitedEventList;
+    private     Set<Fireable>          awaitedSimEventList;
+    private     Set<Fireable>          firedEventList;
     private     long                   minRemainingCycleTime;
     private     long                   maxRemainingCycleTime;
     private     long                   expectedCycleEndTime;
@@ -244,7 +246,7 @@ public class JPac extends Thread{
                 }
             }
             else{
-                Log.error("cycle time expired before synchronization on modules !!!!!!");
+                Log.error("cycle time expired before synchronization on modules !!!!!!: " + (-waittime) + " ns");
             }
         }
     }
@@ -380,9 +382,9 @@ public class JPac extends Thread{
         status                      = Status.initializing;
         cycleNumber                 = 0;
 
-        awaitedEventList            = new FireableList("AwaitedEventList");
-        awaitedSimEventList         = new FireableList("AwaitedSimEventList");
-        firedEventList              = new FireableList("FiredEventList");
+        awaitedEventList            = Collections.synchronizedSet(new HashSet<Fireable>());
+        awaitedSimEventList         = Collections.synchronizedSet(new HashSet<Fireable>());
+        firedEventList              = new HashSet<Fireable>();
 
         readyToShutdown             = false;
         emergencyStopRequested      = false;
@@ -627,39 +629,37 @@ public class JPac extends Thread{
         }
     };
 
-    private void handleFireables(FireableList fireableList) throws SomeEventsNotProcessedException, InconsistencyException{
+    private void handleFireables(Set<Fireable> fireableList) throws SomeEventsNotProcessedException, InconsistencyException{
         boolean fired = false;
-        synchronized(fireableList){
-            //check, if some of the currently registered Fireables can be fired in this cycle
-            for (Fireable f: fireableList) {
-                try{//the fireable is fired, if
-                    //it is fired by its own,
-                    //or if it is a ProcessEvent and an emergency stop is pending and the ProcessEvent is not awaited by a module, which threw
-                    //an emergency stop exception during the last cycle,
-                    //or if it is a ProcessEvent and it timed out during this cycle
-                    fired = f.isFired() ||
-                            (f instanceof ProcessEvent && (emergencyStopIsToBeThrown && !((ProcessEvent)f).getObservingModule().isRequestingEmergencyStop()) ||
-                                                           ((ProcessEvent)f).isTimedout()                                                                      );
+        //check, if some of the currently registered Fireables can be fired in this cycle
+        for (Fireable f: fireableList) {
+            try{//the fireable is fired, if
+                //it is fired by its own,
+                //or if it is a ProcessEvent and an emergency stop is pending and the ProcessEvent is not awaited by a module, which threw
+                //an emergency stop exception during the last cycle,
+                //or if it is a ProcessEvent and it timed out during this cycle
+                fired = f.isFired() ||
+                        (f instanceof ProcessEvent && (emergencyStopIsToBeThrown && !((ProcessEvent)f).getObservingModule().isRequestingEmergencyStop()) ||
+                                                       ((ProcessEvent)f).isTimedout()                                                                      );
+            }
+            catch(ProcessException exc){
+                //the fireable threw a process exception
+                //let the observing module handle this
+                fired = true;
+            }
+            if (fired){
+                //add Fireable to the list of fired events
+                if (f instanceof ProcessEvent && emergencyStopIsToBeThrown){
+                    //if an emergency stop request is pending,
+                    //let the awaiting module know about it
+                    ((ProcessEvent)f).setEmergencyStopOccured(true);
+                    ((ProcessEvent)f).setEmergencyStopCause(emergencyStopCausedBy.getMessage());                        
                 }
-                catch(ProcessException exc){
-                    //the fireable threw a process exception
-                    //let the observing module handle this
-                    fired = true;
-                }
-                if (fired){
-                    //add Fireable to the list of fired events
-                    if (f instanceof ProcessEvent && emergencyStopIsToBeThrown){
-                        //if an emergency stop request is pending,
-                        //let the awaiting module know about it
-                        ((ProcessEvent)f).setEmergencyStopOccured(true);
-                        ((ProcessEvent)f).setEmergencyStopCause(emergencyStopCausedBy.getMessage());                        
-                    }
-                    getFiredEventList().add(f);
-                }
-                if (f instanceof ProcessEvent && ((ProcessEvent)f).getObservingModule().isRequestingEmergencyStop()){
-                    //emergency stop request has been recognized above. Reset it instantly
-                   ((ProcessEvent)f).getObservingModule().setRequestingEmergencyStop(false);                                                 
-                }
+                getFiredEventList().add(f);
+            }
+            if (f instanceof ProcessEvent && ((ProcessEvent)f).getObservingModule().isRequestingEmergencyStop()){
+                //emergency stop request has been recognized above. Reset it instantly
+               ((ProcessEvent)f).getObservingModule().setRequestingEmergencyStop(false);                                                 
             }
         }
     }
@@ -710,6 +710,11 @@ public class JPac extends Thread{
                             Log.error("  max. activeEventsCount : " + activeEventsLock.getMaxCount());
                             Log.error("  incrementCounter       : " + incrementCounter);
                             Log.error("  decrementCounter       : " + decrementCounter);
+                            for (Fireable f: getFiredEventList()){
+                                ProcessEvent pe       = (ProcessEvent)f; 
+                                AbstractModule module = pe.getObservingModule();
+                                Log.info("  module '" + module + "' invoked by " + f + " state " + module.getStatus() + " ProcessEvent tracepoint: " + pe.getTracePoint());                                                    
+                            }
                             activeEventsLock.reset();
                         }
                      }
@@ -765,15 +770,13 @@ public class JPac extends Thread{
 
     }
 
-    private void shutdownAwaitingModules(FireableList fireableList){
+    private void shutdownAwaitingModules(Set<Fireable> fireableList){
         try{
-            synchronized(fireableList){
-                //invoke all waiting modules and let them handle their ShutdownException
-                for (Fireable f: fireableList) {
-                    if (f instanceof ProcessEvent){
-                        //retrieve all pending process events
-                        getFiredEventList().add(f);
-                    }
+            //invoke all waiting modules and let them handle their ShutdownException
+            for (Fireable f: fireableList) {
+                if (f instanceof ProcessEvent){
+                    //retrieve all pending process events
+                    getFiredEventList().add(f);
                 }
             }
             if (Log.isInfoEnabled()) Log.info("shutting down modules ...");
@@ -844,21 +847,21 @@ public class JPac extends Thread{
     /*
      * @return the awaitedEventList
      */
-    protected FireableList getAwaitedEventList() {
+    protected Set<Fireable> getAwaitedEventList() {
         return awaitedEventList;
     }
 
     /**
      * @return the awaitedSimEventList
      */
-    protected FireableList getAwaitedSimEventList() {
+    protected Set<Fireable> getAwaitedSimEventList() {
         return awaitedSimEventList;
     }
 
     /**
      * @return the firedEventList
      */
-    protected FireableList getFiredEventList() {
+    protected Set<Fireable> getFiredEventList() {
         return firedEventList;
     }
 

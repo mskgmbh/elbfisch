@@ -229,11 +229,6 @@ public class PlugTest {
             assert(instance.getPin(0).getAssignedItem() instanceof Plug);
             assert(instance.getPin(1).getAssignedItem() instanceof Logical);
             assert(instance.getPin(2).getAssignedItem() instanceof Logical);
-            assert(((Logical)instance.getPin(1).getAssignedItem()).getObservingSignals().get(0) == jackSignalSink);
-            assert(((Logical)jack.getPin(2).getAssignedItem()).getObservingSignals().get(0) == signalSink);
-            assert(((Logical)subPlug.getPin(0).getAssignedItem()).getObservingSignals().get(0) == subJackSignalSink);
-            assert(((Logical)subJack.getPin(1).getAssignedItem()).getObservingSignals().get(0) == subSignalSink);
-
         }
         catch (PinAlreadyAssignedException ex) {
             Logger.getLogger(PlugTest.class.getName()).log(Level.SEVERE, null, ex);
@@ -308,10 +303,6 @@ public class PlugTest {
             assert(instance.getPin(0).getAssignedItem() instanceof Plug);
             assert(instance.getPin(1).getAssignedItem() instanceof Logical);
             assert(instance.getPin(2).getAssignedItem() instanceof Logical);
-            assert(((Logical)instance.getPin(1).getAssignedItem()).getObservingSignals().get(0) == jackSignalSink);
-            assert(((Logical)jack.getPin(2).getAssignedItem()).getObservingSignals().get(0) == signalSink);
-            assert(((Logical)subPlug.getPin(0).getAssignedItem()).getObservingSignals().get(0) == subJackSignalSink);
-            assert(((Logical)subJack.getPin(1).getAssignedItem()).getObservingSignals().get(0) == subSignalSink);
 
             //a plug cannot be connected to a signal
             instance = new Plug(module, "thePlug");

@@ -44,7 +44,8 @@ public class Configuration extends XMLConfiguration{
     
     private Configuration() throws ConfigurationException{
         super();
-        File configFile = new File("./cfg/org.jpac.Configuration.xml");
+//        File configFile = new File("./cfg/org.jpac.Configuration.xml");
+        File configFile = new File(ClassLoader.getSystemResource("org.jpac.Configuration.xml").getFile());
         setFile(configFile);
         if (configFile.exists()){
            load();

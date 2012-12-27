@@ -323,7 +323,7 @@ public void setINT(int byteIndex, int value) throws AddressException, ValueOutOf
             modifiedByteIndices = new ArrayList<Integer>(bytes.length);
             //and initially mark all bytes as modified to give observers the chance
             //to synchronize their state to the actual state of the real world
-            for (int i = 0; i < modifiedByteIndices.size(); i++){
+            for (int i = 0; i < bytes.length; i++){
                 modifiedByteIndices.add(i);
             }
         }

@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : SimulationModule.java
+ * MODULE    : CharStringValue.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -25,19 +25,41 @@
 
 package org.jpac;
 
+import java.io.Serializable;
+
 /**
- * deprecated
+ * represents the value of a char string signal
  * @author berndschuster
- * @deprecated
+ * represents a Decimal value
  */
-
-public abstract class SimulationModule extends AbstractModule{
-
-    protected SimulationModule(AbstractModule containingModule){
-        super(containingModule);
+public class CharStringValue implements Value, Cloneable, Serializable{
+    protected String value = new String();
+    
+    public void set(String value){
+        this.value = value;
+    }
+    
+    public String get(){
+        return value;
+    }
+    
+    @Override
+    public void copy(Value aValue){
+        set(new String(((CharStringValue)aValue).get()));//TODO: copy without construction of a new string ??
     }
 
-    protected SimulationModule(AbstractModule containingModule, String name){
-        super(containingModule, name);
+    @Override
+    public boolean equals(Value aValue) {
+        return aValue instanceof CharStringValue && this.value.equals(((CharStringValue)aValue).get());
+    }
+    
+    @Override
+    public String toString(){
+        return value;
+    }
+
+    @Override
+    public Value clone() throws CloneNotSupportedException {
+        return (CharStringValue) super.clone();
     }
 }

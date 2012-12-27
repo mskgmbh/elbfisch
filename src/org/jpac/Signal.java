@@ -29,7 +29,11 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import org.apache.log4j.Logger;
 
 /**
@@ -65,9 +69,9 @@ public abstract class Signal extends Observable implements Observer, Assignable{
     protected boolean                    propagatedSignalValid;
     private   boolean                    connectedAsTarget;
     protected AbstractModule             containingModule;
-    private   List<Signal>               observingSignals;
-    private   List<RemoteSignalOutput>   observingRemoteSignalOutputs;
-    private   List<ConnectionTask>       connectionTasks;
+    private   Set<Signal>                observingSignals;
+    private   Set<RemoteSignalOutput>    observingRemoteSignalOutputs;
+    private   Queue<ConnectionTask>      connectionTasks;
     
     protected Value                      value;
     protected Value                      propagatedValue;
@@ -83,9 +87,9 @@ public abstract class Signal extends Observable implements Observer, Assignable{
         this.propagatedSignalValid           = false;//signal is initially invalid
         this.connectedAsTarget               = false;
         this.containingModule                = containingModule;
-        this.observingSignals                = Collections.synchronizedList(new ArrayList<Signal>());
-        this.observingRemoteSignalOutputs    = Collections.synchronizedList(new ArrayList<RemoteSignalOutput>());
-        this.connectionTasks                 = Collections.synchronizedList(new ArrayList<ConnectionTask>());
+        this.observingSignals                = Collections.synchronizedSet(new HashSet<Signal>());
+        this.observingRemoteSignalOutputs    = Collections.synchronizedSet(new HashSet<RemoteSignalOutput>());
+        this.connectionTasks                 = new ArrayBlockingQueue<ConnectionTask>(2000);
         this.value                           = null;
         this.propagatedValue                 = null;        
         SignalRegistry.getInstance().add(this);
@@ -277,7 +281,7 @@ public abstract class Signal extends Observable implements Observer, Assignable{
         return containingModule;
     }
 
-    public List<Signal> getObservingSignals(){
+    public Set<Signal> getObservingSignals(){
         return observingSignals;
     }
     

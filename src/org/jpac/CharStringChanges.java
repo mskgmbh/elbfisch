@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : SomeEventsNotProcessedException.java
+ * MODULE    : CharStringChanges.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -25,27 +25,37 @@
 
 package org.jpac;
 
-import java.util.Set;
-import java.util.Iterator;
 /**
- * thrown by jPac, if not all modules could have been processed in time
+ * process event indicating, that the value of a char string signal has changed
  * @author berndschuster
  */
-public class SomeEventsNotProcessedException extends ProcessException{
-    Set<Fireable> processEvents;
-    public SomeEventsNotProcessedException(Set<Fireable> processEvents){
-        this.processEvents = processEvents;
+public class CharStringChanges extends ProcessEvent{ 
+    private CharString charString;
+    /**
+     * constructs a CharStringChanges
+     * @param charString the CharString to supervise
+     */
+    public CharStringChanges(CharString charString){
+        this.charString = charString;
     }
-
+    
     @Override
-    public String getLocalizedMessage() {
-        Iterator<Fireable> pei = processEvents.iterator();
-        String   eventList = ": ";
-        while(pei.hasNext()){
-            Fireable pe =  pei.next();
-            if (!pe.isProcessed())
-                eventList += pe + " ";
+    public boolean fire() throws ProcessException {
+        return charString.isChanged();
+    }
+    
+    @Override
+    public String toString(){
+        return super.toString() + ".changes";
+    }
+    
+    @Override
+    protected boolean equalsCondition(Fireable fireable){
+        boolean equal = false;
+        if (fireable instanceof CharStringChanges){
+            CharStringChanges sc = (CharStringChanges)fireable;
+            equal = this.charString.equals(sc.charString);
         }
-     return eventList;
+        return equal;
     }
 }

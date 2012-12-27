@@ -29,6 +29,7 @@ import org.jpac.AbstractModule;
 import org.jpac.Decimal;
 import org.jpac.InputInterlockException;
 import org.jpac.Module;
+import org.jpac.NextCycle;
 import org.jpac.OutputInterlockException;
 import org.jpac.ProcessEvent;
 import org.jpac.ProcessException;

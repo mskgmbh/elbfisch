@@ -36,7 +36,6 @@ public abstract class Property {
     String  key;
     boolean classProperty;
     public Property(Object owningObject, String key, Object defaultValue, String comment, boolean classProperty) throws ConfigurationException{
-        assertKey(key);
         this.classProperty = classProperty;
         Configuration configuration = Configuration.getInstance();
         //compute key
@@ -67,7 +66,7 @@ public abstract class Property {
             }
             else{
                 //add it to the property
-                configuration.addProperty(this.key + "[@comment]", comment);            
+                configuration.addProperty(this.key + "[@comment]", comment);
             }
             //mark this comment as been touched during actual session
             configuration.getTouchedProperties().add(commentKey);
@@ -79,8 +78,17 @@ public abstract class Property {
     public Property(String key) throws ConfigurationException{
         Configuration configuration = Configuration.getInstance();
         this.key = key;
+        // check if the property exists inside configuration
         if (!configuration.containsKey(this.key)){
-            throw new ConfigurationException("property " + key + " does not exist!");
+            //if not found, check if is a class property
+            int lastPunktIndex = this.key.lastIndexOf(".");
+            this.key = this.key.substring(0, lastPunktIndex).replace(".", "..") + this.key.substring(lastPunktIndex);
+            if (!configuration.containsKey(this.key)){
+                throw new ConfigurationException("property " + key + " does not exist!");
+            }
+            else {
+                this.classProperty = true;
+            }
         }
     }
     

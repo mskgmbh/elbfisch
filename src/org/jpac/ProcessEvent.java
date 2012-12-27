@@ -42,6 +42,8 @@ public abstract class ProcessEvent extends Fireable{
     private   long                     timeoutNanoTime;
     private   String                   statusString;
     private   ArrayList<Fireable>      monitoredEvents;
+    
+    private   int                      tracePoint;//debug
 
     public ProcessEvent(){
         super();
@@ -160,9 +162,16 @@ public abstract class ProcessEvent extends Fireable{
             if (module.isAwakenedByProcessEvent()){
                 //tell the automation controller that one of the modules, awakened by an process event
                 //has come to an end for this cycle
+                tracePoint = 1;
                 module.setAwakenedByProcessEvent(false);
+                tracePoint = 2;
                 module.storeSleepNanoTime();
+                tracePoint = 3;
                 module.getJPac().indicateCheckBack(this);
+                tracePoint = 4;
+            }
+            else{
+                tracePoint = 99;
             }
             //wait, until an ProcessEvent or a timeout occurs
             do{
@@ -196,6 +205,7 @@ public abstract class ProcessEvent extends Fireable{
         module.setAwaitedEvent(null);
         //check for incoming interlock conditions to be handled by the observing module
         module.preCheckInterlocks();
+        tracePoint = 0;
         return this;
     }
 
@@ -300,6 +310,10 @@ public abstract class ProcessEvent extends Fireable{
 
     protected boolean isMonitoredEventOccured() {
         return this.monitoredEventOccured;
+    }
+    
+    public int getTracePoint(){
+        return this.tracePoint;
     }
 
     @Override

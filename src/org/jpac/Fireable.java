@@ -104,15 +104,8 @@ public abstract class Fireable{
         //or by of one or more process exceptions
         //related to the observing module
         if (!notified){
-            if (observingModule instanceof SimulationModule){
-                //if calling module is a simulation module
-                //remove me from the process event list for the simulation modules
-                getObservingModule().getJPac().getAwaitedSimEventList().remove(this);
-            }
-            else if(observingModule instanceof Module){
-                //... else from the regular process event list
-                getObservingModule().getJPac().getAwaitedEventList().remove(this);
-            }
+            //remove fireable from list of awaited events
+            unregister();
             setCycleNumber(getObservingModule().getJPac().getCycleNumber());
             if (Log.isDebugEnabled()){
                 String logString = getCycleNumber() + " firing " + this + "(" + this.hashCode() + ") at module " + getObservingModule().getName();
@@ -124,10 +117,10 @@ public abstract class Fireable{
                 Log.debug(logString);
             }
             notified = true;
-            //increment the count of modules awakened inside the current cycle
-            //and tell the module, that it has been awakened by an event.
+            //tell the module, that it has been awakened by an event.
             getObservingModule().setAwakenedByProcessEvent(true);
             synchronized(this){
+                //increment the count of modules awakened inside the current cycle
                 getObservingModule().getJPac().incrementAwakenedModulesCount();
                 notify();
             }
@@ -137,38 +130,12 @@ public abstract class Fireable{
 
     public void register(){
         //register myself as an active waiting event
-        if (observingModule instanceof SimulationModule){
-            //if calling module is a simulation module
-            //store the event inside the simulation process event list
-            synchronized(getObservingModule().getJPac().getAwaitedSimEventList()){
-                getObservingModule().getJPac().getAwaitedSimEventList().add(this);
-            }
-        }
-        else if (observingModule instanceof Module){
-            //if calling moduel is a regualar module
-            //store the event inside the regular process event list
-            synchronized(getObservingModule().getJPac().getAwaitedEventList()){
-                getObservingModule().getJPac().getAwaitedEventList().add(this);
-            }
-        }
+        getObservingModule().getJPac().getAwaitedEventList().add(this);
     }
 
     public void unregister(){
         //register myself as an active waiting event
-        if (observingModule instanceof SimulationModule){
-            //if calling module is a simulation module
-            //store the event inside the simulation process event list
-            synchronized(getObservingModule().getJPac().getAwaitedSimEventList()){
-                getObservingModule().getJPac().getAwaitedSimEventList().remove(this);
-            }
-        }
-        else if (observingModule instanceof Module){
-            //if calling moduel is a regualar module
-            //store the event inside the regular process event list
-            synchronized(getObservingModule().getJPac().getAwaitedEventList()){
-                getObservingModule().getJPac().getAwaitedEventList().remove(this);
-            }
-        }
+        getObservingModule().getJPac().getAwaitedEventList().remove(this);
     }
 
     /**

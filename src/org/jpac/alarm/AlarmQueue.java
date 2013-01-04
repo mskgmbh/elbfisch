@@ -42,7 +42,7 @@ import org.apache.log4j.Logger;
 public class AlarmQueue extends Observable implements Observer{
     static  Logger Log = Logger.getLogger("jpac.Alarm");    
     
-    private static final int                   QUEUESIZE = 100;
+    private static final int                    QUEUESIZE = 2000;
     
     private static AlarmQueue                   instance;
     private List<Alarm>                         alarms;

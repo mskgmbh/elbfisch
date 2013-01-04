@@ -45,6 +45,23 @@ import org.jpac.SignalInvalidException;
  */
 public class Alarm extends Signal{
     
+    public enum Severity{ALARM('A'),WARNING('W'),MESSAGE('M');
+        private final char id;
+        private Severity(char id){
+            this.id = id;
+        }
+        public static Severity getById(char id){
+            Severity rs = null;
+            for(Severity s: values()){
+                if (s.id == id){
+                    rs = s;
+                    break;
+                }
+            }
+            return rs;
+        }
+    };
+    
     protected class AcknowledgedRunner implements Runnable{
         public void run() {
             setAcknowlegded(true);
@@ -59,7 +76,8 @@ public class Alarm extends Signal{
     private LogicalValue       propagatedAcknowledged;
     private AcknowledgedRunner acknowledgedRunner;
     private boolean            resetOnAcknowledgement;
-    private boolean            invertOnUpdate;    
+    private boolean            invertOnUpdate;   
+    private Severity           severity;
     
     /**
      * constructs an alarm
@@ -67,8 +85,9 @@ public class Alarm extends Signal{
      * @param identifier: identifier of the signal
      * @param message: a message, that can be displayed over a GUI
      * @param resetOnAcknowledgement: if true, the alarm will be automatically reset on acknowledgement by the user
+     * @param severity: severity of the alarm: ALARM, WARNING, MESSAGE
      */
-    public Alarm(AbstractModule containingModule, String identifier, String message, boolean resetOnAcknowledgement){
+    public Alarm(AbstractModule containingModule, String identifier, String message, boolean resetOnAcknowledgement, Severity severity){
         super(containingModule, identifier);
         this.message                = message;
         this.value                  = new LogicalValue();
@@ -78,9 +97,21 @@ public class Alarm extends Signal{
         this.wrapperValue           = new LogicalValue();
         this.resetOnAcknowledgement = resetOnAcknowledgement;
         this.invertOnUpdate         = false;
+        this.severity               = severity;
 
         acknowledged.set(false);
         AlarmQueue.getInstance().register(this);
+    }
+
+    /**
+     * constructs an alarm with default severity MESSAGE
+     * @param containingModule: module which instantiated the alarm
+     * @param identifier: identifier of the signal
+     * @param message: a message, that can be displayed over a GUI
+     * @param resetOnAcknowledgement: if true, the alarm will be automatically reset on acknowledgement by the user
+     */
+    public Alarm(AbstractModule containingModule, String identifier, String message, boolean resetOnAcknowledgement){
+        this(containingModule, identifier, message, resetOnAcknowledgement, Severity.MESSAGE);
     }
     
     /**
@@ -246,5 +277,12 @@ public class Alarm extends Signal{
      */
     public String getMessage() {
         return message;
+    }
+
+    /**
+     * @return the severity
+     */
+    public Severity getSeverity() {
+        return severity;
     }
 }

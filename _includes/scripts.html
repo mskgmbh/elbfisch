@@ -1,2 +1,12 @@
 <script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
 <script type="text/javascript" src="/assets/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+  jQuery(document).ready(function () {
+    jQuery("iframe").each(function() {
+      var copy = jQuery(this).clone();
+      jQuery(copy).attr("frameborder", '0');
+      jQuery(copy).attr("scrolling", 'no');
+      jQuery(copy).replaceAll(this);
+    });
+  });
+</script>

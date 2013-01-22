@@ -61,7 +61,8 @@ BODY {
   right: 25px;
 }
 .gitSocialInner IFRAME {
-  padding: 10px;
+  padding: 10px 10px 0;
+  border: none;
 }
 .hightlight {
   color: teal;

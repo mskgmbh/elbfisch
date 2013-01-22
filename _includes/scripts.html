@@ -4,8 +4,9 @@
   jQuery(document).ready(function () {
     jQuery("iframe").each(function() {
       var copy = jQuery(this).clone();
-      jQuery(copy).attr("frameborder", '0');
-      jQuery(copy).attr("scrolling", 'no');
+      jQuery(copy).attr('frameborder', '0');
+      jQuery(copy).attr('scrolling', 'no');
+      jQuery(copy).attr('allowTransparency', true);
       jQuery(copy).replaceAll(this);
     });
   });

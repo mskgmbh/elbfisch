@@ -98,7 +98,7 @@ public abstract class Fireable{
 //        processed = true;
 //    }
 
-    public void notifyObservingModule() {
+    public void notifyObservingModule() throws InconsistencyException {
         //a module can be notified only once per cycle
         //this may occur due to a regular fire() condition of this process event
         //or by of one or more process exceptions
@@ -128,14 +128,18 @@ public abstract class Fireable{
     }
 
 
-    public void register(){
+    public void register() throws InconsistencyException{
         //register myself as an active waiting event
-        getObservingModule().getJPac().getAwaitedEventList().add(this);
+        if (!getObservingModule().getJPac().getAwaitedEventList().add(this)){
+            throw new InconsistencyException(this + " already registered in list of awaited events !");
+        }
     }
 
-    public void unregister(){
-        //register myself as an active waiting event
-        getObservingModule().getJPac().getAwaitedEventList().remove(this);
+    public void unregister() throws InconsistencyException{
+        //unregister myself as an active waiting event
+        if (!getObservingModule().getJPac().getAwaitedEventList().remove(this)){
+            throw new InconsistencyException(this + " not registered in list of awaited events !");            
+        }
     }
 
     /**

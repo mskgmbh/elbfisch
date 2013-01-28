@@ -770,7 +770,7 @@ public class JPac extends Thread{
 
     }
 
-    private void shutdownAwaitingModules(Set<Fireable> fireableList){
+    private void shutdownAwaitingModules(Set<Fireable> fireableList) throws InconsistencyException{
         try{
             //invoke all waiting modules and let them handle their ShutdownException
             for (Fireable f: fireableList) {
@@ -838,7 +838,12 @@ public class JPac extends Thread{
         //if (Log.isDebugEnabled()) Log.debug("... propagating signals done");
     }
     
+    /*
+     * used to invoke a task synchronized to the next jpac cycle
+     * CAUTION: The given task may not call invokeLater() directly or indirectly by itself !
+     */
     public void invokeLater(Runnable task){
+        //TODO maintain 2 lists odd/even cycles to avoid alteration while iterating through the list
         synchronized(synchronizedTasks){
             synchronizedTasks.add(task);
         }

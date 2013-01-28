@@ -26,6 +26,8 @@
 package org.jpac.configuration;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.HashSet;
 import java.util.Iterator;
 import org.apache.commons.configuration.ConfigurationException;
@@ -42,10 +44,10 @@ public class Configuration extends XMLConfiguration{
     private static boolean         changed;
     private static BooleanProperty cleanupOnSave;
     
-    private Configuration() throws ConfigurationException{
+    private Configuration() throws ConfigurationException, UnsupportedEncodingException{
         super();
 //        File configFile = new File("./cfg/org.jpac.Configuration.xml");
-        File configFile = new File(ClassLoader.getSystemResource("org.jpac.Configuration.xml").getFile());
+        File configFile = new File(URLDecoder.decode(ClassLoader.getSystemResource("org.jpac.Configuration.xml").getFile(),  "UTF-8"));
         setFile(configFile);
         if (configFile.exists()){
            load();
@@ -54,7 +56,12 @@ public class Configuration extends XMLConfiguration{
     
     public static Configuration getInstance() throws ConfigurationException{
         if (instance == null){
-            instance = new Configuration();
+            try{
+                instance = new Configuration();
+            }
+            catch(Exception exc){
+                throw new ConfigurationException(exc);
+            }
         }
         return instance;
     }

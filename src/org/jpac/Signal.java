@@ -416,7 +416,7 @@ public abstract class Signal extends Observable implements Observer, Assignable{
         try{
             //take over the valid state of the source signal ...
             setValid(((Signal)o).isValid());
-            if (isValid()){
+            if (signalValid){
                 //...  and its value, if valid ...
                 updateValue(o, arg);
             }

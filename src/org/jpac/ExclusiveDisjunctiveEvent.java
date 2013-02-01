@@ -67,7 +67,7 @@ public class ExclusiveDisjunctiveEvent extends ProcessEvent{
         eventIterator = combinedEvents.iterator();
         //give all events the chance to fire
         while(eventIterator.hasNext()){
-            if (eventIterator.next().isFired()){
+            if (eventIterator.next().evaluateFiredCondition()){
                 fireCnt++;
             }
         }
@@ -92,25 +92,13 @@ public class ExclusiveDisjunctiveEvent extends ProcessEvent{
         ProcessEvent e    = null;
         eventIterator = combinedEvents.iterator();
         if (eventIterator.hasNext()){
-            e = eventIterator.next();
-            try{
-                firedStr =  e.isFired() ? "[fired !]" : "";
-            }
-            catch(ProcessException exc)
-            {
-                firedStr = "???";
-            }
+            e         = eventIterator.next();
+            firedStr  = e.isFired() ? "[fired !]" : "";
             eventList = e.toString() + firedStr;
         }
         while(eventIterator.hasNext()){
-            e = eventIterator.next();
-            try{
-                firedStr =  e.isFired() ? "[fired !]" : "";
-            }
-            catch(ProcessException exc)
-            {
-                firedStr = "???";
-            }
+            e         = eventIterator.next();
+            firedStr  = e.isFired() ? "[fired !]" : "";
             eventList = eventList + " xor " + e.toString() + firedStr;
         }
         return eventList;

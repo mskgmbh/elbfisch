@@ -27,6 +27,7 @@ package org.jpac.configuration;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -46,11 +47,15 @@ public class Configuration extends XMLConfiguration{
     
     private Configuration() throws ConfigurationException, UnsupportedEncodingException{
         super();
-//        File configFile = new File("./cfg/org.jpac.Configuration.xml");
-        File configFile = new File(URLDecoder.decode(ClassLoader.getSystemResource("org.jpac.Configuration.xml").getFile(),  "UTF-8"));
-        setFile(configFile);
-        if (configFile.exists()){
-           load();
+        URL configFileUrl = ClassLoader.getSystemResource("org.jpac.Configuration.xml");
+        if (configFileUrl != null){
+            File configFile = new File(URLDecoder.decode(configFileUrl.getFile(), "UTF-8"));
+            setFile(configFile);
+            load();
+        }
+        else{
+            //no configuration file found in class path. Set default
+            setFile(new File("./cfg/org.jpac.Configuration.xml"));
         }
     }
     

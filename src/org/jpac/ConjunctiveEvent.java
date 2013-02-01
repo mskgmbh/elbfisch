@@ -65,7 +65,7 @@ public class ConjunctiveEvent extends ProcessEvent{
         ProcessEvent processEvent;
         eventIterator = combinedEvents.iterator();
         while(eventIterator.hasNext() && IamFired){
-            IamFired = IamFired && eventIterator.next().isFired();
+            IamFired = IamFired && eventIterator.next().evaluateFiredCondition();
         }
         if (!IamFired){
             //reset all events, which are fired in this cycle, if at least one is not

@@ -66,7 +66,7 @@ public class DisjunctiveEvent extends ProcessEvent{
         eventIterator = combinedEvents.iterator();
         //give all events the chance to fire
         while(eventIterator.hasNext()){
-            combinedEventFired = eventIterator.next().isFired();
+            combinedEventFired = eventIterator.next().evaluateFiredCondition();
             IamFired = IamFired || combinedEventFired;
         }
         return IamFired;
@@ -79,25 +79,13 @@ public class DisjunctiveEvent extends ProcessEvent{
         ProcessEvent e    = null;
         eventIterator = combinedEvents.iterator();
         if (eventIterator.hasNext()){
-            e = eventIterator.next();
-            try{
-                firedStr =  e.isFired() ? "[fired !]" : "";
-            }
-            catch(ProcessException exc)
-            {
-                firedStr = "???";
-            }
+            e         = eventIterator.next();
+            firedStr  = e.isFired() ? "[fired !]" : "";
             eventList = e.toString() + firedStr;
         }
         while(eventIterator.hasNext()){
-            e = eventIterator.next();
-            try{
-                firedStr =  e.isFired() ? "[fired !]" : "";
-            }
-            catch(ProcessException exc)
-            {
-                firedStr = "???";
-            }
+            e         = eventIterator.next();
+            firedStr  =  e.isFired() ? "[fired !]" : "";
             eventList = eventList + " or " + e.toString() + firedStr;
         }
         return eventList;

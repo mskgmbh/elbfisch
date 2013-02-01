@@ -638,7 +638,7 @@ public class JPac extends Thread{
                 //or if it is a ProcessEvent and an emergency stop is pending and the ProcessEvent is not awaited by a module, which threw
                 //an emergency stop exception during the last cycle,
                 //or if it is a ProcessEvent and it timed out during this cycle
-                fired = f.isFired() ||
+                fired = f.evaluateFiredCondition() ||
                         (f instanceof ProcessEvent && (emergencyStopIsToBeThrown && !((ProcessEvent)f).getObservingModule().isRequestingEmergencyStop()) ||
                                                        ((ProcessEvent)f).isTimedout()                                                                      );
             }
@@ -662,6 +662,10 @@ public class JPac extends Thread{
                ((ProcessEvent)f).getObservingModule().setRequestingEmergencyStop(false);                                                 
             }
         }
+        //remove fireables from awaited event list
+        for (Fireable f: getFiredEventList()) {
+             fireableList.remove(f);
+        }        
     }
     
     private void handleCyclicTasks(){

@@ -65,11 +65,11 @@ public abstract class Fireable{
     public abstract boolean fire() throws ProcessException;
 
     /**
-     * used to check, if a fireable has been fired. Keeps its state, until reset() is called.
-     * @return true: the Fireable has been fired
+     * checks, if the event has been fired
+     * @return true: event is fired
      * @throws ProcessException 
      */
-    public boolean isFired() throws ProcessException {
+    public boolean evaluateFiredCondition() throws ProcessException {
         //fired state persist for the whole process cycle
         //even though the fire-condition may change
         if (!fired){
@@ -86,6 +86,16 @@ public abstract class Fireable{
         }
         return fired;
     }
+    
+    /**
+     * used to check, if a fireable has been fired. Keeps its state, until reset() is called.
+     * @return true: the Fireable has been fired
+     * @throws ProcessException 
+     */
+    public boolean isFired(){
+        return fired;
+    }
+    
 
 //    public void setProcessed(){
 //        //decrement the count of fired event, which are not processed
@@ -105,7 +115,7 @@ public abstract class Fireable{
         //related to the observing module
         if (!notified){
             //remove fireable from list of awaited events
-            unregister();
+            //unregister();
             setCycleNumber(getObservingModule().getJPac().getCycleNumber());
             if (Log.isDebugEnabled()){
                 String logString = getCycleNumber() + " firing " + this + "(" + this.hashCode() + ") at module " + getObservingModule().getName();
@@ -131,7 +141,8 @@ public abstract class Fireable{
     public void register() throws InconsistencyException{
         //register myself as an active waiting event
         if (!getObservingModule().getJPac().getAwaitedEventList().add(this)){
-            throw new InconsistencyException(this + " already registered in list of awaited events !");
+            //throw new InconsistencyException(this + " already registered in list of awaited events !");
+            Log.error(this + " already registered in list of awaited events !");
         }
     }
 

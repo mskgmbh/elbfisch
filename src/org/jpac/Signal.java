@@ -255,9 +255,21 @@ public abstract class Signal extends Observable implements Observer, Assignable{
      */
     protected void setValue(Value value) throws SignalAccessException {
         assertSignalAccess();
-        if (!this.value.equals(value) || !isValid()){
+        if (this.value == null || !this.value.equals(value) || !isValid()){
             if (Log.isDebugEnabled()) Log.debug(this + ".set(" + value + ")");
-            this.value.copy(value);
+            if (this.value == null){
+                //just clone the source value
+                try{
+                    this.value = value.clone();
+                }
+                catch(CloneNotSupportedException exc){
+                    throw new SignalAccessException(exc.getMessage());
+                }
+            }
+            else{
+                //just copy the source value to save resources
+                this.value.copy(value);
+            }
             setChanged();
         }
         setValid(true);

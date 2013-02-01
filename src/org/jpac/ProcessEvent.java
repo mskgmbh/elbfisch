@@ -68,7 +68,7 @@ public abstract class ProcessEvent extends Fireable{
      * @throws ProcessException  
      */
     @Override
-    public boolean isFired() throws ProcessException {
+    public boolean evaluateFiredCondition() throws ProcessException {
         //fired state persist for the whole process cycle
         //even though the fire-condition may change
         if (!fired){
@@ -76,7 +76,7 @@ public abstract class ProcessEvent extends Fireable{
             if (monitoredEvents != null){
                 //check whole list of monitored events
                 for(Fireable f : monitoredEvents){
-                    if (f.isFired()){
+                    if (f.evaluateFiredCondition()){
                         //if at least one is fired
                         //prepare notification of the observing module
                         monitoredEventOccured = true;
@@ -86,11 +86,11 @@ public abstract class ProcessEvent extends Fireable{
                 }
             }
             //... then check own fire condition
-            super.isFired();
+            super.evaluateFiredCondition();
         }
         return fired;
     }
-
+    
     /**
      * used to await the process event. Can be called inside the work() method of a module. The module is suspended, until the awaited process event
      * occured (is fired).
@@ -175,7 +175,11 @@ public abstract class ProcessEvent extends Fireable{
             }
             //wait, until an ProcessEvent or a timeout occurs
             do{
-                try {wait();} catch (InterruptedException ex) {}
+                try {wait();
+                } 
+                catch (InterruptedException ex) {
+                    Log.info("InterruptedException occured for " + this);
+                }
               }
             while(!isTimedout() && !isFired() && !isEmergencyStopOccured() && !isShutdownRequested() && !isProcessExceptionThrown());
             module.storeWakeUpNanoTime();

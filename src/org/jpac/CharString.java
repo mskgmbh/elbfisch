@@ -33,11 +33,9 @@ public class CharString extends Signal{
     private   CharStringValue  wrapperValue;
     
     /**
-     * constructs a char string signal with intrinsic range check
+     * constructs a char string signal
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
-     * @param minValue: minimum value signalValid for this char string
-     * @param maxValue: maximum value signalValid for this char string
      */
     public CharString(AbstractModule containingModule, String identifier){
         super(containingModule, identifier);
@@ -46,6 +44,20 @@ public class CharString extends Signal{
         this.wrapperValue       = new CharStringValue();
     }
     
+    /**
+     * constructs a char string signal
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param defaultValue: default value of the CharString
+     * 
+     */
+    public CharString(AbstractModule containingModule, String identifier, String defaultValue){
+        this(containingModule, identifier);
+        this.initializing = true;//prevent signal access assertion
+        try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/};
+        this.initializing = false;
+    }
+
     /**
      * used to set the char string to the given value
      * @param value: value, the char string is set to

@@ -25,12 +25,10 @@
 
 package org.jpac;
 
-import java.util.Observable;
-import java.util.Observer;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -76,6 +74,8 @@ public abstract class Signal extends Observable implements Observer, Assignable{
     protected Value                      value;
     protected Value                      propagatedValue;
     
+    protected boolean                    initializing;
+    
     public Signal(AbstractModule containingModule, String identifier){
         super();
         this.identifier                      = identifier;
@@ -91,7 +91,8 @@ public abstract class Signal extends Observable implements Observer, Assignable{
         this.observingRemoteSignalOutputs    = Collections.synchronizedSet(new HashSet<RemoteSignalOutput>());
         this.connectionTasks                 = new ArrayBlockingQueue<ConnectionTask>(2000);
         this.value                           = null;
-        this.propagatedValue                 = null;        
+        this.propagatedValue                 = null; 
+        this.initializing                    = false;
         SignalRegistry.getInstance().add(this);
     }
     
@@ -153,6 +154,8 @@ public abstract class Signal extends Observable implements Observer, Assignable{
             throw new SignalAlreadyConnectedException(targetSignal);
         }
         connectionTasks.add(new ConnectionTask(ConnTask.CONNECT, targetSignal));
+        //invoke propagation of the state of this signal to the new target
+        super.setChanged();
     }
     
     /**
@@ -196,6 +199,8 @@ public abstract class Signal extends Observable implements Observer, Assignable{
             throw new SignalAlreadyConnectedException(targetSignal);
         }
         connectionTasks.add(new ConnectionTask(ConnTask.REMOTECONNECT, targetSignal));
+        //invoke propagation of the state of this signal to the new target
+        super.setChanged();
     }
     
     /**
@@ -254,24 +259,29 @@ public abstract class Signal extends Observable implements Observer, Assignable{
      * @param value the value to set
      */
     protected void setValue(Value value) throws SignalAccessException {
-        assertSignalAccess();
-        if (this.value == null || !this.value.equals(value) || !isValid()){
-            if (Log.isDebugEnabled()) Log.debug(this + ".set(" + value + ")");
-            if (this.value == null){
-                //just clone the source value
-                try{
-                    this.value = value.clone();
-                }
-                catch(CloneNotSupportedException exc){
-                    throw new SignalAccessException(exc.getMessage());
-                }
-            }
-            else{
-                //just copy the source value to save resources
-                this.value.copy(value);
-            }
-            setChanged();
+        if (!initializing){
+            //if not called to set the default value inside the constructor
+            //check signal access policy
+            assertSignalAccess();
         }
+        if (this.value != null && value != null && !this.value.equals(value)){
+           if (Log.isDebugEnabled()) Log.debug(this + ".set(" + value + ")");
+           this.value.copy(value);
+           setChanged();
+        } else if (this.value == null && value != null){
+           if (Log.isDebugEnabled()) Log.debug(this + ".set(" + value + ")");
+            try{
+                this.value = value.clone();
+            }
+            catch(CloneNotSupportedException exc){
+                throw new SignalAccessException(exc.getMessage());
+            }
+           setChanged();
+        } else if (this.value != null && value == null){
+           if (Log.isDebugEnabled()) Log.debug(this + ".set(" + value + ")");
+           this.value = null;
+           setChanged();
+        };
         setValid(true);
     }
 
@@ -289,6 +299,7 @@ public abstract class Signal extends Observable implements Observer, Assignable{
         this.propagatedValue.copy(propagatedValue);
     }
 
+    @Override
     public AbstractModule getContainingModule(){
         return containingModule;
     }

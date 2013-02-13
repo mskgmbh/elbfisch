@@ -66,6 +66,36 @@ public class Decimal extends Signal{
         this(containingModule, identifier, 0.0, 0.0);
         this.rangeChecked = false;
     }    
+
+    /**
+     * constructs a decimal signal with a given default value and without range check.
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param defaultValue: default value of the signal
+     */
+    public Decimal(AbstractModule containingModule, String identifier, double defaultValue){
+        this(containingModule, identifier);
+        this.initializing = true;//prevent signal access assertion
+        try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/}catch(NumberOutOfRangeException exc){/*cannot happen*/};
+        this.initializing = false;
+    }
+    
+    /**
+     * constructs a decimal signal with a given default value and intrinsic range check
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param minValue: minimum value signalValid for this decimal
+     * @param maxValue: maximum value signalValid for this decimal
+     * @param defaultValue: default value of the decimal
+     * @throws NumberOutOfRangeException: if the default value is less than minValue or greater than maxValue
+     */
+    public Decimal(AbstractModule containingModule, String identifier, double minValue, double maxValue, double defaultValue) throws NumberOutOfRangeException{
+        this(containingModule, identifier, minValue, maxValue);
+        this.initializing = true;//prevent signal access assertion
+        try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/};
+        this.initializing = false;
+    }
+
     
     /**
      * used to set the decimal to the given value

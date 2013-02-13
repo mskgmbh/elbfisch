@@ -69,6 +69,36 @@ public class SignedInteger extends Signal{
     }    
     
     /**
+     * constructs a signed integer signal with a given default value and without range check.
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param defaultValue: default value of the signal
+     */
+    public SignedInteger(AbstractModule containingModule, String identifier, int defaultValue){
+        this(containingModule, identifier);
+        this.initializing = true;//prevent signal access assertion
+        try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/}catch(NumberOutOfRangeException exc){/*cannot happen*/};
+        this.initializing = false;
+    }
+    
+    /**
+     * constructs a signed integer signal with a given default value and intrinsic range check
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param minValue: minimum value signalValid for this decimal
+     * @param maxValue: maximum value signalValid for this decimal
+     * @param defaultValue: default value of the decimal
+     * @throws NumberOutOfRangeException: if the default value is less than minValue or greater than maxValue
+     */
+    public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue, int defaultValue) throws NumberOutOfRangeException{
+        this(containingModule, identifier, minValue, maxValue);
+        this.initializing = true;//prevent signal access assertion
+        try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/};
+        this.initializing = false;
+    }
+    
+    
+    /**
      * used to set the signed integer to the given value
      * @param value: value, the signed integer is set to
      */

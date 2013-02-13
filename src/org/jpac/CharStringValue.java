@@ -45,12 +45,18 @@ public class CharStringValue implements Value, Cloneable, Serializable{
     
     @Override
     public void copy(Value aValue){
-        set(new String(((CharStringValue)aValue).get()));//TODO: copy without construction of a new string ??
+        if (((CharStringValue)aValue).get() != null){
+            set(new String(((CharStringValue)aValue).get()));//TODO: copy without construction of a new string ??
+        }
+        else{
+            set(null);
+        }
     }
 
     @Override
     public boolean equals(Value aValue) {
-        return aValue instanceof CharStringValue && this.value.equals(((CharStringValue)aValue).get());
+        return aValue instanceof CharStringValue && this.value == null && ((CharStringValue)aValue).get() == null || 
+               aValue instanceof CharStringValue && this.value != null && this.value.equals(((CharStringValue)aValue).get());
     }
     
     @Override

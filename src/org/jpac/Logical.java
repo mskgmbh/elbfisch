@@ -49,6 +49,19 @@ public class Logical extends Signal{
     }
     
     /**
+     * constructs a logical signal
+     * @param containingModule: module, this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param defaultState: default state of this logical
+     */
+    public Logical(AbstractModule containingModule, String identifier, boolean defaultState){
+        this(containingModule, identifier);
+        this.initializing = true;//prevent signal access assertion
+        try{set(defaultState);}catch(SignalAccessException exc){/*cannot happen*/};
+        this.initializing = false;
+    }
+
+    /**
      * used to set the logical to the given state
      * @param state: state, the logical is set to
      * @throws SignalAccessException, if the module invoking this method is

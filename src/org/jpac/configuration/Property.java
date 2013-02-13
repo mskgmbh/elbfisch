@@ -57,16 +57,9 @@ public abstract class Property {
         }
         if (comment != null){
             String commentKey = this.key + "[@comment]";
-            if (configuration.containsKey(commentKey)){
-                //if the comment already exists ...
-                if (!configuration.getString(commentKey).equals(comment)){
-                    //update it, if applicable
-                    configuration.setProperty(commentKey, comment);
-                }
-            }
-            else{
+            if (!configuration.containsKey(commentKey)){
                 //add it to the property
-                configuration.addProperty(this.key + "[@comment]", comment);
+                configuration.addProperty(commentKey, comment);
             }
             //mark this comment as been touched during actual session
             configuration.getTouchedProperties().add(commentKey);

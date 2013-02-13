@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : InEveryCycleDoException.java
+ * MODULE    : AsynchronousTaskException.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -29,20 +29,20 @@ package org.jpac;
  * thrown to the work() method of a module, if an exception condition has been encountered while processing inEveryCycleDo().
  * @author berndschuster
  */
-public class InEveryCycleDoException extends ProcessException{
-    public InEveryCycleDoException(){
+public class AsynchronousTaskException extends ProcessException{
+    public AsynchronousTaskException(){
         super();
     }
 
-    public InEveryCycleDoException(String string){
+    public AsynchronousTaskException(String string){
         super(string);
     }
 
-    InEveryCycleDoException(String string, Throwable cause) {
+    AsynchronousTaskException(String string, Throwable cause) {
         super(string, cause);
     }
 
-    InEveryCycleDoException(Throwable cause) {
+    AsynchronousTaskException(Throwable cause) {
         super(cause);
     }
     

@@ -201,8 +201,9 @@ public abstract class ProcessEvent extends Fireable{
         if (isProcessExceptionThrown()){
             if (getProcessException() instanceof InEveryCycleDoException){
                 throw new InEveryCycleDoException(getProcessException().getCause());
-            }
-            else{
+            } else if (getProcessException() instanceof AsynchronousTaskException){
+                throw new AsynchronousTaskException(getProcessException().getCause());                
+            } else{
                 throw new ProcessException(getProcessException());
             }
         }

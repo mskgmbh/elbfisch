@@ -32,13 +32,13 @@ package org.jpac;
  * 
  */
 public class Generic<ValueImpl> extends Signal{
-    public Generic(AbstractModule containingModule, String identifier){
+    public Generic(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         super(containingModule, identifier);
         value           = null;
         propagatedValue = null; 
     }
 
-    public Generic(AbstractModule containingModule, String identifier, ValueImpl defaultValue){
+    public Generic(AbstractModule containingModule, String identifier, ValueImpl defaultValue) throws SignalAlreadyExistsException{
         this(containingModule, identifier);
         this.initializing = true;//prevent signal access assertion
         try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/};

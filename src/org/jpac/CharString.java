@@ -37,7 +37,7 @@ public class CharString extends Signal{
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
      */
-    public CharString(AbstractModule containingModule, String identifier){
+    public CharString(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         super(containingModule, identifier);
         this.value              = new CharStringValue();
         this.propagatedValue    = new CharStringValue(); 
@@ -51,7 +51,7 @@ public class CharString extends Signal{
      * @param defaultValue: default value of the CharString
      * 
      */
-    public CharString(AbstractModule containingModule, String identifier, String defaultValue){
+    public CharString(AbstractModule containingModule, String identifier, String defaultValue) throws SignalAlreadyExistsException{
         this(containingModule, identifier);
         this.initializing = true;//prevent signal access assertion
         try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/};

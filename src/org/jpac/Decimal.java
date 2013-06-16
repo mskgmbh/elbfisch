@@ -44,7 +44,7 @@ public class Decimal extends Signal{
      * @param minValue: minimum value signalValid for this decimal
      * @param maxValue: maximum value signalValid for this decimal
      */
-    public Decimal(AbstractModule containingModule, String identifier, double minValue, double maxValue){
+    public Decimal(AbstractModule containingModule, String identifier, double minValue, double maxValue) throws SignalAlreadyExistsException{
         super(containingModule, identifier);
         this.minValue           = minValue;
         this.maxValue           = maxValue;
@@ -62,7 +62,7 @@ public class Decimal extends Signal{
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
      */
-    public Decimal(AbstractModule containingModule, String identifier){
+    public Decimal(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         this(containingModule, identifier, 0.0, 0.0);
         this.rangeChecked = false;
     }    
@@ -73,7 +73,7 @@ public class Decimal extends Signal{
      * @param identifier: identifier of the signal
      * @param defaultValue: default value of the signal
      */
-    public Decimal(AbstractModule containingModule, String identifier, double defaultValue){
+    public Decimal(AbstractModule containingModule, String identifier, double defaultValue) throws SignalAlreadyExistsException{
         this(containingModule, identifier);
         this.initializing = true;//prevent signal access assertion
         try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/}catch(NumberOutOfRangeException exc){/*cannot happen*/};
@@ -89,7 +89,7 @@ public class Decimal extends Signal{
      * @param defaultValue: default value of the decimal
      * @throws NumberOutOfRangeException: if the default value is less than minValue or greater than maxValue
      */
-    public Decimal(AbstractModule containingModule, String identifier, double minValue, double maxValue, double defaultValue) throws NumberOutOfRangeException{
+    public Decimal(AbstractModule containingModule, String identifier, double minValue, double maxValue, double defaultValue) throws NumberOutOfRangeException, SignalAlreadyExistsException{
         this(containingModule, identifier, minValue, maxValue);
         this.initializing = true;//prevent signal access assertion
         try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/};

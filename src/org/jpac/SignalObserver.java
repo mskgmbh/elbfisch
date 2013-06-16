@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : SignalAlreadyConnectedException.java
+ * MODULE    : SignalObserver.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -25,18 +25,13 @@
 
 package org.jpac;
 
+import java.util.Observer;
+
 /**
- * thrown, if a attempt is made to connect a signal as a target more than once
+ *
  * @author berndschuster
  */
-public class SignalAlreadyConnectedException extends ProcessException{
-    public SignalAlreadyConnectedException(Signal signal){
-        super(signal.toString());
-    }
-    public SignalAlreadyConnectedException(RemoteSignalOutput signal){
-        super(signal.toString());
-    }
-    public SignalAlreadyConnectedException(SignalObserver signalObserver){
-        super(signalObserver.toString());
-    }    
+public interface SignalObserver extends Observer{
+    public void setConnectedAsTarget(boolean connected);
+    public boolean isConnectedAsTarget();
 }

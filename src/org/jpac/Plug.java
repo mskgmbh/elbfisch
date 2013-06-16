@@ -179,7 +179,7 @@ public class Plug implements Assignable{
      * @param jack to plug in
      * @throws SignalInCompatibleException
      */
-    public void plug(Plug jack) throws PlugIncompatibleException, SignalAlreadyConnectedException{
+    public void plug(Plug jack) throws PlugIncompatibleException, SignalAlreadyConnectedException, SignalAlreadyExistsException{
         if (Log.isDebugEnabled()) Log.debug(this + ".plug(" + jack + ")");
         //check compatibility
         if (!isCompatible(jack)){

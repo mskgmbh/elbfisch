@@ -46,8 +46,13 @@ public class Handshake {
     private ResetRequestRunner     resetRequestRunner;
     private ResetAcknowledgeRunner resetAcknowledgeRunner;
     
-    
-    public Handshake(AbstractModule requestingModule, AbstractModule acknowledgingModule, String identifier){
+    /**
+     * implements a handshake mechanism to synchronize two modules which have a producer/consumer relationship
+     * @param requestingModule the requesting module (producer)
+     * @param acknowledgingModule the acknowledging module (consumer)
+     * @param identifier the identifier of this handshake (Corresponds to the identifiers of signals).
+     */
+    public Handshake(AbstractModule requestingModule, AbstractModule acknowledgingModule, String identifier) throws SignalAlreadyExistsException{
         this.requestingModule       = requestingModule;
         this.acknowledgingModule    = acknowledgingModule;
         this.identifier             = identifier;
@@ -61,24 +66,42 @@ public class Handshake {
         this.resetAcknowledgeRunner = new ResetAcknowledgeRunner();
     }
     
+    /**
+     * @return returns a ProcessEvent which is fired, when the handshake is requested. Can be awaited by the acknowledging module
+     */
     public ProcessEvent requested(){
         return requestedEvent;
     }
 
+    /**
+     * @return returns a ProcessEvent which is fired, when the handshake is acknowledged. Can be awaited by the requesting module
+     */
     public ProcessEvent acknowledged(){
         return acknowledgedEvent;
     }
     
+    /**
+     * used by the requesting module to trigger a request to be handled by the acknowledging module
+     * @throws SignalAccessException 
+     */
     public void request() throws SignalAccessException{
         request.set(true);
         JPac.getInstance().invokeLater(resetAcknowledgeRunner);
     }
     
+    /**
+     * used by the acknowledging module to trigger an acknowledgement to be handled by the requesting module
+     * @throws SignalAccessException 
+     */
     public void acknowledge() throws SignalAccessException{
         acknowledge.set(true);
         JPac.getInstance().invokeLater(resetRequestRunner);
     }
         
+    /**
+     * @return returns true, if a request is pending, which is not acknoweldedged yet
+     * @throws SignalInvalidException 
+     */
     public boolean isRequested() throws SignalInvalidException{
         boolean result;
         if (Thread.currentThread().equals(requestingModule)){
@@ -90,6 +113,10 @@ public class Handshake {
         return result;
     }
     
+    /**
+     * @return returns true, if an acknowledgement is pending
+     * @throws SignalInvalidException 
+     */
     public boolean isAcknowledged() throws SignalInvalidException{
         boolean result;
         if (Thread.currentThread().equals(acknowledgingModule)){
@@ -122,23 +149,7 @@ public class Handshake {
         }
         return getClass().getSimpleName() + '(' + identifier + ' ' + requestingModule.getName() + " <-> " + acknowledgingModule.getName() + " status = " + status +')';
     }
-    
-    private class HandshakeEvent extends LogicalBecomes{
-        public HandshakeEvent(Logical logical){
-            super(logical, true);
-        }        
- 
-        @Override
-        public boolean fire() throws ProcessException {
-            boolean occured = super.fire();
-            if (occured){
-               //reset handshake signal immediateley
-               logical.set(false);
-            }
-            return occured;
-        }    
-    }
-    
+        
     private class ResetRequestRunner implements Runnable{
         @Override
         public void run() {

@@ -154,7 +154,7 @@ import org.apache.log4j.Logger;
          * used to plug a pin into another pin
          * @param jackPin the other pin
          */
-        public void plug(Pin jackPin) throws PlugIncompatibleException, SignalAlreadyConnectedException{
+        public void plug(Pin jackPin) throws PlugIncompatibleException, SignalAlreadyConnectedException, SignalAlreadyExistsException{
             if (Log.isDebugEnabled()) Log.debug(this + ".plug(" + jackPin + ")");
             //check compatibility
             if (!isCompatible(jackPin)){

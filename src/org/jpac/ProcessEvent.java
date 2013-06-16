@@ -258,7 +258,7 @@ public abstract class ProcessEvent extends Fireable{
      * used to check, if the process event timed out, while has been await()'ed by a module
      * @return 
      */
-    public boolean isTimedout() {
+    public boolean evaluateTimedOutCondition() {
         boolean localTimedout = false;
         if (timeoutActive){
             localTimedout = this.timedout || (System.nanoTime() - getTimeoutNanoTime()) > 0;
@@ -269,6 +269,15 @@ public abstract class ProcessEvent extends Fireable{
         }
         return localTimedout;
     }
+    
+    /**
+     * 
+     * @return true, if this process event has been timed out in this cycle 
+     */
+    public boolean isTimedout() {
+        return this.timedout;
+    }
+    
 
     private String getStatusString(){
         if (statusString == null){

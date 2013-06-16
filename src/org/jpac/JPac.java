@@ -148,29 +148,49 @@ public class JPac extends Thread{
     
     private int             incrementCounter;
     private int             decrementCounter;
+
+    private boolean         stopBeforeStartup;
     
     class ShutdownHook extends Thread{
 
         public ShutdownHook(){
             setName(getClass().getSimpleName());
         }
+        
+        private void waitUntilShutdownComplete(){
+            int times100ms;
+            for(times100ms = 0; times100ms < 100 && !readyToShutdown; times100ms++){
+                try {Thread.sleep(100);}catch(InterruptedException ex) {}
+            }
+            if (times100ms == 100){
+                //automation controller did not finish in time
+                Log.error("jPac stopped abnormaly !");
+            }            
+        }
+        
         @Override
         public void run() {
-            if (Log.isInfoEnabled()) Log.info("shutdown requested. Informing the automation controller ...");
-            if (!readyToShutdown){
-                shutdownRequest.request();
-                //wait until the automation controller stopped all modules but no longer than 10 s
-                int times100ms;
-                for(times100ms = 0; times100ms < 100 && !readyToShutdown; times100ms++){
-                    try {Thread.sleep(100);}catch(InterruptedException ex) {}
-                }
-                if (times100ms == 100){
-                    //automation controller did not finish in time
-                    Log.error("automation controller stopped abnormaly !");
-                }
-            }
-            else{
-                if (Log.isInfoEnabled()) Log.info("automation controller already shutdown");
+            if (Log.isInfoEnabled()) Log.info("shutdown requested. Informing jPac ...");
+//    public      enum    Status{initializing, ready, running, halted};
+            switch (status){
+                case initializing:
+                case ready:
+                    //JPac has been initialized but did start cycling
+                    stopBeforeStartUp();
+                    waitUntilShutdownComplete();                    
+                    break;
+                case running:
+                    if (!readyToShutdown){
+                        shutdownRequest.request();
+                        waitUntilShutdownComplete();                    
+                    }
+                    else{
+                        if (Log.isInfoEnabled()) Log.info("automation controller already shutdown");
+                    }
+                    break;
+                case halted:
+                    //nothing to do
+                    break;
             }
             if (Log.isInfoEnabled()) Log.info("shutdown complete");
         }
@@ -483,12 +503,19 @@ public class JPac extends Thread{
         long    systemLoadStartTime  = 0L; //used to compute the system histogramm
         long    modulesLoadStartTime = 0L; //used to compute the modules histogramm
         
-        if (Log.isInfoEnabled()) Log.info(">>>>>>> starting automation controller ");
+        if (Log.isInfoEnabled()) Log.info("STARTING");
         try{
             try{
                 //wait, until start up is requested
                 setStatus(Status.ready);
                 waitForStartUpSignal();
+                if (stopBeforeStartup){
+                    //termination requested before first cycle (see ShutdownHook)
+                    //shut down immediately
+                    if (Log.isInfoEnabled()) Log.info("SHUTDOWN COMPLETE");
+                    readyToShutdown = true;// inform the shutdown hook that we are done
+                    return;
+                }
                 prepareTrace();
                 prepareHistogramms();
                 prepareRemoteConnections();                
@@ -504,6 +531,7 @@ public class JPac extends Thread{
                 invokeShutdownByMySelf(EXITCODEINITIALIZATIONERROR);
             }
             
+            if (Log.isInfoEnabled()) Log.info("running in " + cycleMode + " mode ...");
             setStatus(Status.running);
             running = true;
             if (getCycleMode() == CycleMode.OneCycle){
@@ -613,7 +641,7 @@ public class JPac extends Thread{
                     Log.error("Error: while saving the configuration",exc);
                 }
             }
-            if (Log.isInfoEnabled()) Log.info("shutdown complete");
+            if (Log.isInfoEnabled()) Log.info("SHUTDOWN COMPLETE");
             readyToShutdown = true;// inform the shutdown hook that we are done
             try{sleep(MAXSHUTDOWNTIME);} catch (InterruptedException ex){}
             //jUnit test need special handling
@@ -638,9 +666,11 @@ public class JPac extends Thread{
                 //or if it is a ProcessEvent and an emergency stop is pending and the ProcessEvent is not awaited by a module, which threw
                 //an emergency stop exception during the last cycle,
                 //or if it is a ProcessEvent and it timed out during this cycle
-                fired = f.evaluateFiredCondition() ||
+                boolean fFired    = f.evaluateFiredCondition();
+                boolean fTimedOut = (f instanceof ProcessEvent) && ((ProcessEvent)f).evaluateTimedOutCondition();
+                fired = fFired ||
                         (f instanceof ProcessEvent && (emergencyStopIsToBeThrown && !((ProcessEvent)f).getObservingModule().isRequestingEmergencyStop()) ||
-                                                       ((ProcessEvent)f).isTimedout()                                                                      );
+                                                       fTimedOut                                                                                       );
             }
             catch(ProcessException exc){
                 //the fireable threw a process exception
@@ -732,9 +762,9 @@ public class JPac extends Thread{
                 if (pauseOnBreakPoint){
                     //a module might have run on a break point
                     //wait until all modules have completed their tasks without time limit
-                    if (Log.isInfoEnabled()) Log.info("JPac paused ...");
+                    if (Log.isInfoEnabled()) Log.info("jPac paused ...");
                     activeEventsLock.waitForUnlock();                    
-                    if (Log.isInfoEnabled()) Log.info("JPac continued ...");
+                    if (Log.isInfoEnabled()) Log.info("jPac continued ...");
                 }
                 else{
                     //assert failure, if at least one fired event
@@ -1012,7 +1042,6 @@ public class JPac extends Thread{
         if (Log.isInfoEnabled()) Log.info("awaiting start up signal ...");
         startCycling.waitForRequest();
         startCycling.acknowledge();
-        if (Log.isInfoEnabled()) Log.info(">>> starting up in " + cycleMode + " mode ...");
     }
 
     protected void waitForStartCycleSignal(){
@@ -1289,5 +1318,11 @@ public class JPac extends Thread{
     
     public AbstractModule getProcessedModule(){
         return this.processedModule;
+    }
+    
+    public void stopBeforeStartUp(){
+        if (Log.isInfoEnabled()) Log.info("aborting jPac before startup");
+        this.stopBeforeStartup = true;
+        startCycling.request();
     }
 }

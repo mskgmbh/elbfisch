@@ -61,9 +61,13 @@ public class SignalRegistry {
      * used to add a signal to the registry
      * @param signal
      */
-    public void add(Signal signal){
+    public void add(Signal signal) throws SignalAlreadyExistsException{
+        String identifier = signal.getContainingModule().getQualifiedName() + '.' + signal.getIdentifier();
+        if (signalIndices.get(identifier) != null){
+            throw new SignalAlreadyExistsException(signal);
+        }
         signals.add(lastIndex, signal);
-        signalIndices.put(signal.getContainingModule().getQualifiedName() + '.' + signal.getIdentifier(), lastIndex);
+        signalIndices.put(identifier, lastIndex);
         lastIndex++;
     }
 

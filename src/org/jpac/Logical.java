@@ -40,7 +40,7 @@ public class Logical extends Signal{
      * @param containingModule: module, this signal is contained in
      * @param identifier: identifier of the signal
      */
-    public Logical(AbstractModule containingModule, String identifier){
+    public Logical(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         super(containingModule, identifier);
         value           = new LogicalValue();
         propagatedValue = new LogicalValue(); 
@@ -54,7 +54,7 @@ public class Logical extends Signal{
      * @param identifier: identifier of the signal
      * @param defaultState: default state of this logical
      */
-    public Logical(AbstractModule containingModule, String identifier, boolean defaultState){
+    public Logical(AbstractModule containingModule, String identifier, boolean defaultState) throws SignalAlreadyExistsException{
         this(containingModule, identifier);
         this.initializing = true;//prevent signal access assertion
         try{set(defaultState);}catch(SignalAccessException exc){/*cannot happen*/};

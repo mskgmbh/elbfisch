@@ -139,7 +139,6 @@ public abstract class AsynchronousTask{
         }
         
         public void invoke(boolean startStop){
-            done           = false;
             if (startStop){ 
                 startRequested = true;
                 stopRequested  = false;
@@ -149,12 +148,14 @@ public abstract class AsynchronousTask{
                 stopRequested  = true;
             }
             if (!this.isAlive() && startRequested){
+                done = false;
                 start();
             }
             else{
                 synchronized(this){
                     notify();
                 }
+                done = true;
             }
         }
         
@@ -163,10 +164,18 @@ public abstract class AsynchronousTask{
         }
     }
     
+    /**
+     * 
+     * @return true, if the asynchronous task has come to an end 
+     */
+    public boolean isFinished(){
+        return task.isDone();
+    }
+    
     private class Finished extends ProcessEvent{
         @Override
         public boolean fire() throws ProcessException {
-            return task.isDone();
+            return isFinished();
         }
     }
 }

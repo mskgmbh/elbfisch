@@ -42,20 +42,25 @@ public abstract class Signal extends Observable implements Observer, Assignable{
     
     private class ConnectionTask{
         private ConnTask task;
-        private Object   targetSignal;
+        private Object   target;
 
         private ConnectionTask(ConnTask task, Signal targetSignal) {
-            this.task         = task;
-            this.targetSignal = targetSignal;
+            this.task   = task;
+            this.target = targetSignal;
         }  
 
         private ConnectionTask(ConnTask task, RemoteSignalOutput targetSignal) {
-            this.task         = task;
-            this.targetSignal = targetSignal;
+            this.task   = task;
+            this.target = targetSignal;
+        }  
+
+        private ConnectionTask(ConnTask task, SignalObserver targetObserver) {
+            this.task   = task;
+            this.target = targetObserver;
         }  
     }
     
-    private   enum ConnTask{CONNECT,DISCONNECT, REMOTECONNECT, REMOTEDISCONNECT};
+    private   enum ConnTask{CONNECT,DISCONNECT, REMOTECONNECT, REMOTEDISCONNECT, SIGNALOBSERVERCONNECT, SIGNALOBSERVERDISCONNECT};
     
     static    Logger Log = Logger.getLogger("jpac.Signal");
     private   String                     identifier;
@@ -76,7 +81,7 @@ public abstract class Signal extends Observable implements Observer, Assignable{
     
     protected boolean                    initializing;
     
-    public Signal(AbstractModule containingModule, String identifier){
+    public Signal(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         super();
         this.identifier                      = identifier;
         this.lastChangeCycleNumber           = 0L;
@@ -122,16 +127,22 @@ public abstract class Signal extends Observable implements Observer, Assignable{
                 for (ConnectionTask ct: connectionTasks){
                     switch(ct.task){
                         case CONNECT:
-                            deferredConnect((Signal)ct.targetSignal);
+                            deferredConnect((Signal)ct.target);
                             break;
                         case DISCONNECT:
-                            deferredDisconnect((Signal)ct.targetSignal);
+                            deferredDisconnect((Signal)ct.target);
                             break;
                         case REMOTECONNECT:
-                            deferredConnect((RemoteSignalOutput)ct.targetSignal);
+                            deferredConnect((RemoteSignalOutput)ct.target);
                             break;
                         case REMOTEDISCONNECT:
-                            deferredDisconnect((RemoteSignalOutput)ct.targetSignal);
+                            deferredDisconnect((RemoteSignalOutput)ct.target);
+                            break;
+                        case SIGNALOBSERVERCONNECT:
+                            deferredConnect((SignalObserver)ct.target);
+                            break;
+                        case SIGNALOBSERVERDISCONNECT:
+                            deferredDisconnect((SignalObserver)ct.target);
                             break;
                     }
                 }
@@ -229,6 +240,45 @@ public abstract class Signal extends Observable implements Observer, Assignable{
         //invalidate target signal
         targetSignal.invalidate();
         observingRemoteSignalOutputs.remove(targetSignal);
+    }
+
+    /**
+     * used to connect a signal to a signal observer. One signal can be connected
+     * to multiple signal observers.
+     * @param targetObserver
+     */
+    public void connect(SignalObserver targetObserver) throws SignalAlreadyConnectedException{
+        if (Log.isDebugEnabled()) Log.debug(this + ".connect(" + targetObserver + ")");
+        if (targetObserver.isConnectedAsTarget()){
+            throw new SignalAlreadyConnectedException(targetObserver);
+        }
+        connectionTasks.add(new ConnectionTask(ConnTask.SIGNALOBSERVERCONNECT, targetObserver));
+        //invoke propagation of the state of this signal to the new target
+        super.setChanged();
+    }
+    
+    /**
+     * used to disconnect a signal from another signal
+     * @param targetObserver
+     */
+    public void disconnect(SignalObserver targetObserver){
+        if (Log.isDebugEnabled()) Log.debug(this + ".disconnect(" + targetObserver + ")");
+        connectionTasks.add(new ConnectionTask(ConnTask.SIGNALOBSERVERDISCONNECT, targetObserver));
+    }
+
+    protected void deferredConnect(SignalObserver targetObserver) throws SignalAlreadyConnectedException{
+        if (Log.isDebugEnabled()) Log.debug(this + ".deferredConnect(" + targetObserver + ")");
+        if (targetObserver.isConnectedAsTarget()){
+            throw new SignalAlreadyConnectedException(targetObserver);
+        }
+        addObserver(targetObserver);
+        targetObserver.setConnectedAsTarget(true);
+    }
+    
+    protected void deferredDisconnect(SignalObserver targetObserver){
+        if (Log.isDebugEnabled()) Log.debug(this + ".deferredDisconnect(" + targetObserver + ")");
+        deleteObserver(targetObserver);
+        targetObserver.setConnectedAsTarget(false);
     }
 
     /**

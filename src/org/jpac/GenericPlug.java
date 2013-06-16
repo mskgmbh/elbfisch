@@ -43,7 +43,7 @@ public class GenericPlug extends Plug{
         this(containingModule, (String)null);
     }
 
-    protected GenericPlug(AbstractModule containingModule, Plug jack, String identifier) throws PlugIncompatibleException, SignalAlreadyConnectedException, PinAlreadyAssignedException{
+    protected GenericPlug(AbstractModule containingModule, Plug jack, String identifier) throws PlugIncompatibleException, SignalAlreadyConnectedException, PinAlreadyAssignedException, SignalAlreadyExistsException{
         this(containingModule, identifier);
         this.jack = jack;
         doPlug(jack);
@@ -58,14 +58,14 @@ public class GenericPlug extends Plug{
      */
     @Override
     @SuppressWarnings("empty-statement")
-    public void plug(Plug jack) throws PlugIncompatibleException, SignalAlreadyConnectedException{
+    public void plug(Plug jack) throws PlugIncompatibleException, SignalAlreadyConnectedException, SignalAlreadyExistsException{
         if (Log.isDebugEnabled()) Log.debug(this + ".plug(" + jack + ")");
         //add a new pin and assign a counterpart of the jack to it
         plugAplug(jack, this);
     }
 
 
-    protected void doPlug(Plug jack) throws PlugIncompatibleException, SignalAlreadyConnectedException, PinAlreadyAssignedException{
+    protected void doPlug(Plug jack) throws PlugIncompatibleException, SignalAlreadyConnectedException, PinAlreadyAssignedException, SignalAlreadyExistsException{
         Assignable item;
 
         if (Log.isDebugEnabled()) Log.debug(this + ".plug(" + jack + ")");
@@ -93,7 +93,7 @@ public class GenericPlug extends Plug{
     }
 
     @SuppressWarnings("empty-statement")
-    private void plugAplug(Plug item, Assignable referencingItem) throws PlugIncompatibleException, SignalAlreadyConnectedException{
+    private void plugAplug(Plug item, Assignable referencingItem) throws PlugIncompatibleException, SignalAlreadyConnectedException, SignalAlreadyExistsException{
         String identifier = getContextualIdentifier(item, referencingItem);
         try{addPin(nextPinNumber++).assign(new GenericPlug(getContainingModule(), (Plug)item, identifier));}catch(PinAlreadyAssignedException exc){/*cannot be thrown*/}
     }
@@ -119,7 +119,7 @@ public class GenericPlug extends Plug{
 //    }
 
     @SuppressWarnings("empty-statement")
-    private void plugAsignal(Signal jackSignal, Pin jackPin) throws SignalAlreadyConnectedException, PinAlreadyAssignedException{
+    private void plugAsignal(Signal jackSignal, Pin jackPin) throws SignalAlreadyConnectedException, PinAlreadyAssignedException, SignalAlreadyExistsException{
         Pin     ownPin     = null;
         Signal  ownSignal;
         String  ownPinId   = null;
@@ -146,7 +146,7 @@ public class GenericPlug extends Plug{
         }
     }
 
-    private Signal createSuitableSignal(Signal signal){
+    private Signal createSuitableSignal(Signal signal) throws SignalAlreadyExistsException{
         Signal    newSignal     = null;
         if (signal instanceof Logical){
             newSignal = new Logical(getContainingModule(), signal.getIdentifier());

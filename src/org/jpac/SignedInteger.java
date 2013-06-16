@@ -44,7 +44,7 @@ public class SignedInteger extends Signal{
      * @param minValue: minimum value signalValid for this signed integer
      * @param maxValue: maximum value signalValid for this signed integer
      */
-    public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue){
+    public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue) throws SignalAlreadyExistsException{
         super(containingModule, identifier);
         this.minValue           = minValue;
         this.maxValue           = maxValue;
@@ -63,7 +63,7 @@ public class SignedInteger extends Signal{
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
      */
-    public SignedInteger(AbstractModule containingModule, String identifier){
+    public SignedInteger(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         this(containingModule, identifier, 0, 0);
         this.rangeChecked = false;
     }    
@@ -74,7 +74,7 @@ public class SignedInteger extends Signal{
      * @param identifier: identifier of the signal
      * @param defaultValue: default value of the signal
      */
-    public SignedInteger(AbstractModule containingModule, String identifier, int defaultValue){
+    public SignedInteger(AbstractModule containingModule, String identifier, int defaultValue) throws SignalAlreadyExistsException{
         this(containingModule, identifier);
         this.initializing = true;//prevent signal access assertion
         try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/}catch(NumberOutOfRangeException exc){/*cannot happen*/};
@@ -90,7 +90,7 @@ public class SignedInteger extends Signal{
      * @param defaultValue: default value of the decimal
      * @throws NumberOutOfRangeException: if the default value is less than minValue or greater than maxValue
      */
-    public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue, int defaultValue) throws NumberOutOfRangeException{
+    public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue, int defaultValue) throws NumberOutOfRangeException, SignalAlreadyExistsException{
         this(containingModule, identifier, minValue, maxValue);
         this.initializing = true;//prevent signal access assertion
         try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/};

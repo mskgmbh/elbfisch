@@ -26,6 +26,8 @@
 
 package org.jpac;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -79,8 +81,12 @@ public class LogicalEventTest {
             }
 
             private void initialize() {
-                lo10 = new Logical(this,"lo10");
-                lo11 = new Logical(this,"lo11");
+                try {
+                    lo10 = new Logical(this,"lo10");
+                    lo11 = new Logical(this,"lo11");
+                } catch (SignalAlreadyExistsException ex) {
+                    Log.error("Error", ex);
+                }
             }
 
             @Override

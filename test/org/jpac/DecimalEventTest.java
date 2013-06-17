@@ -25,6 +25,8 @@
 
 package org.jpac;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -81,8 +83,12 @@ public class DecimalEventTest {
             }
 
             private void initialize() {
-                lo10 = new Decimal(this,"lo10");
-                lo11 = new Decimal(this,"lo11");
+                try {
+                    lo10 = new Decimal(this,"lo10");
+                    lo11 = new Decimal(this,"lo11");
+                } catch (SignalAlreadyExistsException ex) {
+                    Log.error("Error", ex);
+                }
             }
 
             @Override

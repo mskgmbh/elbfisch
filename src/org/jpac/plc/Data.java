@@ -33,14 +33,33 @@ import java.util.ArrayList;
  * several plc side datatypes.
  */
 public abstract class Data {
+    public enum Endianness {LITTLEENDIAN,BIGENDIAN};
     protected final byte[]       bitMask = {(byte)0x01,(byte)0x02,(byte)0x04,(byte)0x08,(byte)0x10,(byte)0x20,(byte)0x40,(byte)0x80};
     protected byte[]             bytes;
     protected byte[]             shadowBytes;
     protected boolean            bytesNew;
     protected ArrayList<Integer> modifiedByteIndices;
     
+    Endianness                   endianness;
+    
+    /**
+     * constructor. The endianness of the data item is set to "big endian".
+     * @param bytes
+     */
     public Data(byte[] bytes){
+        this(bytes, Endianness.BIGENDIAN);
+    }
+
+    /**
+     * constructor
+     * @param bytes
+     * @param endianness used to set the endianness of this data item. This setting decides if the 
+     *                   bytes inside this data item are interpreted as little endian or big endian.
+     *                   The default is "big endian"
+     */
+    public Data(byte[] bytes, Endianness endianness){
         this.setBytes(bytes);
+        this.endianness = endianness;
     }
 
     /**
@@ -113,12 +132,21 @@ public abstract class Data {
      * @return the word value
      * @throws AddressException
      */
-public int getWORD(int byteIndex) throws AddressException {
+    public int getWORD(int byteIndex) throws AddressException {
+        int highByte;
+        int word;
         if (byteIndex < 0 || byteIndex + 1 >= getBytes().length){
             throw new AddressException("byte index " + byteIndex + " invalid");
         }
-        int highByte = (getBytes()[byteIndex] & 0x000000FF) << 8;
-        return highByte + (getBytes()[byteIndex + 1] & 0x000000FF);
+        if (endianness == Endianness.BIGENDIAN){
+            highByte = (getBytes()[byteIndex] & 0x000000FF) << 8;
+            word =  highByte + (getBytes()[byteIndex + 1] & 0x000000FF);
+        }
+        else{
+            highByte = (getBytes()[byteIndex] & 0x000000FF);
+            word     = highByte + ((getBytes()[byteIndex + 1] & 0x000000FF) << 8);            
+        }
+        return word;
     }
 
     /**
@@ -127,15 +155,21 @@ public int getWORD(int byteIndex) throws AddressException {
      * @param value the value
      * @throws AddressException
      */
-public void setWORD(int byteIndex, int value) throws AddressException, ValueOutOfRangeException {
+    public void setWORD(int byteIndex, int value) throws AddressException, ValueOutOfRangeException {
         if (value > 0x0000FFFF || value < 0){
             throw new ValueOutOfRangeException("value: " + value);
         }
         if (byteIndex < 0 || byteIndex + 1 >= getBytes().length){
             throw new AddressException("byte index " + byteIndex + " invalid");
         }
-        getBytes()[byteIndex]     = (byte)(value >> 8);
-        getBytes()[byteIndex + 1] = (byte)value;
+        if (endianness == Endianness.BIGENDIAN){
+            getBytes()[byteIndex]     = (byte)(value >> 8);
+            getBytes()[byteIndex + 1] = (byte)value;
+        }
+        else{
+            getBytes()[byteIndex]     = (byte)value;
+            getBytes()[byteIndex + 1] = (byte)(value >> 8);            
+        }
     }
 
     /**
@@ -144,7 +178,7 @@ public void setWORD(int byteIndex, int value) throws AddressException, ValueOutO
      * @return the int value
      * @throws AddressException
      */
- public int getINT(int byteIndex) throws AddressException {
+    public int getINT(int byteIndex) throws AddressException {
         int word = getWORD(byteIndex);
         return word > Short.MAX_VALUE ? word | 0xFFFF0000 : word;
     }
@@ -155,15 +189,21 @@ public void setWORD(int byteIndex, int value) throws AddressException, ValueOutO
      * @param value the value
      * @throws AddressException
      */
-public void setINT(int byteIndex, int value) throws AddressException, ValueOutOfRangeException {
+    public void setINT(int byteIndex, int value) throws AddressException, ValueOutOfRangeException {
         if (value > Short.MAX_VALUE || value < Short.MIN_VALUE){
             throw new ValueOutOfRangeException("value: " + value);
         }
         if (byteIndex < 0 || byteIndex + 1 >= getBytes().length){
             throw new AddressException("byte index " + byteIndex + " invalid");
         }
-        getBytes()[byteIndex]     = (byte)(value >> 8);
-        getBytes()[byteIndex + 1] = (byte)value;
+        if (endianness == Endianness.BIGENDIAN){
+            getBytes()[byteIndex]     = (byte)(value >> 8);
+            getBytes()[byteIndex + 1] = (byte)value;
+        }
+        else{
+            getBytes()[byteIndex]     = (byte)value;
+            getBytes()[byteIndex + 1] = (byte)(value >> 8);            
+        }
     }
 
     /**
@@ -172,14 +212,23 @@ public void setINT(int byteIndex, int value) throws AddressException, ValueOutOf
      * @return the value
      * @throws AddressException
      */
- public long getDWORD(int byteIndex) throws AddressException {
+    public long getDWORD(int byteIndex) throws AddressException {
+        long value;
         if (byteIndex < 0 || byteIndex + 3 >= getBytes().length){
             throw new AddressException("byte index " + byteIndex + " invalid");
         }
-        long value =                (bytes[byteIndex]     & 0x000000FF);
+        if (endianness == Endianness.BIGENDIAN){
+             value =                (bytes[byteIndex]     & 0x000000FF);
              value = (value << 8) + (bytes[byteIndex + 1] & 0x000000FF);
              value = (value << 8) + (bytes[byteIndex + 2] & 0x000000FF);
              value = (value << 8) + (bytes[byteIndex + 3] & 0x000000FF);
+        }
+        else{
+             value =                (bytes[byteIndex + 3] & 0x000000FF);
+             value = (value << 8) + (bytes[byteIndex + 2] & 0x000000FF);
+             value = (value << 8) + (bytes[byteIndex + 1] & 0x000000FF);
+             value = (value << 8) + (bytes[byteIndex]     & 0x000000FF);            
+        }
         return value;
     }
 
@@ -188,17 +237,25 @@ public void setINT(int byteIndex, int value) throws AddressException, ValueOutOf
      * @param byteIndex byte offset inside the data buffer
      * @throws AddressException
      */
-  public void setDWORD(int byteIndex, long value) throws AddressException, ValueOutOfRangeException {
+    public void setDWORD(int byteIndex, long value) throws AddressException, ValueOutOfRangeException {
         if (value > 0xFFFFFFFFL || value < 0){
             throw new ValueOutOfRangeException("value: " + value);
         }
         if (byteIndex < 0 || byteIndex + 3 >= getBytes().length){
             throw new AddressException("byte index " + byteIndex + " invalid");
         }
-        bytes[byteIndex]     = (byte)(value >> 24);
-        bytes[byteIndex + 1] = (byte)(value >> 16);
-        bytes[byteIndex + 2] = (byte)(value >>  8);
-        bytes[byteIndex + 3] = (byte)value;
+        if (endianness == Endianness.BIGENDIAN){
+            bytes[byteIndex]     = (byte)(value >> 24);
+            bytes[byteIndex + 1] = (byte)(value >> 16);
+            bytes[byteIndex + 2] = (byte)(value >>  8);
+            bytes[byteIndex + 3] = (byte)value;
+        }
+        else{
+            bytes[byteIndex + 3] = (byte)(value >> 24);
+            bytes[byteIndex + 2] = (byte)(value >> 16);
+            bytes[byteIndex + 1] = (byte)(value >>  8);
+            bytes[byteIndex]     = (byte)value;            
+        }
     }
 
     /**
@@ -207,14 +264,23 @@ public void setINT(int byteIndex, int value) throws AddressException, ValueOutOf
      * @return the value
      * @throws AddressException
      */
- public int getDINT(int byteIndex) throws AddressException {
+    public int getDINT(int byteIndex) throws AddressException {
+        int value;
         if (byteIndex < 0 || byteIndex + 3 >= getBytes().length){
             throw new AddressException("byte index " + byteIndex + " invalid");
         }
-        int value =                (bytes[byteIndex]     & 0x000000FF);
+        if (endianness == Endianness.BIGENDIAN){
+            value =                (bytes[byteIndex]     & 0x000000FF);
             value = (value << 8) + (bytes[byteIndex + 1] & 0x000000FF);
             value = (value << 8) + (bytes[byteIndex + 2] & 0x000000FF);
             value = (value << 8) + (bytes[byteIndex + 3] & 0x000000FF);
+        }
+        else{
+            value =                (bytes[byteIndex + 3] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 2] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 2] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex]     & 0x000000FF);            
+        }
         return value;
     }
 
@@ -223,14 +289,22 @@ public void setINT(int byteIndex, int value) throws AddressException, ValueOutOf
      * @param byteIndex byte offset inside the data buffer
      * @throws AddressException
      */
-   public void setDINT(int byteIndex, int value) throws AddressException {
+    public void setDINT(int byteIndex, int value) throws AddressException {
         if (byteIndex < 0 || byteIndex + 3 >= getBytes().length){
             throw new AddressException("byte index " + byteIndex + " invalid");
         }
-        bytes[byteIndex]     = (byte)(value >> 24);
-        bytes[byteIndex + 1] = (byte)(value >> 16);
-        bytes[byteIndex + 2] = (byte)(value >>  8);
-        bytes[byteIndex + 3] = (byte)value;
+        if (endianness == Endianness.BIGENDIAN){
+            bytes[byteIndex]     = (byte)(value >> 24);
+            bytes[byteIndex + 1] = (byte)(value >> 16);
+            bytes[byteIndex + 2] = (byte)(value >>  8);
+            bytes[byteIndex + 3] = (byte)value;
+        }
+        else{
+            bytes[byteIndex + 3] = (byte)(value >> 24);
+            bytes[byteIndex + 2] = (byte)(value >> 16);
+            bytes[byteIndex + 1] = (byte)(value >>  8);
+            bytes[byteIndex]     = (byte)value;            
+        }
     }
 
     /**
@@ -239,7 +313,7 @@ public void setINT(int byteIndex, int value) throws AddressException, ValueOutOf
      * @return the value
      * @throws AddressException
      */
-  public PlcString getSTRING(int byteIndex, int maxLength) throws StringLengthException, AddressException {
+    public PlcString getSTRING(int byteIndex, int maxLength) throws StringLengthException, AddressException {
         if (byteIndex < 0 || byteIndex +  1 >= getBytes().length){
             throw new AddressException("byte index " + byteIndex + " invalid");
         }

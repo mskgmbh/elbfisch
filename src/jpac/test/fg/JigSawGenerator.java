@@ -26,10 +26,10 @@
 package jpac.test.fg;
 
 import org.jpac.AbstractModule;
-import org.jpac.Logical;
 import org.jpac.Decimal;
 import org.jpac.Fireable;
 import org.jpac.InputInterlockException;
+import org.jpac.Logical;
 import org.jpac.Module;
 import org.jpac.MonitorException;
 import org.jpac.OutputInterlockException;
@@ -45,7 +45,7 @@ import org.jpac.ShutdownRequestException;
 public class JigSawGenerator extends Module{
     final private double MAXVALUE  = 1.0;
     final private double MINVALUE  = 0.0;
-    final private double INCREMENT = 0.01;
+    final private double INCREMENT = 0.01234567;
 
     //user defined process event. Will be fired, when all
     //input signal went valid
@@ -88,9 +88,14 @@ public class JigSawGenerator extends Module{
     }
 
     private void initialize(){
-        //instantiate own output signals
-        valid        = new Logical(this, "valid");
-        analogOutput = new Decimal(this, "analogOutput",MINVALUE,MAXVALUE);
+        try{
+            //instantiate own output signals
+            valid        = new Logical(this, "valid");
+            analogOutput = new Decimal(this, "analogOutput",MINVALUE,MAXVALUE);
+        }
+        catch(Exception exc){
+            
+        }
     }
 
     @Override

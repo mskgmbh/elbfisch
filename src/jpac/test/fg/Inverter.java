@@ -64,8 +64,13 @@ public class Inverter extends Module{
     }
 
     private void initialize(){
-        analogInput = new Decimal(this, "analogIn");
-        analogOutput = new Decimal(this, "analogOutput");
+        try{
+            analogInput = new Decimal(this, "analogIn");
+            analogOutput = new Decimal(this, "analogOutput");
+        }
+        catch(Exception exc){
+            Log.error("Error: ", exc);
+        }
     }
 
     @Override

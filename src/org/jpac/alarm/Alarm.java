@@ -32,6 +32,7 @@ import org.jpac.Logical;
 import org.jpac.LogicalValue;
 import org.jpac.Signal;
 import org.jpac.SignalAccessException;
+import org.jpac.SignalAlreadyExistsException;
 import org.jpac.SignalInvalidException;
 
 
@@ -63,6 +64,7 @@ public class Alarm extends Signal{
     };
     
     protected class AcknowledgedRunner implements Runnable{
+        @Override
         public void run() {
             setAcknowlegded(true);
         }
@@ -78,18 +80,21 @@ public class Alarm extends Signal{
     private boolean            resetOnAcknowledgement;
     private boolean            invertOnUpdate;   
     private Severity           severity;
+    private Integer            number;
     
     /**
      * constructs an alarm
      * @param containingModule: module which instantiated the alarm
-     * @param identifier: identifier of the signal
+     * @param identifier: unique identifier of the alarm
+     * @param number: a unique number of the alarm (optional, default = null)
      * @param message: a message, that can be displayed over a GUI
-     * @param resetOnAcknowledgement: if true, the alarm will be automatically reset on acknowledgement by the user
-     * @param severity: severity of the alarm: ALARM, WARNING, MESSAGE
+     * @param resetOnAcknowledgement: if true, the alarm will be automatically reset on acknowledgement by the user 
+     * @param severity: severity of the alarm: ALARM, WARNING, MESSAGE (optional, default = Severity.MESSAGE)
      */
-    public Alarm(AbstractModule containingModule, String identifier, String message, boolean resetOnAcknowledgement, Severity severity){
+    public Alarm(AbstractModule containingModule, String identifier, Integer number, String message, boolean resetOnAcknowledgement, Severity severity) throws SignalAlreadyExistsException{
         super(containingModule, identifier);
         this.message                = message;
+        this.number                 = number;
         this.value                  = new LogicalValue();
         this.propagatedValue        = new LogicalValue(); 
         this.acknowledged           = new LogicalValue();
@@ -103,6 +108,19 @@ public class Alarm extends Signal{
         AlarmQueue.getInstance().register(this);
     }
 
+
+    /**
+     * constructs an alarm with default severity MESSAGE
+     * @param containingModule: module which instantiated the alarm
+     * @param identifier: identifier of the signal
+     * @param message: a message, that can be displayed over a GUI
+     * @param resetOnAcknowledgement: if true, the alarm will be automatically reset on acknowledgement by the user
+     * @param severity: severity of the alarm: ALARM, WARNING, MESSAGE (optional, default = Severity.MESSAGE)
+     */
+    public Alarm(AbstractModule containingModule, String identifier, String message, boolean resetOnAcknowledgement, Severity severity) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, null, message, resetOnAcknowledgement, severity);
+    }
+
     /**
      * constructs an alarm with default severity MESSAGE
      * @param containingModule: module which instantiated the alarm
@@ -110,8 +128,8 @@ public class Alarm extends Signal{
      * @param message: a message, that can be displayed over a GUI
      * @param resetOnAcknowledgement: if true, the alarm will be automatically reset on acknowledgement by the user
      */
-    public Alarm(AbstractModule containingModule, String identifier, String message, boolean resetOnAcknowledgement){
-        this(containingModule, identifier, message, resetOnAcknowledgement, Severity.MESSAGE);
+    public Alarm(AbstractModule containingModule, String identifier, String message, boolean resetOnAcknowledgement) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, null, message, resetOnAcknowledgement, Severity.MESSAGE);
     }
     
     /**
@@ -285,4 +303,18 @@ public class Alarm extends Signal{
     public Severity getSeverity() {
         return severity;
     }
+    
+    /**
+     * @return the number
+     */
+    public Integer getNumber() {
+        return number;
+    }
+
+    /**
+     * @param number the number to set
+     */
+    public void setNumber(Integer number) {
+        this.number = number;
+    }    
 }

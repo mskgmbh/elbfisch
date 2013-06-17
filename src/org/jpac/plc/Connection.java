@@ -26,10 +26,10 @@
 
 package org.jpac.plc;
 
-import org.jpac.plc.Request.DATATYPE;
 import java.io.*;
 import org.apache.log4j.Logger;
 import org.jpac.IndexOutOfRangeException;
+import org.jpac.plc.Request.DATATYPE;
 
 /**
  * represents a TCP/IP connection to a plc or to a i/o device.

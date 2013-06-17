@@ -65,26 +65,26 @@ public class FunctionGenerator extends Module{
     }
 
     private void initialize(){
-        //the function generator can enabled and reset by another module ...
-        //instantiate 2 signals accordingly
-        jsgEnable       = new Logical(this, "enable");
-        jsgReset        = new Logical(this, "reset");
-        //the function generator consists of a jig saw generator ....
-        jsg             = new JigSawGenerator(this, "JigSawGenerator",jsgEnable, jsgReset);
-        //a clamp unit ...
-        clamp           = new Clamp(this, "ClampingUnit");
-        //... and an analog  inverter
-        inverter        = new Inverter(this, "AnalogInverter");
-
-        //the function generator provides 3 output signals:
-        //the output for the jig saw signal
-        signalOutput            = new Decimal(this, "SignalOutput",-100,100);
-        //an output for a clamped jig saw signal
-        clampedSignalOutput     = new Decimal(this, "ClampedOutput",-100,100);
-        //and an output which provides the inverted signal of "signalOutput"
-        invertedSignalOutput    = new Decimal(this, "InvertedOutput",-100,100);
-        
         try{
+            //the function generator can enabled and reset by another module ...
+            //instantiate 2 signals accordingly
+            jsgEnable       = new Logical(this, "enable");
+            jsgReset        = new Logical(this, "reset");
+            //the function generator consists of a jig saw generator ....
+            jsg             = new JigSawGenerator(this, "JigSawGenerator",jsgEnable, jsgReset);
+            //a clamp unit ...
+            clamp           = new Clamp(this, "ClampingUnit");
+            //... and an analog  inverter
+            inverter        = new Inverter(this, "AnalogInverter");
+
+            //the function generator provides 3 output signals:
+            //the output for the jig saw signal
+            signalOutput            = new Decimal(this, "SignalOutput",-100,100);
+            //an output for a clamped jig saw signal
+            clampedSignalOutput     = new Decimal(this, "ClampedOutput",-100,100);
+            //and an output which provides the inverted signal of "signalOutput"
+            invertedSignalOutput    = new Decimal(this, "InvertedOutput",-100,100);
+        
             //connect the analog output of the jig saw generator to the analog input of the clamp unit
             jsg.getAnalogOutput().connect(clamp.getAnalogInput());
             //connect the analog output of the jig saw generator to the analog input of the analog inverter
@@ -117,7 +117,7 @@ public class FunctionGenerator extends Module{
                 //Log.info("function generator : " + i);
                 i++;
             }
-            while(i < 10);
+            while(i < 100);
             shutdown(0);
             //throw new EmergencyStopException("stopped by function generator");
         }

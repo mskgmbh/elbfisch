@@ -25,6 +25,8 @@
 
 package org.jpac;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -71,8 +73,12 @@ public class ConnectTest {
             }
 
             private void initialize() {
-                dec10 = new Decimal(this,"dec10");
-                dec11 = new Decimal(this,"dec11");
+                try {
+                    dec10 = new Decimal(this,"dec10");
+                    dec11 = new Decimal(this,"dec11");
+                } catch (SignalAlreadyExistsException ex) {
+                    Log.error("Error: ", ex);
+                }
             }
 
             @Override

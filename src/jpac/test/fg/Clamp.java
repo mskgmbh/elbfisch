@@ -68,9 +68,14 @@ public class Clamp extends Module{
     }
 
     private void initialize(){
-        analogInput = new Decimal(this, "analogIn");
-        analogOutput = new Decimal(this, "analogOutput",MINVALUE,MAXVALUE);
-        accessTestDecimal = new Decimal(this,"accessTestDecimal");
+        try{
+            analogInput = new Decimal(this, "analogIn");
+            analogOutput = new Decimal(this, "analogOutput",MINVALUE,MAXVALUE);
+            accessTestDecimal = new Decimal(this,"accessTestDecimal");
+        }
+        catch(Exception exc){
+            Log.error("Error: ", exc);
+        }
     }
 
     @Override

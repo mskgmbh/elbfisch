@@ -59,6 +59,11 @@ public class CharStringValue implements Value, Cloneable, Serializable{
                aValue instanceof CharStringValue && this.value != null && this.value.equals(((CharStringValue)aValue).get());
     }
     
+    public boolean equals(String aValue) {
+        return this.value == null && aValue == null || 
+               this.value != null && this.value.equals(aValue);
+    }
+
     @Override
     public String toString(){
         return value;

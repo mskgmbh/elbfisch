@@ -42,14 +42,20 @@ public class DecimalValue implements Value, Cloneable, Serializable{
         return value;
     }
     
+    @Override
     public void copy(Value aValue){
         set(((DecimalValue)aValue).get());
     }
 
+    @Override
     public boolean equals(Value aValue) {
         return aValue instanceof DecimalValue && Math.abs(this.value - ((DecimalValue)aValue).get()) < 0.00000000000000001;
     }
     
+    public boolean equals(double aValue) {
+        return Math.abs(this.value - aValue) < 0.00000000000000001;
+    }
+
     @Override
     public String toString(){
         return Double.toString(value);

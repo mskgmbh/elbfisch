@@ -43,14 +43,20 @@ public class SignedIntegerValue implements Value, Cloneable, Serializable{
         return value;
     }
     
+    @Override
     public void copy(Value aValue){
         set(((SignedIntegerValue)aValue).get());
     }
 
+    @Override
     public boolean equals(Value aValue) {
         return aValue instanceof SignedIntegerValue && this.value == ((SignedIntegerValue)aValue).get();
     }
     
+    public boolean equals(int aValue) {
+        return this.value == aValue;
+    }
+
     @Override
     public String toString(){
         return Integer.toString(value);

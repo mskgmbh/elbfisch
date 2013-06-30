@@ -94,7 +94,7 @@ public abstract class Signal extends Observable implements Observer, Assignable{
         this.containingModule                = containingModule;
         this.observingSignals                = Collections.synchronizedSet(new HashSet<Signal>());
         this.observingRemoteSignalOutputs    = Collections.synchronizedSet(new HashSet<RemoteSignalOutput>());
-        this.connectionTasks                 = new ArrayBlockingQueue<ConnectionTask>(2000);
+        this.connectionTasks                 = new ArrayBlockingQueue<ConnectionTask>(100);
         this.value                           = null;
         this.propagatedValue                 = null; 
         this.initializing                    = false;
@@ -122,33 +122,28 @@ public abstract class Signal extends Observable implements Observer, Assignable{
     protected void handleConnections() throws SignalAlreadyConnectedException{
         //handle connection/disconnection of signals requested during last cycle
         //called inside the automation controller only
-        synchronized(connectionTasks){
-            if (!connectionTasks.isEmpty()){
-                for (ConnectionTask ct: connectionTasks){
-                    switch(ct.task){
-                        case CONNECT:
-                            deferredConnect((Signal)ct.target);
-                            break;
-                        case DISCONNECT:
-                            deferredDisconnect((Signal)ct.target);
-                            break;
-                        case REMOTECONNECT:
-                            deferredConnect((RemoteSignalOutput)ct.target);
-                            break;
-                        case REMOTEDISCONNECT:
-                            deferredDisconnect((RemoteSignalOutput)ct.target);
-                            break;
-                        case SIGNALOBSERVERCONNECT:
-                            deferredConnect((SignalObserver)ct.target);
-                            break;
-                        case SIGNALOBSERVERDISCONNECT:
-                            deferredDisconnect((SignalObserver)ct.target);
-                            break;
-                    }
-                }
-                //remove all entries inside the connection task list.
-                connectionTasks.clear();
-            }   
+        while(!connectionTasks.isEmpty()){
+            ConnectionTask ct = connectionTasks.remove();
+            switch(ct.task){
+                case CONNECT:
+                    deferredConnect((Signal)ct.target);
+                    break;
+                case DISCONNECT:
+                    deferredDisconnect((Signal)ct.target);
+                    break;
+                case REMOTECONNECT:
+                    deferredConnect((RemoteSignalOutput)ct.target);
+                    break;
+                case REMOTEDISCONNECT:
+                    deferredDisconnect((RemoteSignalOutput)ct.target);
+                    break;
+                case SIGNALOBSERVERCONNECT:
+                    deferredConnect((SignalObserver)ct.target);
+                    break;
+                case SIGNALOBSERVERDISCONNECT:
+                    deferredDisconnect((SignalObserver)ct.target);
+                    break;
+            }
         }
     }
     
@@ -164,7 +159,15 @@ public abstract class Signal extends Observable implements Observer, Assignable{
         if (targetSignal.isConnectedAsTarget()){
             throw new SignalAlreadyConnectedException(targetSignal);
         }
-        connectionTasks.add(new ConnectionTask(ConnTask.CONNECT, targetSignal));
+        try{
+            connectionTasks.add(new ConnectionTask(ConnTask.CONNECT, targetSignal));
+        }
+        catch(IllegalStateException exc){
+            Log.error("Error connectionTask queue full: ", exc);
+        }
+        catch(Exception exc){
+            Log.error("Error: ", exc);
+        }
         //invoke propagation of the state of this signal to the new target
         super.setChanged();
     }
@@ -175,7 +178,15 @@ public abstract class Signal extends Observable implements Observer, Assignable{
      */
     public void disconnect(Signal targetSignal){
         if (Log.isDebugEnabled()) Log.debug(this + ".disconnect(" + targetSignal + ")");
-        connectionTasks.add(new ConnectionTask(ConnTask.DISCONNECT, targetSignal));
+        try{
+            connectionTasks.add(new ConnectionTask(ConnTask.DISCONNECT, targetSignal));
+        }
+        catch(IllegalStateException exc){
+            Log.error("Error connectionTask queue full: ", exc);
+        }
+        catch(Exception exc){
+            Log.error("Error: ", exc);
+        }
     }
 
     protected void deferredConnect(Signal targetSignal) throws SignalAlreadyConnectedException{
@@ -209,7 +220,15 @@ public abstract class Signal extends Observable implements Observer, Assignable{
         if (targetSignal.isConnectedAsTarget()){
             throw new SignalAlreadyConnectedException(targetSignal);
         }
-        connectionTasks.add(new ConnectionTask(ConnTask.REMOTECONNECT, targetSignal));
+        try{
+            connectionTasks.add(new ConnectionTask(ConnTask.REMOTECONNECT, targetSignal));
+        }
+        catch(IllegalStateException exc){
+            Log.error("Error connectionTask queue full: ", exc);
+        }
+        catch(Exception exc){
+            Log.error("Error: ", exc);
+        }
         //invoke propagation of the state of this signal to the new target
         super.setChanged();
     }
@@ -220,7 +239,15 @@ public abstract class Signal extends Observable implements Observer, Assignable{
      */
     public void disconnect(RemoteSignalOutput targetSignal){
         if (Log.isDebugEnabled()) Log.debug(this + ".disconnect(" + targetSignal + ")");
-        connectionTasks.add(new ConnectionTask(ConnTask.REMOTEDISCONNECT, targetSignal));
+        try{
+            connectionTasks.add(new ConnectionTask(ConnTask.REMOTEDISCONNECT, targetSignal));
+        }
+        catch(IllegalStateException exc){
+            Log.error("Error connectionTask queue full: ", exc);
+        }
+        catch(Exception exc){
+            Log.error("Error: ", exc);
+        }
     }
 
     protected void deferredConnect(RemoteSignalOutput targetSignal) throws SignalAlreadyConnectedException{
@@ -252,7 +279,15 @@ public abstract class Signal extends Observable implements Observer, Assignable{
         if (targetObserver.isConnectedAsTarget()){
             throw new SignalAlreadyConnectedException(targetObserver);
         }
-        connectionTasks.add(new ConnectionTask(ConnTask.SIGNALOBSERVERCONNECT, targetObserver));
+        try{
+            connectionTasks.add(new ConnectionTask(ConnTask.SIGNALOBSERVERCONNECT, targetObserver));
+        }
+        catch(IllegalStateException exc){
+            Log.error("Error connectionTask queue full: ", exc);
+        }
+        catch(Exception exc){
+            Log.error("Error: ", exc);
+        }
         //invoke propagation of the state of this signal to the new target
         super.setChanged();
     }
@@ -263,7 +298,15 @@ public abstract class Signal extends Observable implements Observer, Assignable{
      */
     public void disconnect(SignalObserver targetObserver){
         if (Log.isDebugEnabled()) Log.debug(this + ".disconnect(" + targetObserver + ")");
-        connectionTasks.add(new ConnectionTask(ConnTask.SIGNALOBSERVERDISCONNECT, targetObserver));
+        try{
+            connectionTasks.add(new ConnectionTask(ConnTask.SIGNALOBSERVERDISCONNECT, targetObserver));
+        }
+        catch(IllegalStateException exc){
+            Log.error("Error connectionTask queue full: ", exc);
+        }
+        catch(Exception exc){
+            Log.error("Error: ", exc);
+        }
     }
 
     protected void deferredConnect(SignalObserver targetObserver) throws SignalAlreadyConnectedException{
@@ -284,6 +327,7 @@ public abstract class Signal extends Observable implements Observer, Assignable{
     /**
      * @return the identifier
      */
+    @Override
     public String getIdentifier() {
         return identifier;
     }
@@ -485,6 +529,7 @@ public abstract class Signal extends Observable implements Observer, Assignable{
        return compatible;
     }
     
+    @Override
     public void update(Observable o, Object arg){
         try{
             //take over the valid state of the source signal ...

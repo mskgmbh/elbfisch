@@ -26,9 +26,9 @@
 
 package org.jpac;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Stack;
-import java.util.ArrayList;
 import org.apache.log4j.Logger;
 import org.jpac.statistics.Histogramm;
 

@@ -40,7 +40,7 @@ import org.apache.log4j.Logger;
 public class RemoteSignalOutputDaemon extends Thread{
     static       Logger Log                = Logger.getLogger("jpac.Remote");
     static final long   STOPTDAEMONTIMEOUT = 3000000000L;// 3 sec.
-    static final int    CONNECTRETRYTIME   = 2000;       // 2 sec.
+    static final int    CONNECTRETRYTIME   = 5000;       // 5 sec.
     static final int    DEFAULTPUSHTIME    = 1000;       // 1 sec.
     
         
@@ -224,13 +224,13 @@ public class RemoteSignalOutputDaemon extends Thread{
                 //do nothing
             }
             catch(java.rmi.ConnectException exc){
-                if (Log.isDebugEnabled()) Log.debug("connection failed: ",exc);
+                //if (Log.isDebugEnabled()) Log.debug("connection failed: ",exc);
             }
             catch(NotBoundException exc){
-                if (Log.isDebugEnabled()) Log.debug("connection failed: ",exc);
+                //if (Log.isDebugEnabled()) Log.debug("connection failed: ",exc);
             }
             catch(RemoteException exc){
-                if (Log.isDebugEnabled()) Log.debug("connection failed: ",exc);
+                //if (Log.isDebugEnabled()) Log.debug("connection failed: ",exc);
             }
             catch(Error exc){
                 Log.error("other errors: ", exc);

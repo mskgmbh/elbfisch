@@ -209,14 +209,14 @@ public class RemoteSignalOutputDaemon extends Thread{
         boolean connected    = false;
         String  jPacInstance = JPac.getInstance().getInstanceIdentifier();
         remoteSignalHandler  = null;//force renewal of the remote signal handler;
-        if (Log.isDebugEnabled()) Log.debug("connecting ...");                
+        if (Log.isDebugEnabled()) Log.debug("try to connect to " + remoteSignalConnection.getHost() + " ...");                
         do{
             try{
                 if (InetAddress.getByName(remoteSignalConnection.getHost()).isReachable(1000)){
                     //if host of remote instance is reachable, connect desired signals.
                     getRemoteSignalHandler().connect(jPacInstance, remoteSignalConnection.getOutputSignals());
                     connected = true;                
-                    if (Log.isDebugEnabled()) Log.debug("... connected");                
+                    if (Log.isDebugEnabled()) Log.debug("... connected to " + remoteSignalConnection.getHost());                
                 }
             }
             catch(java.net.ConnectException exc){

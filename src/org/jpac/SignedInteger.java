@@ -228,6 +228,7 @@ public class SignedInteger extends Signal{
     protected void setMinValue(int minValue) throws SignalAccessException{
         assertContainingModule();
         this.minValue = minValue;
+        setRangeChecked(this.minValue > Integer.MIN_VALUE || this.maxValue < Integer.MAX_VALUE);
     }
 
     /**

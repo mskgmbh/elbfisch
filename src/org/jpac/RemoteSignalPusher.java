@@ -26,9 +26,9 @@
 package org.jpac;
 
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.log4j.Logger;
-import java.util.Map.Entry;
 
 /**
  * is called by JPac synchronized to the cycle to copy remote signals to local target signals
@@ -37,6 +37,7 @@ import java.util.Map.Entry;
 class RemoteSignalPusher{
     
     class PushRunner implements Runnable{
+        @Override
         public void run() {
             if (Log.isDebugEnabled()) Log.debug(("pushing signals for " + jPacInstance));
             synchronized(frameToBePushed){
@@ -58,6 +59,7 @@ class RemoteSignalPusher{
     }
     
     class RegisterRunner implements Runnable{
+        @Override
         public void run() {
             try{
                 if (Log.isDebugEnabled()) Log.debug(("registering signals for " + jPacInstance));
@@ -77,6 +79,7 @@ class RemoteSignalPusher{
     }
 
     class UnregisterRunner implements Runnable{
+        @Override
         public void run() {
             try{
                 for (Entry<Integer, Signal> entry: getServedSignals().entrySet()){

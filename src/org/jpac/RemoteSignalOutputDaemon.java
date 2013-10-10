@@ -82,7 +82,7 @@ public class RemoteSignalOutputDaemon extends Thread{
                            if (newFrameArrived){
                                atLeastOneFrameArrived = true;                       
                                remoteSignalFrame = frameBuffer.get();
-                               //Log.debug("pushing frame = " + remoteSignalFrame);
+                               Log.debug("pushing frame to " + remoteSignalConnection.getHost() +  ": " + remoteSignalFrame);
                                getRemoteSignalHandler().push(jPacInstance,remoteSignalFrame);
                                //store this frame for cyclic repetition
                                lastFrameTransferred.copy(remoteSignalFrame);
@@ -92,7 +92,7 @@ public class RemoteSignalOutputDaemon extends Thread{
                            else{
                                //send last frame transferred periodically
                                if (atLeastOneFrameArrived){
-                                    //Log.debug("pushing last frame = " + lastFrameTransferred);//TODO raus
+                                    Log.debug("pushing last frame to " + remoteSignalConnection.getHost() +  ": " + remoteSignalFrame);
                                     getRemoteSignalHandler().push(jPacInstance, lastFrameTransferred);                           
                                }
                            }

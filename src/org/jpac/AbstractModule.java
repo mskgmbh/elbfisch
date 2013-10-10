@@ -468,6 +468,14 @@ public abstract class AbstractModule extends Thread{
     }
     
     /**
+     *  
+     * @return the logger for this module 
+     */
+    public Logger getLogger(){
+        return Log;
+    }
+    
+    /**
      * is invoked by jPac in every cycle to let it handle application specific code, which must be
      * run continously. the application code inside inEveryCycleDo() is stateless. 
      * It must not contain any ProcessEvent.await() calls.

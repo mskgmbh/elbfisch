@@ -227,6 +227,7 @@ public class Decimal extends Signal{
     protected void setMinValue(double minValue) throws SignalAccessException{
         assertContainingModule();
         this.minValue = minValue;
+        setRangeChecked(this.minValue > Double.MIN_VALUE || this.maxValue < Double.MAX_VALUE);
     }
 
     /**
@@ -242,6 +243,7 @@ public class Decimal extends Signal{
     protected void setMaxValue(double maxValue) throws SignalAccessException{
         assertContainingModule();
         this.maxValue = maxValue;
+        setRangeChecked(this.minValue > Double.MIN_VALUE || this.maxValue < Double.MAX_VALUE);
     }
 
     /**

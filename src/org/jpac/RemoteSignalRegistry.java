@@ -38,7 +38,7 @@ public class RemoteSignalRegistry {
     static Logger Log = Logger.getLogger("jpac.Remote");
     
     class ServedInstancesWatchdog extends Thread{
-        final long WATCHDOGTIMEOUTTIME = 2000000000L;//4 sec
+        final long WATCHDOGTIMEOUTTIME = 2000000000L;//2 sec
         final long WATCHDOGCYCLETIME   = (WATCHDOGTIMEOUTTIME/1000000L)/4;// 1/4 WATCHDOGTIMEOUTTIME
         boolean finished;
         

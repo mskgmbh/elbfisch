@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : RemoteSignalFrame.java
+ * MODULE    : RemoteSignalConnection.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 

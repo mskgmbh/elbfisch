@@ -29,7 +29,7 @@ package org.jpac;
  * used to map a decimal signal to another decimal signal.
  * @author Andreas Ulbrich<ulbrich@mskgmbh.com>
  */
-public abstract class DecimalMapper{
+public class DecimalMapper{
     protected double  minSourceValue;
     protected double  maxSourceValue;
     protected double  minTargetValue;

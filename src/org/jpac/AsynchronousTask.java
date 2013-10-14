@@ -152,10 +152,10 @@ public abstract class AsynchronousTask{
                 start();
             }
             else{
+                done = false;
                 synchronized(this){
                     notify();
                 }
-                done = true;
             }
         }
         

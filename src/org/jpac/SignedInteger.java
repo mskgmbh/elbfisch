@@ -33,7 +33,7 @@ public class SignedInteger extends Signal{
     protected int                 minValue;
     protected int                 maxValue;
     protected SignedIntegerMapper mapper;
-    protected SignedIntegerMapper targetSignalMapper;
+    protected SignedIntegerMapper newMapper;
     protected String              unit;
     private   SignedIntegerValue  wrapperValue;
     
@@ -50,7 +50,6 @@ public class SignedInteger extends Signal{
         this.maxValue           = maxValue;
         this.rangeChecked       = true;//activate range check
         this.mapper             = null;
-        this.targetSignalMapper = null;
         this.unit               = null;
         this.value              = new SignedIntegerValue();
         this.propagatedValue    = new SignedIntegerValue(); 
@@ -167,6 +166,7 @@ public class SignedInteger extends Signal{
      * @param targetSignal
      */
     public void connect(SignedInteger targetSignal) throws SignalAlreadyConnectedException{
+        targetSignal.setNewMapper(null);
         super.connect(targetSignal);
     }
 
@@ -181,22 +181,59 @@ public class SignedInteger extends Signal{
      */
     public void connect(SignedInteger targetSignal, SignedIntegerMapper signedIntegerMapper) throws SignalAlreadyConnectedException, SignalAccessException{
         //the target is responsible for correct value mapping
-        targetSignalMapper = signedIntegerMapper;
+        targetSignal.setNewMapper(signedIntegerMapper);
         super.connect(targetSignal);
     }
 
-    @Override
-    protected void deferredConnect(Signal targetSignal) throws SignalAlreadyConnectedException{
-        super.deferredConnect(targetSignal);
-        ((SignedInteger)targetSignal).setMapper(targetSignalMapper);
+    /**
+     * used to connect this signed integer to Decimal. One signed integer can be connected
+     * to multiple signals.
+     * The connection is unidirectional: Changes of the connecting signal (sourceSignal) will be
+     * propagated to the signals it is connected to (targetSignal): sourceSignal.connect(targetSignal).
+     * @param targetSignal
+     */
+    public void connect(Decimal targetSignal) throws SignalAlreadyConnectedException{
+        targetSignal.setNewMapper(new DecimalMapper(Integer.MIN_VALUE, Integer.MAX_VALUE,Integer.MIN_VALUE, Integer.MAX_VALUE));
+        super.connect(targetSignal);
     }
 
+    /**
+     * used to connect this signed integer to Decimal. One signed integer can be connected
+     * to multiple signals.
+     * The connection is unidirectional: Changes of the connecting signal (sourceSignal) will be
+     * propagated to the signals it is connected to (targetSignal): sourceSignal.connect(targetSignal).
+     * @param targetSignal
+     * @param mapper used to map the source signed integer to the target signed integer.
+     *
+     */
+    public void connect(Decimal targetSignal, DecimalMapper decimalMapper) throws SignalAlreadyConnectedException, SignalAccessException{
+        //the target is responsible for correct value mapping
+        targetSignal.setNewMapper(decimalMapper);
+        super.connect(targetSignal);
+    }
+    
+    @Override
+    protected void deferredConnect(Signal targetSignal) throws SignalAlreadyConnectedException{
+        //first install mapper
+        if (targetSignal instanceof Decimal){
+            ((Decimal)targetSignal).setMapper(((Decimal)targetSignal).getNewMapper());
+            ((Decimal)targetSignal).setNewMapper(null);
+        } else if (targetSignal instanceof SignedInteger){
+            ((SignedInteger)targetSignal).setMapper(((SignedInteger)targetSignal).getNewMapper());
+            ((SignedInteger)targetSignal).setNewMapper(null);
+        } 
+        super.deferredConnect(targetSignal);
+    }
+    
     @Override
     protected void deferredDisconnect(Signal targetSignal){
+        //first remove mapper
+        if (targetSignal instanceof Decimal){
+            ((Decimal)targetSignal).setMapper(null);
+        } else if (targetSignal instanceof SignedInteger){
+            ((SignedInteger)targetSignal).setMapper(null);
+        } 
         super.deferredDisconnect(targetSignal);
-        ((SignedInteger)targetSignal).setMapper(null);
-        //clear target signal mapper
-        targetSignalMapper = null;
     }
     
     
@@ -260,6 +297,7 @@ public class SignedInteger extends Signal{
         assertContainingModule();
         this.unit = unit;
     }
+
     /**
      * @return the mapper
      */
@@ -272,6 +310,20 @@ public class SignedInteger extends Signal{
      */
     protected void setMapper(SignedIntegerMapper signedIntegerMapper){   
         this.mapper = signedIntegerMapper;
+    }
+
+    /**
+     * @return the mapper
+     */
+    public SignedIntegerMapper getNewMapper() {
+        return newMapper;
+    }
+
+    /**
+     * @param mapper the mapper to set
+     */
+    protected void setNewMapper(SignedIntegerMapper signedIntegerMapper){   
+        this.newMapper = signedIntegerMapper;
     }
 
     @Override
@@ -289,12 +341,8 @@ public class SignedInteger extends Signal{
     protected void updateValue(Object o, Object arg) throws SignalAccessException {
         try{
             if (o instanceof Decimal){
-                if (getMapper() != null){
-                    set(getMapper().map(((Decimal)o).get()));
-                }
-                else{
-                    set(((SignedInteger)o).get());
-                }
+                //this instance must supply a mapper
+                set(getMapper().map(((Decimal)o).get()));
             }
             if (o instanceof SignedInteger){
                 if (getMapper() != null){

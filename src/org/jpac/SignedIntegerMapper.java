@@ -29,7 +29,7 @@ package org.jpac;
  * used to map a signed integer signal to another signed integer signal.
  * @author Andreas Ulbrich<ulbrich@mskgmbh.com>
  */
-public abstract class SignedIntegerMapper{
+public class SignedIntegerMapper{
     protected int  minSourceValue;
     protected int  maxSourceValue;
     protected int  minTargetValue;

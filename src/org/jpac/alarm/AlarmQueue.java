@@ -51,12 +51,19 @@ public class AlarmQueue extends Observable implements Observer{
     private ArrayBlockingQueue<AlarmQueueEntry> queue;  
     private Observer                            observer;
     
+    private Integer                             pendingAlarmsCountForSeverityAlarm;
+    private Integer                             pendingAlarmsCountForSeverityWarning;
+    private Integer                             pendingAlarmsCountForSeverityMessage;
+    
     protected AlarmQueue(){
         this.alarms        = Collections.synchronizedList(new ArrayList<Alarm>());
         this.alarmIndices  = new ConcurrentHashMap<String, Integer>();
         this.lastIndex     = 0;
         this.queue         = new ArrayBlockingQueue<AlarmQueueEntry>(QUEUESIZE);
         this.observer      = null;
+        this.pendingAlarmsCountForSeverityAlarm   = 0;
+        this.pendingAlarmsCountForSeverityWarning = 0;
+        this.pendingAlarmsCountForSeverityMessage = 0;   
     }
     /**
      * @return the instance of the alarm queue
@@ -129,4 +136,83 @@ public class AlarmQueue extends Observable implements Observer{
     public ArrayBlockingQueue<AlarmQueueEntry> getQueue() {
         return queue;
     }
+    
+    void incrementPendingAlarmsCount(Alarm.Severity severity){
+        switch(severity){
+            case ALARM:
+                synchronized(pendingAlarmsCountForSeverityAlarm){
+                    pendingAlarmsCountForSeverityAlarm++;
+                }
+                break;                
+            case WARNING:
+                synchronized(pendingAlarmsCountForSeverityWarning){
+                    pendingAlarmsCountForSeverityWarning++;
+                }
+                break;                
+            case MESSAGE:
+                synchronized(pendingAlarmsCountForSeverityMessage){
+                    pendingAlarmsCountForSeverityMessage++;
+                }
+                break;                
+        }
+    }
+
+    void decrementPendingAlarmsCount(Alarm.Severity severity){
+        boolean inconsistent = false;
+        switch(severity){
+            case ALARM:
+                synchronized(pendingAlarmsCountForSeverityAlarm){
+                    pendingAlarmsCountForSeverityAlarm--;
+                    if (pendingAlarmsCountForSeverityAlarm < 0){
+                        pendingAlarmsCountForSeverityAlarm = 0;//force counter to '0'
+                        inconsistent = true;
+                    }
+                }
+                if (inconsistent){
+                   Log.error("counter for pending alarms of severity ALARM is inconsistent"); 
+                }
+                break;                
+            case WARNING:
+                synchronized(pendingAlarmsCountForSeverityWarning){
+                    pendingAlarmsCountForSeverityWarning--;
+                    if (pendingAlarmsCountForSeverityWarning < 0){
+                        pendingAlarmsCountForSeverityWarning = 0;//force counter to '0'
+                        inconsistent = true;
+                    }
+                }
+                if (inconsistent){
+                   Log.error("counter for pending alarms of severity WARNING is inconsistent"); 
+                }
+                break;                
+            case MESSAGE:
+                synchronized(pendingAlarmsCountForSeverityMessage){
+                    pendingAlarmsCountForSeverityMessage--;
+                    if (pendingAlarmsCountForSeverityMessage < 0){
+                        pendingAlarmsCountForSeverityMessage = 0;//force counter to '0'
+                        inconsistent = true;
+                    }
+                }
+                if (inconsistent){
+                   Log.error("counter for pending alarms of severity MESSAGE is inconsistent"); 
+                }
+                break;                
+        }
+    }    
+    
+    public boolean isAtLeastOneAlarmPending(Alarm.Severity severity){
+        boolean pending = false;
+        switch(severity){
+            case ALARM:
+                pending = pendingAlarmsCountForSeverityAlarm > 0;
+                break;
+            case WARNING:
+                pending = pendingAlarmsCountForSeverityWarning > 0;
+                break;
+            case MESSAGE:
+                pending = pendingAlarmsCountForSeverityMessage > 0;
+                break;
+        }
+        return pending;
+    }
+
 }

@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : ProcessException.java
+ * MODULE    : AtLeastOneAlarmPending.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -23,27 +23,31 @@
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jpac;
+package org.jpac.alarm;
+
+import org.jpac.ProcessEvent;
+import org.jpac.ProcessException;
 
 /**
- * base class of all jPac related exceptions
+ *
  * @author berndschuster
+ * will be fired if at least on alarm of the given severity is raised.
  */
-public class ProcessException extends Exception{
-
-    public ProcessException(){
+public class AtLeastOneAlarmPending extends ProcessEvent{
+    private Alarm.Severity severity; 
+    
+    /**
+     * constructor
+     * @param severity: severity supervised by this event. 
+     */
+    public AtLeastOneAlarmPending(Alarm.Severity severity){
         super();
+        this.severity = severity;
+    }
+    
+    @Override
+    public boolean fire() throws ProcessException {
+        return AlarmQueue.getInstance().isAtLeastOneAlarmPending(severity);
     }
 
-    public ProcessException(String string){
-        super(string);
-    }
-
-    public ProcessException(String string, Throwable cause) {
-        super(string, cause);
-    }
-
-    public ProcessException(Throwable cause) {
-        super(cause);
-    }
 }

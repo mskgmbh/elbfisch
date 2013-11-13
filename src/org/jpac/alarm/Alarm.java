@@ -139,11 +139,24 @@ public class Alarm extends Signal{
      *         not the containing module
      */
     public void set(boolean state) throws SignalAccessException{
+        boolean wasValidBefore = isValid();
+        boolean lastState      = false;
+        if (wasValidBefore){
+            lastState = ((LogicalValue)getValue()).get();
+        }
         if (Log.isDebugEnabled()) Log.debug(this + ".set(" + state + ")");
         wrapperValue.set(state);
         setValue(wrapperValue);
         if (state){
-           setAcknowlegded(false);
+           setAcknowlegded(false);            
+        }
+        if (state && (!wasValidBefore || (wasValidBefore && !lastState))){
+           //transition from invalid to true, or false to true
+           AlarmQueue.getInstance().incrementPendingAlarmsCount(severity);
+        }
+        else if (!state && wasValidBefore && lastState){
+           //transition from true to false
+           AlarmQueue.getInstance().decrementPendingAlarmsCount(severity);            
         }
     }
 

@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : ProcessException.java
+ * MODULE    : NoAlarmsPending.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -23,27 +23,31 @@
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jpac;
+package org.jpac.alarm;
+
+import org.jpac.ProcessEvent;
+import org.jpac.ProcessException;
 
 /**
- * base class of all jPac related exceptions
+ *
  * @author berndschuster
+ * will be fired, if there are no alarms of this severity pending
  */
-public class ProcessException extends Exception{
-
-    public ProcessException(){
+public class NoAlarmsPending extends ProcessEvent{
+    private Alarm.Severity severity; 
+    
+    /**
+     * constructor
+     * @param severity: severity supervised by this event. 
+     */
+    public NoAlarmsPending(Alarm.Severity severity){
         super();
+        this.severity = severity;
+    }
+    
+    @Override
+    public boolean fire() throws ProcessException {
+        return !AlarmQueue.getInstance().isAtLeastOneAlarmPending(severity);
     }
 
-    public ProcessException(String string){
-        super(string);
-    }
-
-    public ProcessException(String string, Throwable cause) {
-        super(string, cause);
-    }
-
-    public ProcessException(Throwable cause) {
-        super(cause);
-    }
 }

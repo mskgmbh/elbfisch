@@ -733,7 +733,7 @@ public class JPac extends Thread{
                      //wait until all modules have completed their tasks but not beyond the end of the cycle
                      activeEventsLock.waitForUnlock(expectedCycleEndTime - System.nanoTime());
                      if (activeEventsLock.getCount() > 0){
-                        if (atLeastOneHangingModuleFound()){//TODO check, why this somtimes is not true
+                        if (atLeastOneHangingModuleFound()){
                             //if some modules are still running, give them an additional period of time
                             activeEventsLock.waitForUnlock(cycleTimeoutTime);
                             if (Log.isInfoEnabled()) Log.info("cycle time exceeded for " + (System.nanoTime()- expectedCycleEndTime) + ", cycle# " + getCycleNumber());
@@ -786,7 +786,7 @@ public class JPac extends Thread{
                             Log.info("  module '" + module + "' invoked by " + f + " state " + module.getStatus());                                                    
                         }
                     }
-                    if (atLeastOneHangingModuleFound()){//TODO check, why this sometimes is not the case
+                    if (atLeastOneHangingModuleFound()){
                         throw new SomeEventsNotProcessedException(getFiredEventList());
                     }
                 }
@@ -1270,7 +1270,7 @@ public class JPac extends Thread{
         boolean found = false;
         for (Fireable f: getFiredEventList()){
             AbstractModule module = ((ProcessEvent)f).getObservingModule();
-            if (module.getState() != Thread.State.WAITING){
+            if (module.getAwaitedProcessEvent() == null){
                 found = true;
             }
         }

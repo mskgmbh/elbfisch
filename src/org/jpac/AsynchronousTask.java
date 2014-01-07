@@ -34,15 +34,19 @@ public abstract class AsynchronousTask{
     private TaskRunner task;
     private Finished   finishedEvent;
     private String     identifier;
+    private long       minimumDuration;
+    private long       maximumDuration;
 
     /**
      * constructs a asynchronous task
      * @param identifier identifier of the asynchronous task. 
      */
     public AsynchronousTask(String identifier){
-        this.task          = null;
-        this.finishedEvent = new Finished();
-        this.identifier    = identifier;
+        this.task            = null;
+        this.finishedEvent   = new Finished();
+        this.identifier      = identifier;
+        this.minimumDuration = Long.MAX_VALUE;
+        this.maximumDuration = Long.MIN_VALUE;
     }
     
     /**
@@ -110,10 +114,20 @@ public abstract class AsynchronousTask{
         
         @Override
         public void run(){
+            long duration;
+            long startTime;
             do{
                 try{
                     //perform task
+                    startTime = System.nanoTime();
                     doIt();
+                    duration = System.nanoTime() - startTime;
+                    if (duration < getMinimumDuration()){
+                        minimumDuration = duration;
+                    }
+                    if (duration > getMaximumDuration()){
+                        maximumDuration = duration;
+                    }
                 }
                 catch(ProcessException exc){
                     finishedEvent.setProcessException(new AsynchronousTaskException(exc));
@@ -170,6 +184,22 @@ public abstract class AsynchronousTask{
      */
     public boolean isFinished(){
         return task.isDone();
+    }
+
+    /**
+     * used to retrieve the minimum duration of doIt()
+     * @return the minimumDuration
+     */
+    public long getMinimumDuration() {
+        return minimumDuration;
+    }
+
+    /**
+     * used to retrieve the maximum duration of doIt()
+     * @return the maximumDuration
+     */
+    public long getMaximumDuration() {
+        return maximumDuration;
     }
     
     private class Finished extends ProcessEvent{

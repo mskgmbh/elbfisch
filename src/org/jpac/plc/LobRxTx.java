@@ -25,10 +25,11 @@
 
 package org.jpac.plc;
 
-import org.jpac.IndexOutOfRangeException;
-import org.jpac.plc.Request.DATATYPE;
 import java.io.IOException;
 import org.apache.log4j.Logger;
+import org.jpac.IndexOutOfRangeException;
+import org.jpac.Value;
+import org.jpac.plc.Request.DATATYPE;
 
 /**
  * Used to transfer a large data item between the java application and the plc or other device.<br>
@@ -42,7 +43,7 @@ import org.apache.log4j.Logger;
  *          of the receiving side waits until the transmission completed, before<br>
  *          processing the data <br><br>
  */
-abstract public class LobRxTx {
+abstract public class LobRxTx implements Value{
     static Logger Log = Logger.getLogger("jpac.plc");
     
     protected   Connection          conn;
@@ -52,7 +53,7 @@ abstract public class LobRxTx {
     protected   TransmitTransaction txTrans;
     protected   ReceiveTransaction  rxTrans;
     protected   Address             address;
-    protected int                   dataOffset;
+    protected   int                 dataOffset;
 
    /**
     * useful in situations, where the instance is part of complex data structure (STRUCT)
@@ -273,4 +274,42 @@ abstract public class LobRxTx {
     public Address getAddress(){
         return address;
     }
+
+    /**
+     * used to get a copy of this LobRxTx. Copied are it's data item, it's address and it's offset in a containing data LobRxTx
+     * @param aValue 
+     */
+    @Override
+    public void copy(Value aValue){
+        this.data.copy(((LobRxTx)aValue).getData());
+        this.address.setByteIndex(((LobRxTx)aValue).getAddress().getByteIndex());
+        this.address.setBitIndex(((LobRxTx)aValue).getAddress().getBitIndex());
+        this.address.setSize(((LobRxTx)aValue).getAddress().getSize());
+        this.dataOffset = ((LobRxTx)aValue).dataOffset;
+    };
+    
+    /**
+     * used to check the equality of of this LobRxTx to aValue. Both values a said to be equal, if their data, address and offset are identical
+     * @param aValue
+     * @return 
+     */
+    @Override
+    public boolean equals(Value aValue){
+        return this.data.equals(((LobRxTx)aValue).getData()) && 
+               this.address.getByteIndex() == ((LobRxTx)aValue).getAddress().getByteIndex() &&
+               this.address.getBitIndex()  == ((LobRxTx)aValue).getAddress().getBitIndex()  &&
+               this.address.getSize()      == ((LobRxTx)aValue).getAddress().getSize()      &&
+               this.dataOffset             == ((LobRxTx)aValue).dataOffset;
+    };
+    
+
+    /**
+     * used to clone this LobRxTx. Cloneing comprises its address, its offset inside a containing data structure and its data
+     * REMARKS: the connection related properties such like Read-, WriteRequest or the connection itself is not cloned to avoid
+     *          access from several threads. I/O over the connection should be done by the owner of the assigned signal
+     * @return
+     * @throws CloneNotSupportedException 
+     */    
+    @Override
+    public abstract Value clone() throws CloneNotSupportedException;
 }

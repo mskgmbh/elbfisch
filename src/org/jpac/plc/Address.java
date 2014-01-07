@@ -57,26 +57,32 @@ public class Address implements org.jpac.Address, Cloneable{
         this.size      = size;
     }
 
+    @Override
     public int getBitIndex() {
         return this.bitIndex;
     }
 
+    @Override
     public int getByteIndex() {
         return this.byteIndex;
     }
 
+    @Override
     public int getSize() {
         return this.size;
     }
 
+    @Override
     public void setBitIndex(int bitIndex) {
         this.bitIndex = bitIndex;
     }
 
+    @Override
     public void setByteIndex(int byteIndex) {
         this.byteIndex = byteIndex;
     }
 
+    @Override
     public void setSize(int size) {
         this.size = size;
     }

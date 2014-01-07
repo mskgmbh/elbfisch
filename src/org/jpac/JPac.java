@@ -1271,6 +1271,7 @@ public class JPac extends Thread{
         for (Fireable f: getFiredEventList()){
             AbstractModule module = ((ProcessEvent)f).getObservingModule();
             if (module.getAwaitedProcessEvent() == null){
+                Log.info("module '" + module + "' exceeded cycle time. Was invoked by " + f + " in state " + module.getStatus());                                                    
                 found = true;
             }
         }

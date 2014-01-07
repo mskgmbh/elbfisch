@@ -25,8 +25,9 @@
 
 package org.jpac.plc;
 
-import org.jpac.IndexOutOfRangeException;
 import java.io.IOException;
+import org.jpac.IndexOutOfRangeException;
+import org.jpac.Value;
 
 /**
  * Used to transfer a string value between the java application and the plc.
@@ -85,5 +86,12 @@ public class StringRxTx extends LobRxTx{
         //make read() return a StringRxTx
         super.read();
         return this;
+    }
+
+    @Override
+    public Value clone() throws CloneNotSupportedException {
+        StringRxTx stringRxTx = null;
+        try{stringRxTx = new StringRxTx(null, (Address)address.clone(), dataOffset, data.clone());}catch(IndexOutOfRangeException exc){/*cannot happen*/};
+        return stringRxTx;
     }
 }

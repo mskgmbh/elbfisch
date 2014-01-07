@@ -32,7 +32,7 @@ import java.util.ArrayList;
  * Implements a byte array and some accessor methods for<br>
  * several plc side datatypes.
  */
-public abstract class Data {
+public class Data {
     public enum Endianness {LITTLEENDIAN,BIGENDIAN};
     protected final byte[]       bitMask = {(byte)0x01,(byte)0x02,(byte)0x04,(byte)0x08,(byte)0x10,(byte)0x20,(byte)0x40,(byte)0x80};
     protected byte[]             bytes;
@@ -424,8 +424,40 @@ public abstract class Data {
     public ArrayList<Integer> getModifiedByteIndices(){
         return modifiedByteIndices;
     }
-
-  
+    
+    /**
+     * used to copy the bytes and the endianess of data. Afterwards this.isModified() will be true for the first call.
+     * @param data 
+     */
+    public void copy(Data data){
+        this.setBytes(data.bytes);
+        this.endianness = data.endianness;
+    };
+    
+    /**
+     * compares to data items
+     * @param data
+     * @return true, if the bytes of both data items contain identical data, and the endianness is identical, too.
+     */
+    public boolean equals(Data data){
+        boolean equal = this.bytes.length == data.bytes.length && this.endianness == data.endianness;
+        for(int i = 0; i < this.bytes.length && equal == true; i++){
+            equal = this.bytes[i] == data.bytes[i];
+        }
+        return equal;
+    };
+    
+    /**
+     * used to clone this data item. isModified() of the new data item will be true for the first call.
+     * @return cloned data item
+     * @throws CloneNotSupportedException 
+     */
+    @Override
+    public Data clone() throws CloneNotSupportedException{
+        Data clonedData = new Data(this.bytes.clone(), this.endianness);
+        return clonedData;
+    };    
+    
     @Override
     public String toString() {
         String rt = "Data[";

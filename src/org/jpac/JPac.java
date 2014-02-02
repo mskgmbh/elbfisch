@@ -80,7 +80,7 @@ public class JPac extends Thread{
     private     long                   maxRemainingCycleTime;
     private     long                   expectedCycleEndTime;
     private     long                   cycleStartTime;
-    private     long                   nextCycleStartTime;
+//    private     long                   nextCycleStartTime;
     private     long                   cycleNumber;
     private     Status                 status;
     private     boolean                emergencyStopRequested;
@@ -398,7 +398,7 @@ public class JPac extends Thread{
         maxRemainingCycleTime       = 0;
         expectedCycleEndTime        = 0;
         cycleStartTime              = 0;
-        nextCycleStartTime          = 0;
+//        nextCycleStartTime          = 0;
         status                      = Status.initializing;
         cycleNumber                 = 0;
 
@@ -736,14 +736,15 @@ public class JPac extends Thread{
                         if (atLeastOneHangingModuleFound()){
                             //if some modules are still running, give them an additional period of time
                             activeEventsLock.waitForUnlock(cycleTimeoutTime);
-                            if (Log.isInfoEnabled()) Log.info("cycle time exceeded for " + (System.nanoTime()- expectedCycleEndTime) + ", cycle# " + getCycleNumber());
+                            if (Log.isInfoEnabled()) Log.info("cycle time exceeded for " + (System.nanoTime()- expectedCycleEndTime) + " effective cycle time :" + (expectedCycleEndTime - cycleStartTime) +" cycle# " + getCycleNumber());
                         }
                         else{
                             Log.error("activeEventsLock problem encountered !!!");
-                            Log.error("  activeEventsCount      : " + activeEventsLock.getCount());
-                            Log.error("  max. activeEventsCount : " + activeEventsLock.getMaxCount());
-                            Log.error("  incrementCounter       : " + incrementCounter);
-                            Log.error("  decrementCounter       : " + decrementCounter);
+                            Log.error("  activeEventsCount       : " + activeEventsLock.getCount());
+                            Log.error("  max. activeEventsCount  : " + activeEventsLock.getMaxCount());
+                            Log.error("  incrementCounter        : " + incrementCounter);
+                            Log.error("  decrementCounter        : " + decrementCounter);
+                            Log.error("  effective cycle duration: " + (expectedCycleEndTime - cycleStartTime));
                             for (Fireable f: getFiredEventList()){
                                 ProcessEvent pe       = (ProcessEvent)f; 
                                 AbstractModule module = pe.getObservingModule();
@@ -1072,13 +1073,14 @@ public class JPac extends Thread{
     protected void prepareCycle(){
         //compute cycle time
         cycleStartTime       = System.nanoTime();//the cycle starts now
-        expectedCycleEndTime = nextCycleStartTime + getCycleTime();
-        if (expectedCycleEndTime < cycleStartTime){
-            //if last cycle acceeded its end time more than one cycle time
-            //sync cycle to current time
-            expectedCycleEndTime = cycleStartTime + getCycleTime();
-        }
-        nextCycleStartTime = expectedCycleEndTime;
+        expectedCycleEndTime = cycleStartTime + getCycleTime();
+//        expectedCycleEndTime = nextCycleStartTime + getCycleTime();
+//        if (expectedCycleEndTime < cycleStartTime){
+//            //if last cycle exceeded its end time more than one cycle time
+//            //sync cycle to current time
+//            expectedCycleEndTime = cycleStartTime + getCycleTime();
+//        }
+//        nextCycleStartTime = expectedCycleEndTime;
         cycleNumber++;
                 
         //initialize active event counter
@@ -1100,7 +1102,7 @@ public class JPac extends Thread{
     protected void initializeCycle(){
         //set cycleEndTime, nextCycleStartTime to actual time, as if I am at the end of a previous cycle
         expectedCycleEndTime = System.nanoTime();
-        nextCycleStartTime   = expectedCycleEndTime;
+//        nextCycleStartTime   = expectedCycleEndTime;
     }
 
     protected void wait4EndOfCycle(long remainingCycleTime){

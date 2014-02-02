@@ -46,24 +46,32 @@ public abstract class AbstractModule extends Thread{
         public int enter(Object subState){
             overrun = stack.size() > 10;
             if  (!overrun){
-                stack.push(subState);
+                synchronized(this){
+                    stack.push(subState);
+                }
             }
             if (Log.isDebugEnabled()) Log.debug("entering status: " + this);
             return stack.size() - 1;
         }
 
         public void leave(){
-            stack.pop();
+            synchronized(this){
+                stack.pop();
+            }
         }
 
         public void resume(int statusIndex){
-            for (int i = stack.size() - 1; i > statusIndex; i--){
-                stack.remove(i);
+            synchronized(this){
+                for (int i = stack.size() - 1; i > statusIndex; i--){
+                    stack.remove(i);
+                }
             }
         }
 
         public void reset(){
-            stack.remove(0);
+            synchronized(this){
+                stack.remove(0);
+            }
         }
 
         public boolean isOverrun(){
@@ -73,10 +81,12 @@ public abstract class AbstractModule extends Thread{
         @Override
         public String toString(){
             StringBuffer qs = new StringBuffer();
-            for(Iterator is = stack.iterator(); is.hasNext();){
-                qs.append((is.next()).toString());
-                if (is.hasNext()){
-                    qs.append('-');
+            synchronized(this){
+                for(Iterator is = stack.iterator(); is.hasNext();){
+                    qs.append((is.next()).toString());
+                    if (is.hasNext()){
+                        qs.append('-');
+                    }
                 }
             }
             if (overrun){

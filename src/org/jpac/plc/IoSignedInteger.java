@@ -45,6 +45,7 @@ public class IoSignedInteger extends SignedInteger{
     private Data         intData;
     private WriteRequest writeRequest;
     private IoDirection  ioDirection;
+    private Connection   connection;
     
     public IoSignedInteger(AbstractModule containingModule, String name, Data data, Address address, IoDirection ioDirection) throws SignalAlreadyExistsException{
         super(containingModule, name);
@@ -103,10 +104,12 @@ public class IoSignedInteger extends SignedInteger{
      * @return 
      */
     public WriteRequest getWriteRequest(Connection connection){
-        boolean           errorOccured = false;
+        boolean errorOccured = false;
         try{
-            if (intData == null){
-                intData = connection.generateDataObject(4);
+            if (intData == null || this.connection == null || this.connection != connection){
+                this.intData      = connection.generateDataObject(4);
+                this.connection   = connection;
+                this.writeRequest = null;
             }
             switch(address.getSize()){
                 case 1:

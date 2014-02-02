@@ -43,6 +43,7 @@ public class IoLogical extends Logical{
     private Data         bitData;
     private WriteRequest writeRequest;
     private IoDirection  ioDirection;
+    private Connection   connection;
     
     public IoLogical(AbstractModule containingModule, String name, Data data, Address address, IoDirection ioDirection) throws SignalAlreadyExistsException{
         super(containingModule, name);
@@ -71,8 +72,10 @@ public class IoLogical extends Logical{
     public WriteRequest getWriteRequest(Connection connection){
        boolean errorOccured = false;
         try{
-            if (bitData == null){
-                bitData = connection.generateDataObject(1);
+            if (bitData == null || this.connection == null || this.connection != connection){
+                bitData           = connection.generateDataObject(1);
+                this.connection   = connection;
+                this.writeRequest = null;
             }
             bitData.setBYTE(0, is(true) ? 0x01 : 0x00);
             if (writeRequest == null){

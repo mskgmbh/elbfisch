@@ -111,9 +111,4 @@ public class RemoteSignalHandlerImpl extends UnicastRemoteObject implements Remo
             throw new RemoteException("Error: ", exc);
         }
     }
-
-    @Override
-    public void reverseConnect(String jPacInstance, List<RemoteSignalInput> remoteSignalInput) throws RemoteException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 }

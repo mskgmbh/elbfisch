@@ -38,7 +38,7 @@ import org.apache.log4j.Logger;
  * implements the base features of a signal
  * 
  */
-public abstract class Signal extends Observable implements Observer, Assignable{
+public abstract class Signal extends Observable implements Observer {
     
     private class ConnectionTask{
         private ConnTask task;
@@ -327,7 +327,6 @@ public abstract class Signal extends Observable implements Observer, Assignable{
     /**
      * @return the identifier
      */
-    @Override
     public String getIdentifier() {
         return identifier;
     }
@@ -393,7 +392,6 @@ public abstract class Signal extends Observable implements Observer, Assignable{
         this.propagatedValue.copy(propagatedValue);
     }
 
-    @Override
     public AbstractModule getContainingModule(){
         return containingModule;
     }
@@ -504,29 +502,6 @@ public abstract class Signal extends Observable implements Observer, Assignable{
         if (isConnectedAsTarget() && !accessedByJPac()){
             throw new SignalAccessException("signal " + this + " cannot be set() directly, because it's connected as target ");
         }
-    }
-    /**
-     * returns true, if a given signal is compatible to this
-     * @return
-     */
-    @Override
-    public boolean isCompatible(Assignable item) {
-       boolean compatible;
-       if (item instanceof Plug){
-           compatible = false;
-       }
-       else if (item instanceof Pin){
-           //TODO must be tested
-           compatible = ((Pin)item).isCompatible(this);
-       }
-       else if (item instanceof Signal){
-           compatible = isCompatibleSignal((Signal) item);
-       }
-       else{
-           compatible = false;
-           throw new UnsupportedOperationException("error checking compatibility of  " + this + " and item " + item + ": item cannot be processed");
-       }
-       return compatible;
     }
     
     @Override

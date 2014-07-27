@@ -117,23 +117,6 @@ public class RemoteSignalRegistry {
     }
     
     /*
-     * used to register a new remote input signal on the pushing side
-     */
-    int addInput(RemoteSignalInput remoteSignal){
-        String host = remoteSignal.getHost();
-        int    port = remoteSignal.getPort();
-        String key  = host + ':' + port;
-        int    index = 0;
-        //if a new host is to be accessed, create a new remote signal list
-        if (!getRemoteHosts().containsKey(key)){
-            getRemoteHosts().put(key, new RemoteSignalConnection(host, port));
-        }
-        //assign the remote signal to the specified host 
-        index = getRemoteHosts().get(key).addInput((RemoteSignalInput)remoteSignal);
-        return index;
-    }
-
-    /*
      * used to retrieve the list remote connections on the pushing side
      */
     public ConcurrentHashMap<String, RemoteSignalConnection> getRemoteHosts(){

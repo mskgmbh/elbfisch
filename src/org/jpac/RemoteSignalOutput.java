@@ -44,17 +44,17 @@ public class RemoteSignalOutput implements Observer, Serializable{
     private String                jPacInstance;
     private String                remoteHost;
     private int                   remotePort;
-    private String                remoteSignalName;
+    private String                remoteSignalIdentifier;
     
-    public RemoteSignalOutput(String identifier, String host, int port, String signalName){
-        this.identifier        = identifier;
-        this.remoteHost        = host;
-        this.remotePort        = port;
-        this.remoteSignalName  = signalName;
-        this.jPacInstance      = JPac.getInstance().getInstanceIdentifier();
-        this.connectedAsTarget = false;
-        this.index             = RemoteSignalRegistry.getInstance().addOutput(this);        
-        this.transport         = new RemoteSignalTransport(this.index, identifier, signalName);
+    public RemoteSignalOutput(String identifier, String host, int port, String remoteSignalIdentifier){
+        this.identifier             = identifier;
+        this.remoteHost             = host;
+        this.remotePort             = port;
+        this.remoteSignalIdentifier = remoteSignalIdentifier;
+        this.jPacInstance           = JPac.getInstance().getInstanceIdentifier();
+        this.connectedAsTarget      = false;
+        this.index                  = RemoteSignalRegistry.getInstance().addOutput(this);//TODO critical section concerning index        
+        this.transport              = new RemoteSignalTransport(this.index, identifier, remoteSignalIdentifier);
     } 
 
     @Override
@@ -108,8 +108,8 @@ public class RemoteSignalOutput implements Observer, Serializable{
      * 
      * @return the name of the remote signal 
      */
-    public String getSignalName(){
-        return remoteSignalName;
+    public String getRemoteSignalIdentifier(){
+        return remoteSignalIdentifier;
     }
     
     /**
@@ -135,11 +135,6 @@ public class RemoteSignalOutput implements Observer, Serializable{
         this.index = index;
     }
     
-    @Override
-    public String toString(){
-        return getClass().getSimpleName() + "(//" + remoteHost + ':' + remotePort + '/' + remoteSignalName + ")";
-    }
-
     /**
      * 
      * @return the identifier 
@@ -147,17 +142,13 @@ public class RemoteSignalOutput implements Observer, Serializable{
     public String getIdentifier() {
         return identifier;
     }
-
-    /**
-     * checks, if this is compatible to a given Assignable
-     * @param item the Assignable
-     * @return true, if this and item are assignable
-     */
-    public boolean isCompatible(Assignable item) {
-        return true;//RemoteSignalOutput is independent of type
-    }
     
     public String getJPacInstance(){
         return jPacInstance;
+    }
+
+    @Override
+    public String toString(){
+        return getClass().getSimpleName() + "(//" + remoteHost + ':' + remotePort + '/' + remoteSignalIdentifier + ")";
     }
 }

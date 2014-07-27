@@ -29,7 +29,7 @@ import java.io.IOException;
 import org.jpac.IndexOutOfRangeException;
 
 /**
- * Used to transfer a byte value between the java application and the plc.
+ * Used to transfer a signed 32 bit integer (DINT) value between the java application and the plc.
  * Can be used standalone or in the context of a complex data structure (STRUCT)
  */
 public class DintRxTx extends RxTx{

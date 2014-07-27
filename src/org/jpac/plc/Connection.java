@@ -43,6 +43,8 @@ public abstract class Connection {
     protected int                port;
     protected boolean            debug;
     protected boolean            autoConnect;
+
+    protected String             toString;
     
     /**
      * an instance of Connection is created and the connection to given device is initiated immediately
@@ -115,6 +117,14 @@ public abstract class Connection {
      */
     public void setDebug(boolean debug) {
         this.debug = debug;
+    }
+    
+    @Override
+    public String toString(){
+        if (toString == null){
+            toString = getClass().getCanonicalName() + "(" + host + ":" + port + ")";
+        }
+        return toString;
     }
 
     /**

@@ -29,7 +29,7 @@ import java.io.IOException;
 import org.jpac.IndexOutOfRangeException;
 
 /**
- * Used to transfer a byte value between the java application and the plc.
+ * Used to transfer an unsigned 32 bit value (DWORD) between the java application and the plc.
  * Can be used standalone or in the context of a complex data structure (STRUCT)
  */
 public class DwordRxTx extends RxTx{

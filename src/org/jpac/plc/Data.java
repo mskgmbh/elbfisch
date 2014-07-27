@@ -399,6 +399,7 @@ public class Data {
             //to synchronize their state to the actual state of the real world
             for (int i = 0; i < bytes.length; i++){
                 modifiedByteIndices.add(i);
+                shadowBytes[i] = bytes[i];
             }
         }
         else{
@@ -456,7 +457,11 @@ public class Data {
     public Data clone() throws CloneNotSupportedException{
         Data clonedData = new Data(this.bytes.clone(), this.endianness);
         return clonedData;
-    };    
+    };
+    
+    public Endianness getEndianness(){
+        return this.endianness;
+    }
     
     @Override
     public String toString() {

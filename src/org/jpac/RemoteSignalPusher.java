@@ -64,7 +64,7 @@ class RemoteSignalPusher{
             try{
                 if (Log.isDebugEnabled()) Log.debug(("registering signals for " + jPacInstance));
                 for (RemoteSignalOutput rso: remoteSignalOutputsToBeRegistered){
-                    Signal signal = SignalRegistry.getInstance().getSignal(rso.getSignalName());
+                    Signal signal = SignalRegistry.getInstance().getSignal(rso.getRemoteSignalIdentifier());
                     getServedSignals().put(rso.getTransport().getSignature(), signal);
                     signal.setConnectedAsTarget(true);//signal might not be written to by other signals                
                 }
@@ -129,7 +129,7 @@ class RemoteSignalPusher{
         synchronized(this){
             if (!remoteSignalsRegistered){
                 for (RemoteSignalOutput rso: remoteSignalOutputs){
-                    Signal signal = SignalRegistry.getInstance().getSignal(rso.getSignalName());
+                    Signal signal = SignalRegistry.getInstance().getSignal(rso.getRemoteSignalIdentifier());
                     if (signal.isConnectedAsTarget()){
                         //signal already connected by other instance
                         throw new SignalAlreadyConnectedException(signal);

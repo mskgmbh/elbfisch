@@ -34,7 +34,6 @@ import java.util.List;
  */
 public interface RemoteSignalHandler extends java.rmi.Remote{
     void              connect(String jPacInstance, List<RemoteSignalOutput> remoteSignalOutput) throws RemoteException;
-    void              reverseConnect(String jPacInstance, List<RemoteSignalInput> remoteSignalInput) throws RemoteException;
     void              disconnect(String jPacInstance) throws RemoteException;
     void              push(String jPacInstance, RemoteSignalFrame frame) throws RemoteException;
 }

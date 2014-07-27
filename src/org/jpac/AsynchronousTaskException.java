@@ -26,7 +26,7 @@
 package org.jpac;
 
 /**
- * thrown to the work() method of a module, if an exception condition has been encountered while processing inEveryCycleDo().
+ * might be thrown by the .finished.await() method of an AsynchronousTask.
  * @author berndschuster
  */
 public class AsynchronousTaskException extends ProcessException{

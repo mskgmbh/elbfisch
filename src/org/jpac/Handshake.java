@@ -28,7 +28,7 @@ package org.jpac;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * implements a handshake mechanism to synchronize two modules which have a producer/consumer relationship
  * @author berndschuster
  */
 public class Handshake {
@@ -47,7 +47,6 @@ public class Handshake {
     private ResetAcknowledgeRunner resetAcknowledgeRunner;
     
     /**
-     * implements a handshake mechanism to synchronize two modules which have a producer/consumer relationship
      * @param requestingModule the requesting module (producer)
      * @param acknowledgingModule the acknowledging module (consumer)
      * @param identifier the identifier of this handshake (Corresponds to the identifiers of signals).

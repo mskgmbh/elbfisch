@@ -34,21 +34,18 @@ import java.util.List;
  * @author berndschuster
  */
 public class RemoteSignalConnection {
-    private String                       host;
-    private int                          port;
-    private List<RemoteSignalOutput>     outputSignals;
-    private List<RemoteSignalInput>      inputSignals;
-    private int                          inputIndex;
-    private int                          outputIndex;
-    private RemoteSignalOutputDaemon     remoteSignalOutputDaemon;
-    //TODO private RemoteSignalInputDaemon     remoteSignalInputDaemon;
-    private RemoteSignalFrame            outputFrame;
-    private String                       remoteJPacInstance;
+    private String                         host;
+    private int                            port;
+    private List<RemoteSignalOutput>       outputSignals;
+    private int                            inputIndex;
+    private int                            outputIndex;
+    private RemoteSignalOutputDaemon       remoteSignalOutputDaemon;
+    private RemoteSignalFrame              outputFrame;
+    private String                         remoteJPacInstance;
     
     RemoteSignalConnection(String host, int port){
         this.host          = host;
         this.port          = port;
-        this.inputSignals  = Collections.synchronizedList(new ArrayList<RemoteSignalInput>());
         this.outputSignals = Collections.synchronizedList(new ArrayList<RemoteSignalOutput>());
         this.inputIndex    = 0;
         this.outputIndex   = 0;
@@ -65,13 +62,7 @@ public class RemoteSignalConnection {
     public int getPort(){
         return port;
     }
-    
-    int addInput(RemoteSignalInput remoteInputSignal){
-        remoteInputSignal.setIndex(inputIndex);
-        inputSignals.add(inputIndex, remoteInputSignal);
-        return inputIndex++;
-    }
-    
+        
     int addOutput(RemoteSignalOutput remoteOutputSignal){
         remoteOutputSignal.setIndex(outputIndex);
         outputSignals.add(outputIndex, remoteOutputSignal);
@@ -80,11 +71,7 @@ public class RemoteSignalConnection {
         //     register this signal subsequently
         return outputIndex++;
     }
-    
-    public List<RemoteSignalInput> getInputSignals(){
-        return inputSignals;
-    }
-    
+        
     public List<RemoteSignalOutput> getOutputSignals(){
         return outputSignals;
     }

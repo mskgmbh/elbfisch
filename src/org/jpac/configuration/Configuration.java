@@ -33,6 +33,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
+import org.apache.log4j.Logger;
+import org.jpac.AsynchronousTask;
+import org.jpac.CyclicTask;
+import org.jpac.JPac;
+import org.jpac.ProcessException;
+import org.jpac.WrongUseException;
 
 /**
  * represents the central hierarchical configuration of an elbfisch application. All modules store there properties here
@@ -40,18 +46,58 @@ import org.apache.commons.configuration.XMLConfiguration;
  * @author berndschuster
  */
 public class Configuration extends XMLConfiguration{
-    private static Configuration   instance;
-    private static HashSet<String> touchedProperties;
-    private static boolean         changed;
-    private static BooleanProperty cleanupOnSave;
+    static Logger Log = Logger.getLogger("jpac.JPac");
+    
+    private static Configuration      instance;
+    private static HashSet<String>    touchedProperties;
+    private static boolean            changed;
+    private static boolean            invokeSaveOperation;
+    private static BooleanProperty    cleanupOnSave;
+    private static boolean            loadedSuccessFully;
+    private static boolean            backupedSuccessFully;
+    private static ConfigurationSaver configurationSaver;
+    private static File               backupConfigFile;
     
     private Configuration() throws ConfigurationException, UnsupportedEncodingException{
         super();
         URL configFileUrl = ClassLoader.getSystemResource("org.jpac.Configuration.xml");
         if (configFileUrl != null){
-            File configFile = new File(URLDecoder.decode(configFileUrl.getFile(), "UTF-8"));
+            File configFile  = new File(URLDecoder.decode(configFileUrl.getFile(), "UTF-8"));
+            backupConfigFile = new File(configFile.getAbsolutePath() + ".bak");
             setFile(configFile);
-            load();
+            try{
+                load();
+                loadedSuccessFully = true;
+                //configuration loaded successfully
+                //store a backup version, if it has been modified since last session
+                if (configFile.lastModified() > backupConfigFile.lastModified()){
+                    save(backupConfigFile);
+                    backupedSuccessFully = true;
+                }
+            }
+            catch(ConfigurationException exc){
+                if (!loadedSuccessFully){
+                    Log.error("error occured while loading the configuration: ", exc);
+                    //configuration file cannot be read
+                    //try the backup file
+                    if (backupConfigFile.exists()){
+                        load(backupConfigFile);//throw exception up, if this operation fails
+                        //and store it as the actual configuration
+                        save();//throw exception up, if this operation fails
+                        Log.error("backup configuration loaded instead and saved as actual configuration.");
+                    }
+                }
+                else if (!backupedSuccessFully){
+                    Log.error("error occured while backing up the configuration: ", exc);
+                    try{
+                        backupConfigFile.delete();//try to remove backup configuration
+                        save(backupConfigFile);//and retry backing up the current configuration
+                    }
+                    catch(Exception ex){
+                        Log.error("error occured while backing up the configuration (2nd trial): ", exc);
+                    }
+                }
+            }
         }
         else{
             //no configuration file found in class path. Set default
@@ -103,19 +149,22 @@ public class Configuration extends XMLConfiguration{
     @Override
     public void setProperty(String key, Object value){
         super.setProperty(key, value);
-        changed = true;
+        changed             = true;
+        invokeSaveOperation = true;
     }
     
     @Override
     public void clearPropertyDirect(String key){
         super.clearPropertyDirect(key);
         changed = true;
+        invokeSaveOperation = true;
     }
     
     @Override
     public void addPropertyDirect(String key, Object value){
         super.addPropertyDirect(key, value);
         changed = true;
+        invokeSaveOperation = true;
     }
 
     /**
@@ -133,6 +182,54 @@ public class Configuration extends XMLConfiguration{
      */
     public static void setCleanupOnSave(boolean cleanUp) throws ConfigurationException {
         cleanupOnSave.set(cleanUp);
+    }
+        
+    public ConfigurationSaver getConfigurationSaver(){
+        if (configurationSaver == null){
+            configurationSaver = new ConfigurationSaver();
+        }
+        return configurationSaver;
+    }
+    
+    class ConfigurationSaver implements CyclicTask{
+        Runner runner = null;
+        @Override
+        public void run() {
+            if (invokeSaveOperation && runner.isFinished()){
+                try{runner.start();}catch(WrongUseException exc){/*cannot happen*/}
+                invokeSaveOperation = false;
+            }
+        }
+
+        @Override
+        public void prepare() {
+            runner = new Runner();
+        }
+
+        @Override
+        public void stop() {
+            try{runner.terminate();}catch(WrongUseException exc){/*cannot happen*/};
+        }
+
+        @Override
+        public boolean isFinished() {
+            return runner.isFinished();
+        }
+        
+        class Runner extends AsynchronousTask{
+            @Override
+            public void doIt() throws ProcessException {
+                if (Log.isDebugEnabled()) Log.debug("saving configuration ...");
+                try{
+                    save();
+                    save(backupConfigFile);//save a copy 
+                }
+                catch(ConfigurationException exc){
+                    Log.error("Error: ", exc);
+                }
+                if (Log.isDebugEnabled()) Log.debug("... saving of configuration done.");
+            }
+        }
     }
     
 }

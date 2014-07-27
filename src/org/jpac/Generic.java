@@ -25,10 +25,9 @@
 package org.jpac;
 
 /**
- *
- * @author berndschuster
- * class template for generic objects used as signalsm where ValueImpl is a class 
+ * class template for generic objects used as signals, where ValueImpl is a class 
  * implementing the org.jpac.Value interface
+ * @author berndschuster
  * 
  */
 public class Generic<ValueImpl> extends Signal{

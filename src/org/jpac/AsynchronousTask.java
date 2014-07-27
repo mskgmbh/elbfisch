@@ -27,7 +27,8 @@
 package org.jpac;
 
 /**
- *
+ * Asynchronous tasks can be used to implement long term functions which might exceed the cycle time of an
+ * elbfisch application. They can be instantiated and started by modules.
  * @author berndschuster
  */
 public abstract class AsynchronousTask{
@@ -36,6 +37,7 @@ public abstract class AsynchronousTask{
     private String     identifier;
     private long       minimumDuration;
     private long       maximumDuration;
+    private boolean    taskTerminated;
 
     /**
      * constructs a asynchronous task
@@ -60,16 +62,24 @@ public abstract class AsynchronousTask{
 
     /**
      * Invokes the asynchronous task on separate thread. On first call a thread (task runner) is started which
-     * calls the doIt() method. The thread keeps running after doIt() returns and waiting for its
+     * calls the doIt() method. The thread keeps running after doIt() returns. Afterwards it waits for its
      * next invocation by start(). The thread keeps on running, until terminate() is called or the application shuts down.
-     * @throws WrongUseException thrown, when start() is called outside the context of a module
+     * @throws WrongUseException thrown, when start() is called outside the context of a module or jPac
      */
     public void start() throws WrongUseException{
-        if (!(Thread.currentThread() instanceof AbstractModule)){
-            throw new WrongUseException("must be invoked inside a module");
+        if (!((Thread.currentThread() instanceof AbstractModule) || (Thread.currentThread() instanceof JPac))){
+            throw new WrongUseException("must be invoked inside a module or by jPac");
         }
-        if (task == null){
-            task = new TaskRunner(((AbstractModule)Thread.currentThread()).getQualifiedName() + '.' + identifier);
+        if (task == null || taskTerminated){
+            String taskId;
+            if (Thread.currentThread() instanceof AbstractModule){
+                taskId = ((AbstractModule)Thread.currentThread()).getQualifiedName() + '.' + identifier;
+            } 
+            else {
+                taskId = "JPac." + identifier;
+            }
+            taskTerminated = false;
+            task = new TaskRunner(taskId);
         }
         //start task runner
         task.invoke(true);
@@ -80,25 +90,38 @@ public abstract class AsynchronousTask{
      * @throws WrongUseException thrown, when start() is called outside the context of a module
      */
     public void terminate() throws WrongUseException{
-        if (!(Thread.currentThread() instanceof AbstractModule)){
-            throw new WrongUseException("must be invoked inside a module");
+        if (!((Thread.currentThread() instanceof AbstractModule) || (Thread.currentThread() instanceof JPac))){
+            throw new WrongUseException("must be invoked inside a module or by jPac");
         }
         if (task != null){
             //stop task runner
             task.invoke(false);
-            //a new task runner
-            task = null;
         }
+        taskTerminated = true;
     }
     
+    /**
+     * returns a ProcessEvent which indicates the conclusion of an asynchronous task
+     * @return 
+     */
     public ProcessEvent finished(){
         return finishedEvent;
     }
     
+    /**
+     * 
+     * @return the identifier of the asynchronous task 
+     */
     public String getIdentifier(){
         return identifier;
     }
     
+    /**
+     * must implemented to fulfill the application specific function of this AsynchronousTask.
+     * Is called on every call of start(). The invoking module can await() its conclusion by calling
+     * asynchTask.finished.await().
+     * @throws ProcessException 
+     */
     public abstract void doIt()throws ProcessException;
     
     private class TaskRunner extends Thread{
@@ -150,6 +173,9 @@ public abstract class AsynchronousTask{
                 }
             }
             while(!stopRequested);
+            //denote completion
+            stopRequested = false;
+            done          = true;
         }
         
         public void invoke(boolean startStop){
@@ -183,7 +209,7 @@ public abstract class AsynchronousTask{
      * @return true, if the asynchronous task has come to an end 
      */
     public boolean isFinished(){
-        return task.isDone();
+        return task == null || task.isDone();
     }
 
     /**

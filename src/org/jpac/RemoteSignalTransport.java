@@ -35,12 +35,15 @@ import org.apache.log4j.Logger;
 class RemoteSignalTransport implements Serializable, Cloneable{
     static Logger Log = Logger.getLogger("jpac.Remote");
     
+//    public enum State {UNDEFINED, ADDED, PRESENT, REMOVED};
+//    
     private String  targetSignal;
     private String  sourceSignal;
     private int     index;
     private boolean valid;
     private Value   value;
     private int     signature;
+//    private State   state;
     
     RemoteSignalTransport(int index, String sourceSignal, String targetSignal){
         this.sourceSignal = sourceSignal;
@@ -49,6 +52,7 @@ class RemoteSignalTransport implements Serializable, Cloneable{
         this.valid        = false;
         this.value        = null;
         this.signature    = (sourceSignal + targetSignal + index).hashCode();
+//        this.state        = State.UNDEFINED;
     }
 
     /**
@@ -129,11 +133,20 @@ class RemoteSignalTransport implements Serializable, Cloneable{
         return signature;
     }
     
+//    State getState(){
+//        return state;
+//    }
+//    
+//    void setState(State state){
+//        this.state = state;
+//    }
+//    
     boolean equals(RemoteSignalTransport remoteSignalTransport){
         boolean equal = false;
         if (remoteSignalTransport != null){
             equal = signature == remoteSignalTransport.getSignature() &&
-                    valid == remoteSignalTransport.isValid()     &&                 
+                    valid     == remoteSignalTransport.isValid()      &&                 
+//                    state     == remoteSignalTransport.getState()     &&
                     (value == null && remoteSignalTransport.getValue() == null || value.equals(remoteSignalTransport.getValue()));
         }
         return equal;

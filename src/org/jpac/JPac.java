@@ -58,14 +58,14 @@ import org.jpac.statistics.Histogramm;
 public class JPac extends Thread{
     static Logger Log = Logger.getLogger("jpac.JPac");
 
-    private     final int       OWNMODULEINDEX          = 0;
-    private     final long      DEFAULTCYCLETIME        = 100000000L; // 100 ms
-    private     final long      DEFAULTCYCLETIMEOUTTIME = 1000000000L;// 1 s
-    private     final long      MAXSHUTDOWNTIME         = 2000;       // 2 s
-    private     final CycleMode DEFAULTCYCLEMODE        = CycleMode.FreeRunning;//TODO !!!! CycleMode.FreeRunning;
-    private     final int       EXITCODEINITIALIZATIONERROR = 100;
-    private     final int       EXITCODEINTERNALERROR       = 101;
-
+    private     final int       OWNMODULEINDEX                       = 0;
+    private     final long      DEFAULTCYCLETIME                     = 100000000L; // 100 ms
+    private     final long      DEFAULTCYCLETIMEOUTTIME              = 1000000000L;// 1 s
+    private     final long      MAXSHUTDOWNTIME                      = 2000;       // 2 s
+    private     final CycleMode DEFAULTCYCLEMODE                     = CycleMode.FreeRunning;//TODO !!!! CycleMode.FreeRunning;
+    private     final int       EXITCODEINITIALIZATIONERROR          = 100;
+    private     final int       EXITCODEINTERNALERROR                = 101;
+    private     final long      DEFAULTCYCLICTASKSHUTDOWNTIMEOUTTIME = 5000000000L; //5 s
     public enum CycleMode{OneCycle, Bound, LazyBound, FreeRunning}
     
     public      enum    Status{initializing, ready, running, halted};
@@ -95,7 +95,8 @@ public class JPac extends Thread{
     
     private     boolean              running;
     
-    private     final List<Runnable> synchronizedTasks;
+    private     final List<Runnable>   synchronizedTasks;
+    private     final List<CyclicTask> cyclicTasks;
     
     private LongProperty    propCycleTime;
     private LongProperty    propCycleTimeoutTime;
@@ -103,13 +104,13 @@ public class JPac extends Thread{
     private BooleanProperty propRunningInsideAnIde;
     private BooleanProperty propRunningInjUnitTest;
     private BooleanProperty propEnableTrace;
-    private BooleanProperty propStoreConfigOnShutdown;
     private BooleanProperty propPauseOnBreakPoint;
     private IntProperty     propTraceTimeMinutes;
     private BooleanProperty propRemoteSignalsEnabled;
     private IntProperty     propRemoteSignalPort;
     private BooleanProperty propStoreHistogrammsOnShutdown;
     private StringProperty  propHistogrammFile;
+    private LongProperty    propCyclicTaskShutdownTimeoutTime;
  
     private String          instanceIdentifier;
     private long            cycleTime;
@@ -118,13 +119,13 @@ public class JPac extends Thread{
     private boolean         runningInsideAnIde;
     private boolean         runningInjUnitTest;
     private boolean         enableTrace;
-    private boolean         storeConfigOnShutdown;
     private boolean         pauseOnBreakPoint;
     private int             traceTimeMinutes;
     private boolean         remoteSignalsEnabled;
     private int             remoteSignalPort;
     private boolean         storeHistogrammsOnShutdown;
     private String          histogrammFile;
+    private long            cyclicTaskShutdownTimeoutTime;
 
     private CountingLock    activeEventsLock;
     
@@ -413,6 +414,7 @@ public class JPac extends Thread{
         emergencyStopCausedBy       = null;
         
         synchronizedTasks           = Collections.synchronizedList(new ArrayList<Runnable>());
+        cyclicTasks                 = Collections.synchronizedList(new ArrayList<CyclicTask>());
         
         startCycle                  = new Semaphore(1);
         cycleEnded                  = new Semaphore(1);
@@ -441,34 +443,35 @@ public class JPac extends Thread{
         
         
         try{
-            propCycleTime                  = new LongProperty(this,"CycleTime",DEFAULTCYCLETIME,"[ns]",true);
-            propCycleTimeoutTime           = new LongProperty(this,"CycleTimeoutTime",DEFAULTCYCLETIMEOUTTIME,"[ns]",true);
-            propCycleMode                  = new StringProperty(this,"CycleMode",CycleMode.FreeRunning.toString(),"[OneCycle | Bound | LazyBound | FreeRunning]",true);
-            propRunningInsideAnIde         = new BooleanProperty(this,"RunningInsideAnIde",false,"will pop up a small window to close the application",true);
-            propRunningInjUnitTest         = new BooleanProperty(this,"RunningInjUnitTest",false,"helpful, if jPac is run in a jUnit test",true);
-            propEnableTrace                = new BooleanProperty(this,"EnableTrace",false,"enables tracing of the module activity",true);
-            propStoreConfigOnShutdown      = new BooleanProperty(this,"StoreConfigOnShutdown",true,"if set, the configuration is stored on shutdown",true);
-            propTraceTimeMinutes           = new IntProperty(this,"TraceTimeMinutes",0,"used to estimate the length of the trace buffer [min]",true);
-            propPauseOnBreakPoint          = new BooleanProperty(this,"pauseOnBreakPoint", false, "cycle is paused, until all modules enter waiting state", true);
-            propRemoteSignalsEnabled       = new BooleanProperty(this,"RemoteSignalsEnabled", false, "enable connections to/from remote JPac instances", true);
-            propRemoteSignalPort           = new IntProperty(this,"RemoteSignalPort",10002,"server port for remote signal access",true);
-            propStoreHistogrammsOnShutdown = new BooleanProperty(this,"storeHistogrammsOnShutdown",false,"enables storing of histogramm data on shutdown", true);
-            propHistogrammFile             = new StringProperty(this,"HistogrammFile","./data/histogramm.csv","file in which the histogramms are stored", true);
-            
-            instanceIdentifier         = InetAddress.getLocalHost().getHostName() + ":" + propRemoteSignalPort.get();
-            cycleTime                  = propCycleTime.get();
-            cycleTimeoutTime           = propCycleTimeoutTime.get();
-            cycleMode                  = CycleMode.valueOf(propCycleMode.get());
-            runningInsideAnIde         = propRunningInsideAnIde.get();
-            runningInjUnitTest         = propRunningInjUnitTest.get();
-            enableTrace                = propEnableTrace.get();
-            storeConfigOnShutdown      = propStoreConfigOnShutdown.get();
-            traceTimeMinutes           = propTraceTimeMinutes.get();
-            pauseOnBreakPoint          = propPauseOnBreakPoint.get();
-            remoteSignalsEnabled       = propRemoteSignalsEnabled.get();
-            remoteSignalPort           = propRemoteSignalPort.get();
-            storeHistogrammsOnShutdown = propStoreHistogrammsOnShutdown.get();
-            histogrammFile             = propHistogrammFile.get();
+            propCycleTime                     = new LongProperty(this,"CycleTime",DEFAULTCYCLETIME,"[ns]",true);
+            propCycleTimeoutTime              = new LongProperty(this,"CycleTimeoutTime",DEFAULTCYCLETIMEOUTTIME,"[ns]",true);
+            propCycleMode                     = new StringProperty(this,"CycleMode",CycleMode.FreeRunning.toString(),"[OneCycle | Bound | LazyBound | FreeRunning]",true);
+            propRunningInsideAnIde            = new BooleanProperty(this,"RunningInsideAnIde",false,"will pop up a small window to close the application",true);
+            propRunningInjUnitTest            = new BooleanProperty(this,"RunningInjUnitTest",false,"helpful, if jPac is run in a jUnit test",true);
+            propEnableTrace                   = new BooleanProperty(this,"EnableTrace",false,"enables tracing of the module activity",true);
+            propTraceTimeMinutes              = new IntProperty(this,"TraceTimeMinutes",0,"used to estimate the length of the trace buffer [min]",true);
+            propPauseOnBreakPoint             = new BooleanProperty(this,"pauseOnBreakPoint", false, "cycle is paused, until all modules enter waiting state", true);
+            propRemoteSignalsEnabled          = new BooleanProperty(this,"RemoteSignalsEnabled", false, "enable connections to/from remote JPac instances", true);
+            propRemoteSignalPort              = new IntProperty(this,"RemoteSignalPort",10002,"server port for remote signal access",true);
+            propStoreHistogrammsOnShutdown    = new BooleanProperty(this,"storeHistogrammsOnShutdown",false,"enables storing of histogramm data on shutdown", true);
+            propHistogrammFile                = new StringProperty(this,"HistogrammFile","./data/histogramm.csv","file in which the histogramms are stored", true);
+            propCyclicTaskShutdownTimeoutTime = new LongProperty(this,"CyclicTaskShutdownTimeoutTime",DEFAULTCYCLICTASKSHUTDOWNTIMEOUTTIME,"Timeout for all cyclic tasks to stop on shutdown [ns]",true);
+            instanceIdentifier            = InetAddress.getLocalHost().getHostName() + ":" + propRemoteSignalPort.get();
+            cycleTime                     = propCycleTime.get();
+            cycleTimeoutTime              = propCycleTimeoutTime.get();
+            cycleMode                     = CycleMode.valueOf(propCycleMode.get());
+            runningInsideAnIde            = propRunningInsideAnIde.get();
+            runningInjUnitTest            = propRunningInjUnitTest.get();
+            enableTrace                   = propEnableTrace.get();
+            traceTimeMinutes              = propTraceTimeMinutes.get();
+            pauseOnBreakPoint             = propPauseOnBreakPoint.get();
+            remoteSignalsEnabled          = propRemoteSignalsEnabled.get();
+            remoteSignalPort              = propRemoteSignalPort.get();
+            storeHistogrammsOnShutdown    = propStoreHistogrammsOnShutdown.get();
+            histogrammFile                = propHistogrammFile.get();
+            cyclicTaskShutdownTimeoutTime = propCyclicTaskShutdownTimeoutTime.get();
+            //install configuration saver
+            try{registerCyclicTask(Configuration.getInstance().getConfigurationSaver());}catch(WrongUseException exc){/*cannot happen*/}
         }
         catch(UnknownHostException ex){
             Log.error("Error: ", ex);
@@ -518,7 +521,8 @@ public class JPac extends Thread{
                 }
                 prepareTrace();
                 prepareHistogramms();
-                prepareRemoteConnections();                
+                prepareRemoteConnections(); 
+                prepareCyclicTasks();
             }
             catch(Exception exc){
                 //if an error occured during preparation of the system, shutdown immediately
@@ -563,9 +567,9 @@ public class JPac extends Thread{
                     //acquire system histogramm information
                     modulesLoadStartTime = System.nanoTime();
                     systemHistogramm.update(modulesLoadStartTime - systemLoadStartTime);
-                    //invoke cyclic task for every active module
+                    //invoke the inEveryCycleDo() for every active module
                     tracePoint = 1400;
-                    handleCyclicTasks();                    
+                    handleInEveryCycleDos();                    
                     //now start up application modules which have been awakenend before by fired process events
                     tracePoint = 1450;
                     handleAwakenedModules();
@@ -626,21 +630,23 @@ public class JPac extends Thread{
             shutdownAwaitingModules(getAwaitedEventList());
             //shutdown RemoteSignalConnection's
             closeRemoteConnections();
+            //clean up context of registered cyclic tasks
+            stopCyclicTasks();
             //acknowledge request
             acknowledgeShutdownRequest();
             //new state is halted
             setStatus(Status.halted);
             logStatistics();
-            if(storeConfigOnShutdown){
-                try{
-                    if (Log.isInfoEnabled()) Log.info("saving the configuration ...");
-                    Configuration.getInstance().save();
-                    if (Log.isInfoEnabled()) Log.info("... saving of the configuration done");
-                }
-                catch(ConfigurationException exc){
-                    Log.error("Error: while saving the configuration",exc);
-                }
-            }
+//            if(storeConfigOnShutdown){
+//                try{
+//                    if (Log.isInfoEnabled()) Log.info("saving the configuration ...");
+//                    Configuration.getInstance().save();
+//                    if (Log.isInfoEnabled()) Log.info("... saving of the configuration done");
+//                }
+//                catch(ConfigurationException exc){
+//                    Log.error("Error: while saving the configuration",exc);
+//                }
+//            }
             if (Log.isInfoEnabled()) Log.info("SHUTDOWN COMPLETE");
             readyToShutdown = true;// inform the shutdown hook that we are done
             try{sleep(MAXSHUTDOWNTIME);} catch (InterruptedException ex){}
@@ -698,7 +704,7 @@ public class JPac extends Thread{
         }        
     }
     
-    private void handleCyclicTasks(){
+    private void handleInEveryCycleDos(){
         try{
             for (AbstractModule module: moduleList){
                 //invoke inEveryCycleDo() for all active modules
@@ -846,6 +852,7 @@ public class JPac extends Thread{
             getFiredEventList().clear();
         }
     }
+    
     /**
      * used to propagate signal states to connected signal instances
      */
@@ -860,6 +867,13 @@ public class JPac extends Thread{
             synchronizedTasks.clear();
         }
         
+        synchronized(cyclicTasks){
+            for(CyclicTask ct: cyclicTasks){
+                //run cyclic task
+                ct.run();
+            }            
+        }
+                
         List<Signal> signals = SignalRegistry.getInstance().getSignals();
         synchronized(signals){
             for(Signal s: signals){
@@ -878,9 +892,31 @@ public class JPac extends Thread{
      * CAUTION: The given task may not call invokeLater() directly or indirectly by itself !
      */
     public void invokeLater(Runnable task){
-        //TODO maintain 2 lists odd/even cycles to avoid alteration while iterating through the list
         synchronized(synchronizedTasks){
             synchronizedTasks.add(task);
+        }
+    }
+
+    /*
+     * used to register a task, which is run at the beginning of every jpac cycle
+     * @param  task cyclic task 
+     * @throws WrongUseException, if the given task is already registered
+     */
+    public void registerCyclicTask(CyclicTask task) throws WrongUseException{
+        synchronized(cyclicTasks){
+            if (cyclicTasks.contains(task)){
+                throw new WrongUseException("cyclic task " + task + " already registered.");
+            }
+            cyclicTasks.add(task);
+        }
+    }
+
+    /*
+     * used to register a task, which is run at the beginning of every jpac cycle
+     */
+    public void unregisterCyclicTask(Runnable task){
+        synchronized(cyclicTasks){
+            cyclicTasks.remove(task);
         }
     }
 
@@ -911,8 +947,6 @@ public class JPac extends Thread{
     public long getCycleNumber() {
         return cycleNumber;
     }
-
-//    protected abstract void startModules() throws SignalAlreadyExistsException, SignalAlreadyAssignedException, IndexOutOfRangeException;
 
     /**
      * @return the cycleTime
@@ -1244,7 +1278,46 @@ public class JPac extends Thread{
             Log.error("Error:", exc);
         }
     }
+
+    protected void prepareCyclicTasks(){
+         synchronized(cyclicTasks){
+            for(CyclicTask ct: cyclicTasks){
+                //prepare cyclic task
+                ct.prepare();
+            }            
+        }
+    }
     
+    protected void stopCyclicTasks(){
+        boolean atLeastOneCyclicTaskRunning = false;
+        int     ticks                       = 0;
+        synchronized(cyclicTasks){
+            //stop all cyclic tasks
+            for(CyclicTask ct: cyclicTasks){
+                ct.stop();
+            }            
+            //wait for all cyclic tasks coming to an end
+            do{
+                atLeastOneCyclicTaskRunning = false;
+                for(CyclicTask ct: cyclicTasks){
+                    atLeastOneCyclicTaskRunning = atLeastOneCyclicTaskRunning || !ct.isFinished();
+                }  
+                if (atLeastOneCyclicTaskRunning){
+                    try{Thread.sleep(100);}catch(InterruptedException exc){}
+                }
+                ticks++;
+            }
+            while(atLeastOneCyclicTaskRunning && ticks < (cyclicTaskShutdownTimeoutTime/100000000L));
+            if (atLeastOneCyclicTaskRunning){
+                for(CyclicTask ct: cyclicTasks){
+                    if (!ct.isFinished()){
+                        Log.error("cyclic task " + ct.getClass().getCanonicalName() + " did not stop in time.");
+                    }
+                }  
+            }
+        }
+    }
+
     protected void pushSignalsOverRemoteConnections() throws ConfigurationException, RemoteSignalException{
         if (remoteSignalsEnabled){
             ConcurrentHashMap<String, RemoteSignalConnection> remoteHosts = RemoteSignalRegistry.getInstance().getRemoteHosts();

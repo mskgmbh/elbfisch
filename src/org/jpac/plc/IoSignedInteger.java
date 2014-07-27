@@ -113,13 +113,13 @@ public class IoSignedInteger extends SignedInteger{
             }
             switch(address.getSize()){
                 case 1:
-                    intData.setBYTE(0, get());
+                    intData.setBYTE(0, isValid() ? get() : 0);
                     break;
                 case 2:
-                    intData.setINT(0, get());
+                    intData.setINT(0, isValid() ? get() : 0);
                     break;
                 case 4:
-                    intData.setDINT(0, get());                    
+                    intData.setDINT(0, isValid() ? get() : 0);                    
                     break;
             }
             if (writeRequest == null){

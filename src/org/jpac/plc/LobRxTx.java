@@ -34,9 +34,9 @@ import org.jpac.plc.Request.DATATYPE;
 /**
  * Used to transfer a large data item between the java application and the plc or other device.<br>
  * "Large" means, that the size of the data item exceeds the maximum pdu size, <br>
- * which is the size of the chunk of data which can be transferred by a<br>
+ * which is the size of data which can be transferred by a<br>
  * single transaction.<br>
- * To transfer, large data items are splitted into smaller chunks of date,<br>
+ * For transfer, large data items are splitted into smaller chunks of data,<br>
  * which then are transferred sequentially within multiple transactions.<br>
  * CAUTION: During this transmission sequence, the data will be inconsistent on <br>
  *          the partcular receiving side (critical section). Make sure, that the software <br>

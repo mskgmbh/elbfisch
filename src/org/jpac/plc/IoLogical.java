@@ -62,6 +62,7 @@ public class IoLogical extends Logical{
         if (isChanged()){
             try{if (Log.isDebugEnabled()) Log.debug(this + " set to " + is(true));}catch(SignalInvalidException exc){/*cannot happen*/};
         }
+            try{if (Log.isInfoEnabled()) Log.info(this + " set to " + is(true));}catch(SignalInvalidException exc){/*cannot happen*/};
     }
     
     /**
@@ -77,7 +78,7 @@ public class IoLogical extends Logical{
                 this.connection   = connection;
                 this.writeRequest = null;
             }
-            bitData.setBYTE(0, is(true) ? 0x01 : 0x00);
+            bitData.setBYTE(0, isValid() && is(true) ? 0x01 : 0x00);
             if (writeRequest == null){
                writeRequest = connection.generateWriteRequest(Request.DATATYPE.BIT, address, 0, bitData);
             }

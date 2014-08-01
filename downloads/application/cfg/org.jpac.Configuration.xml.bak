@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<configuration>
+<org.jpac.JPac>
+        <CycleTime comment="[ns]">100000000</CycleTime>
+        <CycleTimeoutTime comment="[ns]">1000000000</CycleTimeoutTime>
+        <CycleMode comment="[OneCycle | Bound | LazyBound | FreeRunning]">LazyBound</CycleMode>
+        <RunningInsideAnIde comment="will pop up a small window to close the application">false</RunningInsideAnIde>
+        <RunningInjUnitTest comment="helpful,if jPac is run in a jUnit test">false</RunningInjUnitTest>
+        <EnableTrace comment="enables tracing of the module activity">false</EnableTrace>
+        <StoreConfigOnShutdown comment="if set,the configuration is stored on shutdown">true</StoreConfigOnShutdown>
+        <TraceTimeMinutes comment="used to estimate the length of the trace buffer [min]">0</TraceTimeMinutes>
+        <pauseOnBreakPoint comment="cycle is paused,until all modules enter waiting state">true</pauseOnBreakPoint>
+        <RemoteSignalsEnabled comment="enable connections to/from remote JPac instances">false</RemoteSignalsEnabled>
+        <RemoteSignalPort comment="server port for remote signal access">10002</RemoteSignalPort>
+        <storeHistogrammsOnShutdown comment="enables storing of histogramm data on shutdown">true</storeHistogrammsOnShutdown>
+        <HistogrammFile comment="file in which the histogramms are stored">./data/histogramm.csv</HistogrammFile>
+    <CyclicTaskShutdownTimeoutTime comment="Timeout for all cyclic tasks to stop on shutdown [ns]">5000000000</CyclicTaskShutdownTimeoutTime>
+</org.jpac.JPac>
+<org.jpac.vioss>
+        <modbus>org.jpac.vioss.modbus.IOHandler</modbus>        
+        <raspigpio>org.jpac.vioss.raspi.gpio.IOHandler</raspigpio>        
+</org.jpac.vioss>
+<PlcListener>
+        <host comment="Ip of the S7 plc which has to be logged">127.0.0.1</host>
+        <slot comment="slot inside the plc's rack">2</slot>
+        <db comment="DB inside the plc which holds the log buffer">203</db>
+        <plcPollTime comment="cycle time used to poll the plc's log buffer [ms]">2000</plcPollTime>
+        <simulation comment="switch on/off simulation mode">false</simulation>
+    </PlcListener>
+<CleanupOnSave comment="removes unused properties on next save(). !!! Will be automatically reset !!!">false</CleanupOnSave>
+</configuration>

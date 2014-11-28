@@ -84,4 +84,17 @@ public class ByteRxTx extends RxTx{
     public static int getSize() {
         return 1;
     }
+    
+    @Override
+    public String toString(){
+        String str = null;
+        try{
+            str = new Integer(get()).toString();
+        }
+        catch(AddressException exc)
+        {
+            str = super.toString();
+        };
+        return str;
+    }    
 }

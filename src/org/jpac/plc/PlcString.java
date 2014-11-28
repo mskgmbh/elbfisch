@@ -42,8 +42,8 @@ public class PlcString {
      */
     public PlcString(String string, int maxLength) throws StringLengthException{
         this.stringBytes = new byte[maxLength];
-        if (maxLength > 255 || string.length() > 255 || string.length() > maxLength){
-            throw new StringLengthException("maximum string length > 255");
+        if (maxLength > 256 || string.length() > 256 || string.length() > maxLength){
+            throw new StringLengthException("maximum string length > 256");
         }
         this.maxLength = maxLength;
         if (string != null){
@@ -56,17 +56,17 @@ public class PlcString {
 
     /**
      * @param string an array of bytes to be stored as a plc string
-     * @param actualLength the actual length of the plc string (the maximum length is deduce from string.length)
+     * @param actualLength the actual length of the plc string (the maximum length is deduced from string.length)
      * @throws StringLengthException
      */
     public PlcString(byte[] string, int actualLength) throws StringLengthException{
         this.stringBytes = string;
-        if (actualLength > 255 || string.length > 255 || actualLength > string.length){
-            throw new StringLengthException("actual string length > 255");
+        if (actualLength > 256 || string.length > 256 || actualLength > string.length){
+            throw new StringLengthException("actual string length > 256");
         }
         if (string != null){
-            if (string.length > 255){
-                throw new StringLengthException("maximum string length > 255");
+            if (string.length > 256){
+                throw new StringLengthException("maximum string length > 256");
             }
             this.maxLength    = string.length;
             this.actualLength = actualLength;
@@ -113,36 +113,10 @@ public class PlcString {
         if (string.length() > this.maxLength){
             throw new StringLengthException("actual length > maximum string length");
         }
-        if (string.length() > 255){
-            throw new StringLengthException("actual length > 255");
+        if (string.length() > 256){
+            throw new StringLengthException("actual length > 256");
         }
         System.arraycopy(string.getBytes(), 0, this.stringBytes, 0, string.length());
         this.actualLength = string.length();
     }
-    /**
-     * used to writeInt a plc string to the plc over a pure (non ISO) TCP/IP connection
-     * @param conn an open connection to the plc
-     * @throws IOException
-     */
-//    public void write(Connection conn) throws IOException{
-//        System.err.println("write() not tested yet");
-//        conn.writeInt(maxLength);
-//        conn.writeInt(actualLength);
-//        conn.writeInt(stringBytes);
-////        conn.getOutputStream().write(maxLength);
-////        conn.getOutputStream().write(actualLength);
-////        conn.getOutputStream().write(stringBytes);
-//    }
-//
-//    /**
-//     * used to read a plc string from the plc over a pure (non ISO) TCP/IP connection
-//     * @param conn
-//     * @throws IOException
-//     */
-//    public void read(Connection conn) throws IOException{
-//        System.err.println("read() not tested yet");
-//        maxLength    = conn.readInt();
-//        actualLength = conn.readInt();
-//        conn.readString(stringBytes);
-//    }
 }

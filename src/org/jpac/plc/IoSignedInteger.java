@@ -37,8 +37,8 @@ import org.jpac.SignedInteger;
  *
  * @author berndschuster
  */
-public class IoSignedInteger extends SignedInteger{
-    static  Logger  Log = Logger.getLogger("com.msk.atlas.IoHandler");      
+public class IoSignedInteger extends SignedInteger implements IoSignal{
+    static  Logger  Log = Logger.getLogger("jpac.Signal");      
     
     private Address      address;
     private Data         data;
@@ -46,6 +46,9 @@ public class IoSignedInteger extends SignedInteger{
     private WriteRequest writeRequest;
     private IoDirection  ioDirection;
     private Connection   connection;
+    private boolean      changedByCheck;
+    private boolean      inCheck;
+    private boolean      toBePutOut;    
     
     public IoSignedInteger(AbstractModule containingModule, String name, Data data, Address address, IoDirection ioDirection) throws SignalAlreadyExistsException{
         super(containingModule, name);
@@ -79,24 +82,61 @@ public class IoSignedInteger extends SignedInteger{
      * propagated to all connected signals
      * @throws SignalAccessException
      * @throws AddressException 
-     * @throws NumberOutOfRangeException
      */    
-    public void check() throws SignalAccessException, AddressException, NumberOutOfRangeException{
-        switch(address.getSize()){
-            case 1:
-                set(data.getBYTE(address.getByteIndex()));//TODO check signed integer behaviour
-                break;
-            case 2:
-                set(data.getINT(address.getByteIndex()));//TODO check signed integer behaviour   
-                break;
-            case 4:
-                set(data.getDINT(address.getByteIndex()));        
-                break;
+    @Override
+    public void check() throws SignalAccessException, AddressException {
+        try{
+            inCheck = true;
+            switch(address.getSize()){
+                case 1:
+                    set(data.getBYTE(address.getByteIndex()));//TODO check signed integer behaviour
+                    break;
+                case 2:
+                    set(data.getINT(address.getByteIndex()));//TODO check signed integer behaviour   
+                    break;
+                case 4:
+                    set(data.getDINT(address.getByteIndex()));        
+                    break;
+            }
+        }
+        catch(NumberOutOfRangeException exc){
+            throw new SignalAccessException(exc.getMessage());
+        }
+        finally{
+            inCheck = false;
         }
         if (isChanged()){
             try{if (Log.isDebugEnabled()) Log.debug(this + " set to " + get());}catch(SignalInvalidException exc){/*cannot happen*/};
+            changedByCheck = true;
         }
     }
+    
+    @Override
+    public void set(int value) throws SignalAccessException, NumberOutOfRangeException{
+        super.set(value);
+        changedByCheck = isChanged() && inCheck;
+    }
+ 
+    @Override
+    public void propagate() throws SignalInvalidException{
+        //this signal has been altered inside the Elbfisch application  (not by the external device).
+        //Mark it as to be put out to the external device
+        if (hasChanged() && ! toBePutOut){
+            toBePutOut     = !changedByCheck;
+            changedByCheck = false;
+        }
+        super.propagate();
+    }
+    
+    @Override
+    public boolean isToBePutOut(){
+        return toBePutOut;
+    }
+    
+    @Override
+    public void resetToBePutOut(){
+        toBePutOut = false;
+    }    
 
     /**
      * returns a write request suitable for transmitting this signal to the plc
@@ -142,6 +182,13 @@ public class IoSignedInteger extends SignedInteger{
     public IoDirection getIoDirection() {
         return ioDirection;
     }
+
+    /**
+     * @return the address of the signal
+     */
+    public Address getAddress(){
+        return this.address;
+    }    
         
     @Override
     public String toString(){

@@ -30,7 +30,7 @@ package org.jpac;
  * @author berndschuster
  * 
  */
-public class Generic<ValueImpl> extends Signal{
+public class Generic<ValueImpl> extends Signal{    
     public Generic(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         super(containingModule, identifier);
         value           = null;

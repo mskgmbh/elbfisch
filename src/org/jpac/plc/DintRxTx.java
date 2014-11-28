@@ -85,4 +85,17 @@ public class DintRxTx extends RxTx{
     public static int getSize() {
         return 4;
     }
+
+    @Override
+    public String toString(){
+        String str = null;
+        try{
+            str = new Long(get()).toString();
+        }
+        catch(AddressException exc)
+        {
+            str = super.toString();
+        };
+        return str;
+    }
 }

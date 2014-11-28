@@ -109,4 +109,14 @@ public class Address implements org.jpac.Address, Cloneable{
         cloned.setSize(size);
         return cloned;
     }
+    
+    public boolean equals(Address address){
+        return address != null && this.byteIndex == address.byteIndex && this.bitIndex == address.bitIndex && this.size == address.size;
+    }
+    
+    public void copy(Address address){
+        this.byteIndex = address.byteIndex;
+        this.bitIndex  = address.bitIndex;
+        this.size      = address.size;
+    }
 }

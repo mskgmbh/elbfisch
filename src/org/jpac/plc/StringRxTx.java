@@ -94,4 +94,16 @@ public class StringRxTx extends LobRxTx{
         try{stringRxTx = new StringRxTx(null, (Address)address.clone(), dataOffset, data.clone());}catch(IndexOutOfRangeException exc){/*cannot happen*/};
         return stringRxTx;
     }
+
+    @Override
+    public String toString(){
+        String str = null;
+        try{
+            str = "'" + get() + "'";}
+        catch(Exception exc)
+        {
+            str = super.toString();
+        };
+        return str;
+    }
 }

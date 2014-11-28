@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : IoLogical.java
+ * MODULE    : IoCharString.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -27,7 +27,7 @@ package org.jpac.plc;
 
 import org.apache.log4j.Logger;
 import org.jpac.AbstractModule;
-import org.jpac.Logical;
+import org.jpac.CharString;
 import org.jpac.SignalAccessException;
 import org.jpac.SignalAlreadyExistsException;
 import org.jpac.SignalInvalidException;
@@ -36,52 +36,64 @@ import org.jpac.SignalInvalidException;
  *
  * @author berndschuster
  */
-public class IoLogical extends Logical implements IoSignal{
+public class IoCharString extends CharString implements IoSignal{
     static  Logger  Log = Logger.getLogger("jpac.Signal");      
+    
     private Address      address;
     private Data         data;
-    private Data         bitData;
+    private Data         strData;
     private WriteRequest writeRequest;
     private IoDirection  ioDirection;
     private Connection   connection;
     private boolean      changedByCheck;
+    private PlcString    plcString;
     private boolean      inCheck;
     private boolean      toBePutOut;
     
-    public IoLogical(AbstractModule containingModule, String name, Data data, Address address, IoDirection ioDirection) throws SignalAlreadyExistsException{
+    
+    public IoCharString(AbstractModule containingModule, String name, Data data, Address address, IoDirection ioDirection) throws SignalAlreadyExistsException, StringLengthException{
         super(containingModule, name);
         this.data        = data;
-        this.address     = address; 
+        this.address     = address;
         this.ioDirection = ioDirection;
+        this.plcString   = new PlcString("",address.getSize() - 2);//TODO suitable for S7 strings, but not for others
     }
+    
     /**
      * used to check, if this signal has been changed by the plc. If so, the signal change is automatically
      * propagated to all connected signals
      * @throws SignalAccessException
      * @throws AddressException 
-     */
+     */    
     @Override
-    public void check() throws SignalAccessException, AddressException{
+    public void check() throws SignalAccessException, AddressException {
         try{
             inCheck = true;
-            set(data.getBIT(address.getByteIndex(), address.getBitIndex()));        
+            set(data.getSTRING(address.getByteIndex(),address.getSize()).toString());//TODO check signed integer behaviour
+        }
+        catch(StringLengthException exc){
+            throw new SignalAccessException(exc.getMessage());
         }
         finally{
             inCheck = false;
         }
+        if (isChanged()){
+            try{if (Log.isDebugEnabled()) Log.debug(this + " set to " + get());}catch(SignalInvalidException exc){/*cannot happen*/};
+            changedByCheck = true;
+        }
     }
     
     @Override
-    public void set(boolean value) throws SignalAccessException{
+    public void set(String value) throws SignalAccessException {
         super.set(value);
         changedByCheck = isChanged() && inCheck;
     }
-    
+        
     @Override
     public void propagate() throws SignalInvalidException{
         //this signal has been altered inside the Elbfisch application  (not by the external device).
         //Mark it as to be put out to the external device
-        if (hasChanged() && !toBePutOut){
+        if (hasChanged() && ! toBePutOut){
             toBePutOut     = !changedByCheck;
             changedByCheck = false;
         }
@@ -97,7 +109,7 @@ public class IoLogical extends Logical implements IoSignal{
     public void resetToBePutOut(){
         toBePutOut = false;
     }
-
+    
     /**
      * returns a write request suitable for transmitting this signal to the plc
      * @param connection
@@ -105,23 +117,27 @@ public class IoLogical extends Logical implements IoSignal{
      */
     @Override
     public WriteRequest getWriteRequest(Connection connection){
-       boolean errorOccured = false;
+        boolean errorOccured = false;
         try{
-            if (bitData == null || this.connection == null || this.connection != connection){
-                bitData           = connection.generateDataObject(1);
+            if (strData == null || this.connection == null || this.connection != connection){
+                this.strData      = connection.generateDataObject(address.getSize());
                 this.connection   = connection;
                 this.writeRequest = null;
             }
-            bitData.setBYTE(0, isValid() && is(true) ? 0x01 : 0x00);
+            strData.clear();
+            if (isValid()){
+                plcString.setStringBytes(get());
+                strData.setSTRING(0, plcString);
+            }
             if (writeRequest == null){
-               writeRequest = connection.generateWriteRequest(Request.DATATYPE.BIT, address, 0, bitData);
+               writeRequest = connection.generateWriteRequest(Request.DATATYPE.BYTE, address, 0, strData);
             }
             else{
-               writeRequest.setData(bitData);
+               writeRequest.setData(strData);
             }
         }
         catch(Exception exc){
-            Log.error("Error: " + exc);
+            Log.error("Error: ",exc);
             errorOccured = true;
         }
         return errorOccured ? null : writeRequest;  
@@ -133,15 +149,15 @@ public class IoLogical extends Logical implements IoSignal{
     public IoDirection getIoDirection() {
         return ioDirection;
     }
-    
+
     /**
      * @return the address of the signal
      */
     @Override
     public Address getAddress(){
         return this.address;
-    }
-    
+    }    
+        
     @Override
     public String toString(){
        return super.toString() + (ioDirection == IoDirection.INPUT ? " <- " : " -> ") + address.toString(); 

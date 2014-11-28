@@ -26,33 +26,77 @@
 package org.jpac.plc;
 
 import org.apache.log4j.Logger;
+import org.jpac.AbstractModule;
 import org.jpac.Generic;
-import org.jpac.NumberOutOfRangeException;
+import org.jpac.IndexOutOfRangeException;
 import org.jpac.SignalAccessException;
 import org.jpac.SignalAlreadyExistsException;
+import org.jpac.SignalInvalidException;
 
 /**
  *
  * @author berndschuster
  */
-public class IoGeneric{
-    static  Logger  Log = Logger.getLogger("com.msk.atlas.IoHandler");      
+public class IoGeneric<ValueImpl> extends Generic<ValueImpl> implements IoSignal{
+    static  Logger  Log = Logger.getLogger("jpac.Signal");      
+
+    private org.jpac.plc.Address    address;
+    private Data                    data;
+    private WriteRequest            writeRequest;
+    private IoDirection             ioDirection;
+    private Connection              connection;
+    private boolean                 changedByCheck;
+    private boolean                 inCheck;
+    private boolean                 toBePutOut;   
+    private LobRxTx                 lobRxTx;
     
-    private Generic      signal;
-    private LobRxTx      lobRxTx;
-    
-    public IoGeneric(Generic signal, LobRxTx lobRxTx) throws SignalAlreadyExistsException{
-        this.signal  = signal;
-        this.lobRxTx = lobRxTx;
+    public IoGeneric(AbstractModule containingModule, String identifier, Data data, Address address, IoDirection ioDirection) throws SignalAlreadyExistsException, IndexOutOfRangeException{
+        super(containingModule, identifier);
+        this.data        = data;
+        this.address     = address;
+        this.ioDirection = ioDirection;
+        this.lobRxTx     = new LobRxTx(null, address, 0, data);
     }
     
-    public void check() throws SignalAccessException, AddressException, NumberOutOfRangeException{
-        signal.set(lobRxTx);
-        if (signal.isChanged()){
-           if (Log.isDebugEnabled()) Log.debug(this + " changed");
+    @Override
+    public void check() throws SignalAccessException, AddressException {
+        try{
+            inCheck = true;
+            set((ValueImpl)lobRxTx);
+        }
+        finally{
+            inCheck = false;
         }
     }
     
+    @Override
+    public void set(ValueImpl value) throws SignalAccessException{
+        super.set(value);
+        changedByCheck = isChanged() && inCheck;
+    }
+    
+    @Override
+    public void propagate() throws SignalInvalidException{
+        //this signal has been altered inside the Elbfisch application  (not by the external device).
+        //Mark it as to be put out to the external device
+        if (hasChanged() && !toBePutOut){
+            toBePutOut     = !changedByCheck;
+            changedByCheck = false;
+        }
+        super.propagate();
+    }
+    
+    @Override
+    public boolean isToBePutOut(){
+        return toBePutOut;
+    }
+    
+    @Override
+    public void resetToBePutOut(){
+        toBePutOut = false;
+    }
+    
+    @Override
     public WriteRequest getWriteRequest(Connection connection){
         WriteRequest writeRequest = null;
         try{
@@ -64,6 +108,12 @@ public class IoGeneric{
         return writeRequest;  
     }
     
+    /**
+     * @return the address of the signal
+     */
+    public Address getAddress(){
+        return this.address;
+    }    
     
     @Override
     public String toString(){

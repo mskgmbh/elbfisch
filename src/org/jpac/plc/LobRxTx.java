@@ -43,7 +43,7 @@ import org.jpac.plc.Request.DATATYPE;
  *          of the receiving side waits until the transmission completed, before<br>
  *          processing the data <br><br>
  */
-abstract public class LobRxTx implements Value{
+public class LobRxTx implements Value{
     static Logger Log = Logger.getLogger("jpac.plc");
     
     protected   Connection          conn;
@@ -219,7 +219,7 @@ abstract public class LobRxTx implements Value{
         return conn;
     }
 
-    protected Data getData() {
+    public Data getData() {
         return data;
     }
 
@@ -282,24 +282,21 @@ abstract public class LobRxTx implements Value{
     @Override
     public void copy(Value aValue){
         this.data.copy(((LobRxTx)aValue).getData());
-        this.address.setByteIndex(((LobRxTx)aValue).getAddress().getByteIndex());
-        this.address.setBitIndex(((LobRxTx)aValue).getAddress().getBitIndex());
-        this.address.setSize(((LobRxTx)aValue).getAddress().getSize());
+        this.address.copy(((LobRxTx)aValue).getAddress());
         this.dataOffset = ((LobRxTx)aValue).dataOffset;
     };
     
     /**
-     * used to check the equality of of this LobRxTx to aValue. Both values a said to be equal, if their data, address and offset are identical
+     * used to check the equality of of this LobRxTx to aValue. Both values a said to be equal, if their type, data, address and offset are identical
      * @param aValue
      * @return 
      */
     @Override
     public boolean equals(Value aValue){
-        return this.data.equals(((LobRxTx)aValue).getData()) && 
-               this.address.getByteIndex() == ((LobRxTx)aValue).getAddress().getByteIndex() &&
-               this.address.getBitIndex()  == ((LobRxTx)aValue).getAddress().getBitIndex()  &&
-               this.address.getSize()      == ((LobRxTx)aValue).getAddress().getSize()      &&
-               this.dataOffset             == ((LobRxTx)aValue).dataOffset;
+        return aValue instanceof LobRxTx                           &&
+               this.data.equals(((LobRxTx)aValue).getData())       && 
+               this.address.equals(((LobRxTx)aValue).getAddress()) &&
+               this.dataOffset == ((LobRxTx)aValue).dataOffset;
     };
     
 
@@ -311,5 +308,19 @@ abstract public class LobRxTx implements Value{
      * @throws CloneNotSupportedException 
      */    
     @Override
-    public abstract Value clone() throws CloneNotSupportedException;
+    public Value clone() throws CloneNotSupportedException{
+        LobRxTx clonedLobRxTx = null;
+        try{
+            clonedLobRxTx            = new LobRxTx(null, (Address) address.clone(), dataOffset, data.clone());
+            clonedLobRxTx.conn       = null;//connection related data not cloned
+            clonedLobRxTx.rxReq      = null;
+            clonedLobRxTx.rxTrans    = null;
+            clonedLobRxTx.txReq      = null;
+            clonedLobRxTx.txTrans    = null;
+        }
+        catch(IndexOutOfRangeException exc){
+            Log.error("Error: ", exc);
+        }
+        return clonedLobRxTx;
+    };
 }

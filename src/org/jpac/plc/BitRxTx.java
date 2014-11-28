@@ -147,4 +147,16 @@ public class BitRxTx extends RxTx{
         return 1;
     }
     
+    @Override
+    public String toString(){
+        String str = null;
+        try{
+            str = new Boolean(is(true)).toString();
+        }
+        catch(AddressException exc)
+        {
+            str = super.toString();
+        };
+        return str;
+    }
 }

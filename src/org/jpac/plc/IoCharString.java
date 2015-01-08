@@ -77,10 +77,6 @@ public class IoCharString extends CharString implements IoSignal{
         finally{
             inCheck = false;
         }
-        if (isChanged()){
-            try{if (Log.isDebugEnabled()) Log.debug(this + " set to " + get());}catch(SignalInvalidException exc){/*cannot happen*/};
-            changedByCheck = true;
-        }
     }
     
     @Override
@@ -93,10 +89,10 @@ public class IoCharString extends CharString implements IoSignal{
     public void propagate() throws SignalInvalidException{
         //this signal has been altered inside the Elbfisch application  (not by the external device).
         //Mark it as to be put out to the external device
-        if (hasChanged() && ! toBePutOut){
-            toBePutOut     = !changedByCheck;
-            changedByCheck = false;
+        if (hasChanged() && signalValid && !changedByCheck){
+            toBePutOut = true;
         }
+        changedByCheck = false;
         super.propagate();
     }
     

@@ -27,6 +27,7 @@ package org.jpac.plc;
 
 import org.apache.log4j.Logger;
 import org.jpac.AbstractModule;
+import org.jpac.JPac;
 import org.jpac.Logical;
 import org.jpac.SignalAccessException;
 import org.jpac.SignalAlreadyExistsException;
@@ -81,10 +82,10 @@ public class IoLogical extends Logical implements IoSignal{
     public void propagate() throws SignalInvalidException{
         //this signal has been altered inside the Elbfisch application  (not by the external device).
         //Mark it as to be put out to the external device
-        if (hasChanged() && !toBePutOut){
-            toBePutOut     = !changedByCheck;
-            changedByCheck = false;
+        if (hasChanged() && signalValid && !changedByCheck){
+            toBePutOut = true;
         }
+        changedByCheck = false;
         super.propagate();
     }
     

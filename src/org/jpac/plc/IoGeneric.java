@@ -79,10 +79,10 @@ public class IoGeneric<ValueImpl> extends Generic<ValueImpl> implements IoSignal
     public void propagate() throws SignalInvalidException{
         //this signal has been altered inside the Elbfisch application  (not by the external device).
         //Mark it as to be put out to the external device
-        if (hasChanged() && !toBePutOut){
-            toBePutOut     = !changedByCheck;
-            changedByCheck = false;
+        if (hasChanged() && signalValid && !changedByCheck){
+            toBePutOut = true;
         }
+        changedByCheck = false;
         super.propagate();
     }
     

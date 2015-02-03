@@ -80,6 +80,7 @@ public abstract class Signal extends Observable implements Observer {
     protected Value                      propagatedValue;
     
     protected boolean                    initializing;
+    protected boolean                    justConnectedAsSource;
     
     public Signal(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         super();
@@ -98,6 +99,7 @@ public abstract class Signal extends Observable implements Observer {
         this.value                           = null;
         this.propagatedValue                 = null; 
         this.initializing                    = false;
+        this.justConnectedAsSource           = false;
         SignalRegistry.getInstance().add(this);
     }
     
@@ -105,6 +107,12 @@ public abstract class Signal extends Observable implements Observer {
      * used to propagate the signals state synchronously at start of cycle
      */
     protected void propagate() throws SignalInvalidException{
+        //if the signal was connected as source signal in the last cycle
+        //let its value be propagated to all observing signals
+        if (isJustConnectedAsSource()){
+            super.setChanged();
+        }
+        setJustConnectedAsSource(false);
         //propagate changes occured during the last cycle
         //avoid propagation of changes occured during the actual propagation phase
         if (hasChanged()){
@@ -169,7 +177,7 @@ public abstract class Signal extends Observable implements Observer {
             Log.error("Error: ", exc);
         }
         //invoke propagation of the state of this signal to the new target
-        super.setChanged();
+        setJustConnectedAsSource(true);
     }
     
     /**
@@ -230,7 +238,7 @@ public abstract class Signal extends Observable implements Observer {
             Log.error("Error: ", exc);
         }
         //invoke propagation of the state of this signal to the new target
-        super.setChanged();
+        setJustConnectedAsSource(true);
     }
     
     /**
@@ -289,7 +297,7 @@ public abstract class Signal extends Observable implements Observer {
             Log.error("Error: ", exc);
         }
         //invoke propagation of the state of this signal to the new target
-        super.setChanged();
+        setJustConnectedAsSource(true);
     }
     
     /**
@@ -536,6 +544,14 @@ public abstract class Signal extends Observable implements Observer {
         return Thread.currentThread().equals(jPac) && (jPac.getProcessedModule() == null);
     }
     
+    protected boolean isJustConnectedAsSource() {
+        return justConnectedAsSource;
+    }
+
+    protected void setJustConnectedAsSource(boolean justConnectedAsSource) {
+        this.justConnectedAsSource = justConnectedAsSource;
+    }
+
     abstract protected boolean isCompatibleSignal(Signal signal);
     abstract protected void updateValue(Object o, Object arg) throws SignalAccessException;
     abstract protected void propagateSignalInternally() throws SignalInvalidException;    

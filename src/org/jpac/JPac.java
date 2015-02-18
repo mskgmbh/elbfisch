@@ -55,7 +55,7 @@ import org.jpac.statistics.Histogramm;
  * central runtime engine of JPac
  * @author berndschuster
  */
-public class JPac extends Thread{
+public class JPac extends Thread {
     static Logger Log = Logger.getLogger("jpac.JPac");
 
     private     final int       OWNMODULEINDEX                       = 0;
@@ -742,19 +742,21 @@ public class JPac extends Thread{
                         if (atLeastOneHangingModuleFound()){
                             //if some modules are still running, give them an additional period of time
                             activeEventsLock.waitForUnlock(cycleTimeoutTime);
-                            if (Log.isInfoEnabled()) Log.info("cycle time exceeded for " + (System.nanoTime()- expectedCycleEndTime) + " effective cycle time :" + (expectedCycleEndTime - cycleStartTime) +" cycle# " + getCycleNumber());
+                            if (Log.isDebugEnabled()) Log.error("cycle time exceeded for " + (System.nanoTime()- expectedCycleEndTime) + " effective cycle time :" + (expectedCycleEndTime - cycleStartTime) +" cycle# " + getCycleNumber());
                         }
                         else{
-                            Log.error("activeEventsLock problem encountered !!!");
-                            Log.error("  activeEventsCount       : " + activeEventsLock.getCount());
-                            Log.error("  max. activeEventsCount  : " + activeEventsLock.getMaxCount());
-                            Log.error("  incrementCounter        : " + incrementCounter);
-                            Log.error("  decrementCounter        : " + decrementCounter);
-                            Log.error("  effective cycle duration: " + (expectedCycleEndTime - cycleStartTime));
-                            for (Fireable f: getFiredEventList()){
-                                ProcessEvent pe       = (ProcessEvent)f; 
-                                AbstractModule module = pe.getObservingModule();
-                                Log.info("  module '" + module + "' invoked by " + f + " state " + module.getStatus() + " ProcessEvent tracepoint: " + pe.getTracePoint());                                                    
+                            if (Log.isDebugEnabled()) Log.error("activeEventsLock problem encountered !!!");
+                            if (Log.isDebugEnabled()) Log.error("  activeEventsCount       : " + activeEventsLock.getCount());
+                            if (Log.isDebugEnabled()) Log.error("  max. activeEventsCount  : " + activeEventsLock.getMaxCount());
+                            if (Log.isDebugEnabled()) Log.error("  incrementCounter        : " + incrementCounter);
+                            if (Log.isDebugEnabled()) Log.error("  decrementCounter        : " + decrementCounter);
+                            if (Log.isDebugEnabled()) Log.error("  effective cycle duration: " + (expectedCycleEndTime - cycleStartTime));
+                            if (Log.isDebugEnabled()) {
+                                for (Fireable f: getFiredEventList()){
+                                    ProcessEvent pe       = (ProcessEvent)f; 
+                                    AbstractModule module = pe.getObservingModule();
+                                    Log.info("  module '" + module + "' invoked by " + f + " state " + module.getStatus() + " ProcessEvent tracepoint: " + pe.getTracePoint());                                                    
+                                }
                             }
                             activeEventsLock.reset();
                         }
@@ -857,7 +859,6 @@ public class JPac extends Thread{
      * used to propagate signal states to connected signal instances
      */
     private void handleDeferredTasks() throws SignalAlreadyConnectedException, SignalInvalidException, ConfigurationException, RemoteSignalException {
-        //if (Log.isDebugEnabled()) Log.debug("propagating signals ...");
         synchronized(synchronizedTasks){
             for(Runnable r: synchronizedTasks){
                 //run synchronized task
@@ -884,7 +885,6 @@ public class JPac extends Thread{
             }
         }
         pushSignalsOverRemoteConnections();        
-        //if (Log.isDebugEnabled()) Log.debug("... propagating signals done");
     }
     
     /*
@@ -1081,13 +1081,11 @@ public class JPac extends Thread{
 
     protected void waitForStartCycleSignal(){
         startCycle.acquireUninterruptibly();
-        if (Log.isDebugEnabled()) Log.debug("-> start of cycle " + cycleNumber);        
     }
     
     protected void signalEndOfCycle(){
         //signal end of cycle
         cycleEnded.release();
-        if (Log.isDebugEnabled()) Log.debug("<- end of cycle " + cycleNumber);        
         //aquire start semaphore in preparation of next cycle
         //must be released instantly
         startCycle.acquireUninterruptibly();
@@ -1099,7 +1097,6 @@ public class JPac extends Thread{
         cycleEnded.acquireUninterruptibly();
         //start cycle
         startCycle.release();
-        if (Log.isDebugEnabled()) Log.debug("!!! next cycle invoked");        
         //wait, until cycle has finished
         cycleEnded.acquireUninterruptibly();
     }

@@ -80,6 +80,7 @@ public class JPac extends Thread {
     private     long                   maxRemainingCycleTime;
     private     long                   expectedCycleEndTime;
     private     long                   cycleStartTime;
+    private     long                   numberOfCyclesExceeded;
 //    private     long                   nextCycleStartTime;
     private     long                   cycleNumber;
     private     Status                 status;
@@ -88,12 +89,12 @@ public class JPac extends Thread {
     private     EmergencyStopException emergencyStopCausedBy;
     private     boolean                emergencyStopIsToBeThrown;
 
-    private     boolean              readyToShutdown;
+    private     boolean                readyToShutdown;
 
-    private     Semaphore            startCycle;
-    private     Semaphore            cycleEnded;
+    private     Semaphore              startCycle;
+    private     Semaphore              cycleEnded;
     
-    private     boolean              running;
+    private     boolean                running;
     
     private     final List<Runnable>   synchronizedTasks;
     private     final List<CyclicTask> cyclicTasks;
@@ -247,8 +248,8 @@ public class JPac extends Thread {
         
         protected void waitForUnlock(){
             synchronized(zeroReached){
-                while(count > 0){
-                    try{zeroReached.wait();}catch(InterruptedException exc){};
+                while(count > 0 && !shutdownRequest.isRequested()){
+                    try{zeroReached.wait(100);}catch(InterruptedException exc){};
                 }
             }            
         }
@@ -267,7 +268,7 @@ public class JPac extends Thread {
                 }
             }
             else{
-                Log.error("cycle time expired before synchronization on modules !!!!!!: " + (-waittime) + " ns");
+                if (Log.isDebugEnabled()) Log.debug("cycle time expired before synchronization on modules !!!!!!: " + (-waittime) + " ns");
             }
         }
     }
@@ -739,27 +740,10 @@ public class JPac extends Thread {
                      //wait until all modules have completed their tasks but not beyond the end of the cycle
                      activeEventsLock.waitForUnlock(expectedCycleEndTime - System.nanoTime());
                      if (activeEventsLock.getCount() > 0){
-                        if (atLeastOneHangingModuleFound()){
-                            //if some modules are still running, give them an additional period of time
-                            activeEventsLock.waitForUnlock(cycleTimeoutTime);
-                            if (Log.isDebugEnabled()) Log.error("cycle time exceeded for " + (System.nanoTime()- expectedCycleEndTime) + " effective cycle time :" + (expectedCycleEndTime - cycleStartTime) +" cycle# " + getCycleNumber());
-                        }
-                        else{
-                            if (Log.isDebugEnabled()) Log.error("activeEventsLock problem encountered !!!");
-                            if (Log.isDebugEnabled()) Log.error("  activeEventsCount       : " + activeEventsLock.getCount());
-                            if (Log.isDebugEnabled()) Log.error("  max. activeEventsCount  : " + activeEventsLock.getMaxCount());
-                            if (Log.isDebugEnabled()) Log.error("  incrementCounter        : " + incrementCounter);
-                            if (Log.isDebugEnabled()) Log.error("  decrementCounter        : " + decrementCounter);
-                            if (Log.isDebugEnabled()) Log.error("  effective cycle duration: " + (expectedCycleEndTime - cycleStartTime));
-                            if (Log.isDebugEnabled()) {
-                                for (Fireable f: getFiredEventList()){
-                                    ProcessEvent pe       = (ProcessEvent)f; 
-                                    AbstractModule module = pe.getObservingModule();
-                                    Log.info("  module '" + module + "' invoked by " + f + " state " + module.getStatus() + " ProcessEvent tracepoint: " + pe.getTracePoint());                                                    
-                                }
-                            }
-                            activeEventsLock.reset();
-                        }
+                        //cycle exceedance encountered. Give the application time to bring the cycle to an end
+                        activeEventsLock.waitForUnlock(cycleTimeoutTime);
+                        //record cycle exceedance
+                        numberOfCyclesExceeded++;
                      }
                      break;
                 case FreeRunning:
@@ -795,9 +779,7 @@ public class JPac extends Thread {
                             Log.info("  module '" + module + "' invoked by " + f + " state " + module.getStatus());                                                    
                         }
                     }
-                    if (atLeastOneHangingModuleFound()){
-                        throw new SomeEventsNotProcessedException(getFiredEventList());
-                    }
+                    throw new SomeEventsNotProcessedException(getFiredEventList());
                 }
             }
             else{
@@ -1174,13 +1156,16 @@ public class JPac extends Thread {
         
         int percentageMinRemainingCycleTime = (int)(100L * minRemainingCycleTime/getCycleTime());
         int percentageMaxRemainingCycleTime = (int)(100L * maxRemainingCycleTime/getCycleTime());
-        
+        int percentageCyclesExceeded        = (int)(100L * numberOfCyclesExceeded/getCycleNumber());        
         if (Log.isInfoEnabled()){
-            Log.info("cycle mode               : " + getCycleMode());
-            Log.info("cycle time               : " + getCycleTime() + " ns");
+            Log.info("cycle mode                : " + getCycleMode());
+            Log.info("cycle time                : " + getCycleTime() + " ns");
             if (getCycleMode() != CycleMode.FreeRunning){
-                Log.info("min remaining cycle time : " + minRemainingCycleTime + " ns (" + percentageMinRemainingCycleTime + "%)");
-                Log.info("max remaining cycle time : " + maxRemainingCycleTime + " ns (" + percentageMaxRemainingCycleTime + "%)");
+                Log.info("min remaining cycle time  : " + minRemainingCycleTime + " ns (" + percentageMinRemainingCycleTime + "%)");
+                Log.info("max remaining cycle time  : " + maxRemainingCycleTime + " ns (" + percentageMaxRemainingCycleTime + "%)");
+            }
+            if (getCycleMode() == CycleMode.LazyBound){
+                Log.info("number of cycles exceeded : " + numberOfCyclesExceeded + " of " + getCycleNumber() + " (" + percentageCyclesExceeded + "%)");
             }
         }
     }
@@ -1337,19 +1322,6 @@ public class JPac extends Thread {
         systemHistogramm  = new Histogramm(cycleTime);
         modulesHistogramm = new Histogramm(cycleTime);
     }
-    
-    private boolean atLeastOneHangingModuleFound(){
-        boolean found = false;
-        for (Fireable f: getFiredEventList()){
-            AbstractModule module = ((ProcessEvent)f).getObservingModule();
-            if (module.getAwaitedProcessEvent() == null){
-                Log.info("module '" + module + "' exceeded cycle time. Was invoked by " + f + " in state " + module.getStatus());                                                    
-                found = true;
-            }
-        }
-        return found;
-    }    
-    
     
     public Histogramm getSystemHistogramm(){
         return systemHistogramm;

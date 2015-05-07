@@ -48,6 +48,7 @@ public class IoCharString extends CharString implements IoSignal{
     private boolean      changedByCheck;
     private PlcString    plcString;
     private boolean      inCheck;
+    private boolean      outCheck;
     private boolean      toBePutOut;
     
     
@@ -60,16 +61,16 @@ public class IoCharString extends CharString implements IoSignal{
     }
     
     /**
-     * used to check, if this signal has been changed by the plc. If so, the signal change is automatically
+     * used to checkIn, if this signal has been changed by the plc. If so, the signal change is automatically
      * propagated to all connected signals
      * @throws SignalAccessException
      * @throws AddressException 
      */    
     @Override
-    public void check() throws SignalAccessException, AddressException {
+    public void checkIn() throws SignalAccessException, AddressException {
         try{
             inCheck = true;
-            set(data.getSTRING(address.getByteIndex(),address.getSize()).toString());//TODO check signed integer behaviour
+            set(data.getSTRING(address.getByteIndex(),address.getSize()).toString());//TODO checkIn signed integer behaviour
         }
         catch(StringLengthException exc){
             throw new SignalAccessException(exc.getMessage());
@@ -78,6 +79,27 @@ public class IoCharString extends CharString implements IoSignal{
             inCheck = false;
         }
     }
+    
+    /**
+     * used to check, if this signal has been changed by this jPac instance. If so, the signal change is
+     * propagated to the process image (data)
+     * @throws SignalAccessException
+     * @throws AddressException 
+     */
+    @Override
+    public void checkOut() throws SignalAccessException, AddressException{
+        throw new UnsupportedOperationException("to be implemented");
+//        try{
+//            outCheck = true;
+//            if (isToBePutOut()){
+//                try{data.setSTRING(address.getByteIndex(), isValid() ? plcString : new PlcString("",address.getSize() - 2));}catch(StringLengthException exc){/*cannot happen*/}
+//            }
+//        }
+//        finally{
+//            outCheck = false;
+//        }
+    }
+    
     
     @Override
     public void set(String value) throws SignalAccessException {
@@ -140,18 +162,37 @@ public class IoCharString extends CharString implements IoSignal{
     }
     
     /**
-     * @return the ioDirection
+     * @param address address of the signal
      */
-    public IoDirection getIoDirection() {
-        return ioDirection;
+    @Override
+    public void setAddress(Address address){
+        this.address = address;
     }
-
+    
     /**
      * @return the address of the signal
      */
     @Override
     public Address getAddress(){
         return this.address;
+    }
+    
+    /**
+     * 
+     * @param ioDirection to be set 
+     */
+    @Override
+    public void setIoDirection(IoDirection ioDirection){
+        this.ioDirection = ioDirection;
+    }
+    
+    /**
+     *
+     * @return ioDirection
+     */
+    @Override
+    public IoDirection getIoDirection(){
+        return this.ioDirection;
     }    
         
     @Override

@@ -79,21 +79,21 @@ public class IoSignedInteger extends SignedInteger implements IoSignal{
     }
     
     /**
-     * used to check, if this signal has been changed by the plc. If so, the signal change is automatically
+     * used to checkIn, if this signal has been changed by the plc. If so, the signal change is automatically
      * propagated to all connected signals
      * @throws SignalAccessException
      * @throws AddressException 
      */    
     @Override
-    public void check() throws SignalAccessException, AddressException {
+    public void checkIn() throws SignalAccessException, AddressException {
         try{
             inCheck = true;
             switch(address.getSize()){
                 case 1:
-                    set(data.getBYTE(address.getByteIndex()));//TODO check signed integer behaviour
+                    set(data.getBYTE(address.getByteIndex()));//TODO checkIn signed integer behaviour
                     break;
                 case 2:
-                    set(data.getINT(address.getByteIndex()));//TODO check signed integer behaviour   
+                    set(data.getINT(address.getByteIndex()));//TODO checkIn signed integer behaviour   
                     break;
                 case 4:
                     set(data.getDINT(address.getByteIndex()));        
@@ -108,6 +108,17 @@ public class IoSignedInteger extends SignedInteger implements IoSignal{
         }
     }
     
+   /**
+     * used to checkIn, if this signal has been changed by the plc. If so, the signal change is automatically
+     * propagated to all connected signals
+     * @throws SignalAccessException
+     * @throws AddressException 
+     */    
+    @Override
+    public void checkOut() throws SignalAccessException, AddressException {
+        throw new UnsupportedOperationException("not implemented yet");
+    }
+
     @Override
     public void set(int value) throws SignalAccessException, NumberOutOfRangeException{
         super.set(value);
@@ -173,16 +184,36 @@ public class IoSignedInteger extends SignedInteger implements IoSignal{
         return errorOccured ? null : writeRequest;  
     }
     
-    /**
-     * @return the ioDirection
+   /**
+     * 
+     * @param ioDirection to be set 
      */
-    public IoDirection getIoDirection() {
-        return ioDirection;
+    @Override
+    public void setIoDirection(IoDirection ioDirection){
+        this.ioDirection = ioDirection;
+    }
+    
+    /**
+     *
+     * @return ioDirection
+     */
+    @Override
+    public IoDirection getIoDirection(){
+        return this.ioDirection;
+    }    
+
+    /**
+     * @param address address of the signal
+     */
+    @Override
+    public void setAddress(Address address){
+        this.address = address;
     }
 
     /**
      * @return the address of the signal
      */
+    @Override
     public Address getAddress(){
         return this.address;
     }    

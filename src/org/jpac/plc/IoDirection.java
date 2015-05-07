@@ -32,5 +32,6 @@ package org.jpac.plc;
 public enum IoDirection {
     UNDEFINED,
     INPUT,
-    OUTPUT;
+    OUTPUT,
+    INOUT;
 }

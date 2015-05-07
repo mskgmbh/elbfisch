@@ -31,9 +31,13 @@ import org.jpac.SignalAccessException;
  * @author berndschuster
  */
 public interface IoSignal {
-    public void check() throws SignalAccessException, AddressException;
+    public void setAddress(Address address);
+    public void checkIn() throws SignalAccessException, AddressException;
+    public void checkOut() throws SignalAccessException, AddressException;
     public boolean isToBePutOut();
     public void resetToBePutOut();
     public Address getAddress();
     public WriteRequest getWriteRequest(Connection connection);
+    public void setIoDirection(IoDirection ioDirection);
+    public IoDirection getIoDirection();
 }

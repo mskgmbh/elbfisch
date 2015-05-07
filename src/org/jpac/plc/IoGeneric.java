@@ -59,7 +59,7 @@ public class IoGeneric<ValueImpl> extends Generic<ValueImpl> implements IoSignal
     }
     
     @Override
-    public void check() throws SignalAccessException, AddressException {
+    public void checkIn() throws SignalAccessException, AddressException {
         try{
             inCheck = true;
             set((ValueImpl)lobRxTx);
@@ -67,6 +67,11 @@ public class IoGeneric<ValueImpl> extends Generic<ValueImpl> implements IoSignal
         finally{
             inCheck = false;
         }
+    }
+    
+    @Override
+    public void checkOut() throws SignalAccessException, AddressException {
+        throw new UnsupportedOperationException("not implemented yet");
     }
     
     @Override
@@ -109,11 +114,38 @@ public class IoGeneric<ValueImpl> extends Generic<ValueImpl> implements IoSignal
     }
     
     /**
+     * @param address address of the signal
+     */
+    @Override
+    public void setAddress(Address address){
+        this.address = address;
+    }
+    
+    /**
      * @return the address of the signal
      */
+    @Override
     public Address getAddress(){
         return this.address;
-    }    
+    }   
+    
+    /**
+     * 
+     * @param ioDirection to be set 
+     */
+    @Override
+    public void setIoDirection(IoDirection ioDirection){
+        this.ioDirection = ioDirection;
+    }
+    
+    /**
+     *
+     * @return ioDirection
+     */
+    @Override
+    public IoDirection getIoDirection(){
+        return this.ioDirection;
+    }        
     
     @Override
     public String toString(){

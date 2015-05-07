@@ -38,16 +38,18 @@ import org.jpac.SignalInvalidException;
  * @author berndschuster
  */
 public class IoLogical extends Logical implements IoSignal{
-    static  Logger  Log = Logger.getLogger("jpac.Signal");      
-    private Address      address;
-    private Data         data;
-    private Data         bitData;
-    private WriteRequest writeRequest;
-    private IoDirection  ioDirection;
-    private Connection   connection;
-    private boolean      changedByCheck;
-    private boolean      inCheck;
-    private boolean      toBePutOut;
+    static  Logger       Log = Logger.getLogger("jpac.Signal");      
+    
+    private   Address      address;
+    private   Data         data;
+    private   Data         bitData;
+    private   WriteRequest writeRequest;
+    private   IoDirection  ioDirection;
+    private   Connection   connection;
+    protected boolean      changedByCheck;
+    protected boolean      inCheck;
+    protected boolean      outCheck;
+    protected boolean      toBePutOut;
     
     public IoLogical(AbstractModule containingModule, String name, Data data, Address address, IoDirection ioDirection) throws SignalAlreadyExistsException{
         super(containingModule, name);
@@ -55,14 +57,15 @@ public class IoLogical extends Logical implements IoSignal{
         this.address     = address; 
         this.ioDirection = ioDirection;
     }
+
     /**
-     * used to check, if this signal has been changed by the plc. If so, the signal change is automatically
+     * used to checkIn, if this signal has been changed by the plc. If so, the signal change is automatically
      * propagated to all connected signals
      * @throws SignalAccessException
      * @throws AddressException 
      */
     @Override
-    public void check() throws SignalAccessException, AddressException{
+    public void checkIn() throws SignalAccessException, AddressException{
         try{
             inCheck = true;
             set(data.getBIT(address.getByteIndex(), address.getBitIndex()));        
@@ -72,6 +75,23 @@ public class IoLogical extends Logical implements IoSignal{
         }
     }
     
+    /**
+     * used to check, if this signal has been changed by this jPac instance. If so, the signal change is
+     * propagated to the process image (data)
+     * @throws SignalAccessException
+     * @throws AddressException 
+     */
+    @Override
+    public void checkOut() throws SignalAccessException, AddressException{
+        try{
+            outCheck = true;
+            try{data.setBIT(address.getByteIndex(), address.getBitIndex(), isValid() ? is(true) : false);}catch(SignalInvalidException exc){/*cannot happen*/}
+        }
+        finally{
+            outCheck = false;
+        }
+    }
+
     @Override
     public void set(boolean value) throws SignalAccessException{
         super.set(value);
@@ -129,12 +149,31 @@ public class IoLogical extends Logical implements IoSignal{
     }
     
     /**
-     * @return the ioDirection
+     * 
+     * @param ioDirection to be set 
      */
-    public IoDirection getIoDirection() {
-        return ioDirection;
+    @Override
+    public void setIoDirection(IoDirection ioDirection){
+        this.ioDirection = ioDirection;
     }
     
+    /**
+     *
+     * @return ioDirection
+     */
+    @Override
+    public IoDirection getIoDirection(){
+        return this.ioDirection;
+    }    
+    
+    /**
+     * @param address address of the signal
+     */
+    @Override
+    public void setAddress(Address address){
+        this.address = address;
+    }
+
     /**
      * @return the address of the signal
      */

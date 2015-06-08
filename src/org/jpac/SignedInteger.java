@@ -43,6 +43,7 @@ public class SignedInteger extends Signal{
      * @param identifier: identifier of the signal
      * @param minValue: minimum value signalValid for this signed integer
      * @param maxValue: maximum value signalValid for this signed integer
+     * @throws org.jpac.SignalAlreadyExistsException
      */
     public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue) throws SignalAlreadyExistsException{
         super(containingModule, identifier);
@@ -61,6 +62,7 @@ public class SignedInteger extends Signal{
      * range check is disabled.
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
+     * @throws org.jpac.SignalAlreadyExistsException
      */
     public SignedInteger(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         this(containingModule, identifier, 0, 0);
@@ -72,6 +74,7 @@ public class SignedInteger extends Signal{
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
      * @param defaultValue: default value of the signal
+     * @throws org.jpac.SignalAlreadyExistsException
      */
     public SignedInteger(AbstractModule containingModule, String identifier, int defaultValue) throws SignalAlreadyExistsException{
         this(containingModule, identifier);
@@ -88,6 +91,7 @@ public class SignedInteger extends Signal{
      * @param maxValue: maximum value signalValid for this decimal
      * @param defaultValue: default value of the decimal
      * @throws NumberOutOfRangeException: if the default value is less than minValue or greater than maxValue
+     * @throws org.jpac.SignalAlreadyExistsException
      */
     public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue, int defaultValue) throws NumberOutOfRangeException, SignalAlreadyExistsException{
         this(containingModule, identifier, minValue, maxValue);
@@ -100,17 +104,38 @@ public class SignedInteger extends Signal{
     /**
      * used to set the signed integer to the given value
      * @param value: value, the signed integer is set to
+     * @throws org.jpac.NumberOutOfRangeException
+     * @throws org.jpac.SignalAccessException
      */
     public void set(int value) throws NumberOutOfRangeException, SignalAccessException{
-        assertRange(value);
-        wrapperValue.set(value);
-        setValue(wrapperValue);
+        synchronized(this){
+            assertRange(value);
+            wrapperValue.set(value);
+            setValue(wrapperValue);
+        }
     }
+    
+    /**
+     * used to set the SignedInteger from any thread, which is not a module and not the jPac thread
+     * The value is changed synchronized to the jPac cycle
+     * @param value: value, the signed integer is set to
+     * @throws SignalAccessException, if the module invoking this method is
+     *         not the containing module
+     */
+    public void setDeferred(int value) throws SignalAccessException{
+        SignedIntegerValue localWrapperValue = new SignedIntegerValue();
+        synchronized(this){
+            localWrapperValue.set(value);
+            setValueDeferred(localWrapperValue);
+        }
+    }
+    
 
     /**
      * returns the value of the signed integer. If the calling module is the containing module the value of this signal is returned.
      * If the calling module is a foreign module the propagated signal is returned.
      * @return see above
+     * @throws org.jpac.SignalInvalidException
      */
     public int get() throws SignalInvalidException{
         return ((SignedIntegerValue)getValidatedValue()).get();
@@ -135,6 +160,7 @@ public class SignedInteger extends Signal{
     /**
      * returns a process event (SignedIntegerChanges), which is fired, if the signed integer changes more than the given 
      * threshold in relation to the given baseValue
+     * @param baseValue
      * @param threshold: threshold to be supervised
      */    
     public SignedIntegerChanges changes(int baseValue, int threshold){
@@ -143,7 +169,6 @@ public class SignedInteger extends Signal{
 
     /**
      * returns a process event (SignedIntegerChanges), which is fired, if the signed integer changes
-     * @param threshold: threshold to be supervised
      */    
     public SignedIntegerChanges changes(){
         return new SignedIntegerChanges(this, 0, 0);
@@ -164,10 +189,13 @@ public class SignedInteger extends Signal{
      * The connection is unidirectional: Changes of the connecting signal (sourceSignal) will be
      * propagated to the signals it is connected to (targetSignal): sourceSignal.connect(targetSignal).
      * @param targetSignal
+     * @throws org.jpac.SignalAlreadyConnectedException
      */
     public void connect(SignedInteger targetSignal) throws SignalAlreadyConnectedException{
-        targetSignal.setNewMapper(null);
-        super.connect(targetSignal);
+        synchronized(this){
+            targetSignal.setNewMapper(null);
+            super.connect(targetSignal);
+        }
     }
 
     /**
@@ -176,13 +204,17 @@ public class SignedInteger extends Signal{
      * The connection is unidirectional: Changes of the connecting signal (sourceSignal) will be
      * propagated to the signals it is connected to (targetSignal): sourceSignal.connect(targetSignal).
      * @param targetSignal
-     * @param mapper used to map the source signed integer to the target signed integer.
+     * @param signedIntegerMapper
+     * @throws org.jpac.SignalAlreadyConnectedException
+     * @throws org.jpac.SignalAccessException
      *
      */
     public void connect(SignedInteger targetSignal, SignedIntegerMapper signedIntegerMapper) throws SignalAlreadyConnectedException, SignalAccessException{
-        //the target is responsible for correct value mapping
-        targetSignal.setNewMapper(signedIntegerMapper);
-        super.connect(targetSignal);
+        synchronized(this){
+            //the target is responsible for correct value mapping
+            targetSignal.setNewMapper(signedIntegerMapper);
+            super.connect(targetSignal);
+        }
     }
 
     /**
@@ -191,10 +223,13 @@ public class SignedInteger extends Signal{
      * The connection is unidirectional: Changes of the connecting signal (sourceSignal) will be
      * propagated to the signals it is connected to (targetSignal): sourceSignal.connect(targetSignal).
      * @param targetSignal
+     * @throws org.jpac.SignalAlreadyConnectedException
      */
     public void connect(Decimal targetSignal) throws SignalAlreadyConnectedException{
-        targetSignal.setNewMapper(new DecimalMapper(Integer.MIN_VALUE, Integer.MAX_VALUE,Integer.MIN_VALUE, Integer.MAX_VALUE));
-        super.connect(targetSignal);
+        synchronized(this){
+            targetSignal.setNewMapper(new DecimalMapper(Integer.MIN_VALUE, Integer.MAX_VALUE,Integer.MIN_VALUE, Integer.MAX_VALUE));
+            super.connect(targetSignal);
+        }
     }
 
     /**
@@ -203,13 +238,17 @@ public class SignedInteger extends Signal{
      * The connection is unidirectional: Changes of the connecting signal (sourceSignal) will be
      * propagated to the signals it is connected to (targetSignal): sourceSignal.connect(targetSignal).
      * @param targetSignal
-     * @param mapper used to map the source signed integer to the target signed integer.
+     * @param decimalMapper
+     * @throws org.jpac.SignalAlreadyConnectedException
+     * @throws org.jpac.SignalAccessException
      *
      */
     public void connect(Decimal targetSignal, DecimalMapper decimalMapper) throws SignalAlreadyConnectedException, SignalAccessException{
-        //the target is responsible for correct value mapping
-        targetSignal.setNewMapper(decimalMapper);
-        super.connect(targetSignal);
+        synchronized(this){
+            //the target is responsible for correct value mapping
+            targetSignal.setNewMapper(decimalMapper);
+            super.connect(targetSignal);
+        }
     }
     
     @Override
@@ -246,6 +285,7 @@ public class SignedInteger extends Signal{
 
     /**
      * @param rangeChecked the rangeChecked to set
+     * @throws org.jpac.SignalAccessException
      */
     protected void setRangeChecked(boolean rangeChecked) throws SignalAccessException {
         assertContainingModule();
@@ -261,6 +301,7 @@ public class SignedInteger extends Signal{
 
     /**
      * @param minValue the minValue to set
+     * @throws org.jpac.SignalAccessException
      */
     protected void setMinValue(int minValue) throws SignalAccessException{
         assertContainingModule();
@@ -277,6 +318,7 @@ public class SignedInteger extends Signal{
 
     /**
      * @param maxValue the maxValue to set
+     * @throws org.jpac.SignalAccessException
      */
     protected void setMaxValue(int maxValue) throws SignalAccessException{
         assertContainingModule();
@@ -292,6 +334,7 @@ public class SignedInteger extends Signal{
 
     /**
      * @param unit: string representation of the unit
+     * @throws org.jpac.SignalAccessException
      */
     protected void setUnit(String unit) throws SignalAccessException{
         assertContainingModule();
@@ -306,7 +349,7 @@ public class SignedInteger extends Signal{
     }
 
     /**
-     * @param mapper the mapper to set
+     * @param signedIntegerMapper
      */
     protected void setMapper(SignedIntegerMapper signedIntegerMapper){   
         this.mapper = signedIntegerMapper;
@@ -320,7 +363,7 @@ public class SignedInteger extends Signal{
     }
 
     /**
-     * @param mapper the mapper to set
+     * @param signedIntegerMapper
      */
     protected void setNewMapper(SignedIntegerMapper signedIntegerMapper){   
         this.newMapper = signedIntegerMapper;

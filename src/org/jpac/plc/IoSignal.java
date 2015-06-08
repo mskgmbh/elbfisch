@@ -40,4 +40,5 @@ public interface IoSignal {
     public WriteRequest getWriteRequest(Connection connection);
     public void setIoDirection(IoDirection ioDirection);
     public IoDirection getIoDirection();
+    public void invalidate() throws SignalAccessException;
 }

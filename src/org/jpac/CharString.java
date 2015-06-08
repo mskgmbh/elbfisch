@@ -36,6 +36,7 @@ public class CharString extends Signal{
      * constructs a char string signal
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
+     * @throws org.jpac.SignalAlreadyExistsException
      */
     public CharString(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         super(containingModule, identifier);
@@ -49,6 +50,7 @@ public class CharString extends Signal{
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
      * @param defaultValue: default value of the CharString
+     * @throws org.jpac.SignalAlreadyExistsException
      * 
      */
     public CharString(AbstractModule containingModule, String identifier, String defaultValue) throws SignalAlreadyExistsException{
@@ -61,16 +63,36 @@ public class CharString extends Signal{
     /**
      * used to set the char string to the given value
      * @param value: value, the char string is set to
+     * @throws org.jpac.SignalAccessException
      */
     public void set(String value) throws SignalAccessException{
-        wrapperValue.set(value);
-        setValue(wrapperValue);
+        synchronized(this){
+            wrapperValue.set(value);
+            setValue(wrapperValue);
+        }
     }
+    
+    /**
+     * used to set the CharString from any thread, which is not a module and not the jPac thread
+     * The value is changed synchronized to the jPac cycle
+     * @param value: value, the char string is set to
+     * @throws SignalAccessException, if the module invoking this method is
+     *         not the containing module
+     */
+    public void setDeferred(String value) throws SignalAccessException{
+        CharStringValue localWrapperValue = new CharStringValue();
+        synchronized(this){
+            localWrapperValue.set(value);
+            setValueDeferred(localWrapperValue);
+        }
+    }
+    
 
     /**
      * returns the value of the char string. If the calling module is the containing module the value of this signal is returned.
      * If the calling module is a foreign module the propagated signal is returned.
      * @return see above
+     * @throws org.jpac.SignalInvalidException
      */
     public String get() throws SignalInvalidException{
         return ((CharStringValue)getValidatedValue()).get();
@@ -78,7 +100,6 @@ public class CharString extends Signal{
 
     /**
      * returns a process event (CharStringChanges), which is fired, if the char string changes
-     * @param threshold: threshold to be supervised
      */    
     public CharStringChanges changes(){
         return new CharStringChanges(this);
@@ -90,6 +111,7 @@ public class CharString extends Signal{
      * The connection is unidirectional: Changes of the connecting signal (sourceSignal) will be
      * propagated to the signals it is connected to (targetSignal): sourceSignal.connect(targetSignal).
      * @param targetSignal
+     * @throws org.jpac.SignalAlreadyConnectedException
      */
     public void connect(CharString targetSignal) throws SignalAlreadyConnectedException{
         super.connect(targetSignal);

@@ -162,6 +162,9 @@ public abstract class Fireable{
 
     /**
      * used to set a monitor on a Fireable. If it is fired, a MonitorException is thrown to the monitoring module
+     * if the Firable is already monitored, this call will be ignored. BUT: There might be situations, where jPac is unable
+     * to detect, that this Fireable or a certain complex fire condition is already monitored. To avoid this reliably, aspecially inside of
+     * loops, instantiate the fireable once outside the loop and call monitor() upon this instance.
      * @throws InconsistencyException thrown, if an jpac internal problem arose 
      */
     public void monitor() throws InconsistencyException{
@@ -173,7 +176,7 @@ public abstract class Fireable{
         //check, if I am already monitored by this module
         boolean fireableAlreadyRegistered = false; 
         for(Fireable f: module.getMonitoredEvents()){
-            if(this.equalsCondition(f)){
+            if(this.equals(f) || this.equalsCondition(f)){
                 fireableAlreadyRegistered = true;
                 break;
             }
@@ -181,6 +184,9 @@ public abstract class Fireable{
         if(!fireableAlreadyRegistered){
             //I'm not monitored by this module yet
             //register myself as an active waiting event
+            if (module.getMonitoredEvents().size() >= module.MAXNUMBEROFMONITORS){
+                throw new InconsistencyException("maximum number of monitors reached. Use unmonitor() for monitors which are no longer used");
+            }
             module.getMonitoredEvents().add(this);
         }
     }
@@ -248,12 +254,12 @@ public abstract class Fireable{
     
     /**
      * used, to check, if this fireable implements the identical fire condition as f.
-     * 
+     * CAUTION: if not overwritten, equalsCondition() returns false by default
      * @param f the Fireable to check
      * @return true, if both fire conditions match
      */
     protected boolean equalsCondition(Fireable f){
         //Note: leave this code herein unchanged. It is implemented this way designedly.
-        throw new UnsupportedOperationException("must be implemented if this fireable is to be monitored");
+        return false;
     }
 }

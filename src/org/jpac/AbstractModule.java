@@ -117,6 +117,8 @@ public abstract class AbstractModule extends Thread{
     public  static final long millis = 1000000L;
     /**used to denote a span of time in seconds*/
     public  static final long sec    = 1000000000L;
+    
+    public  static final int  MAXNUMBEROFMONITORS = 1000;
 
     private JPac                  jPac;
     private int                   moduleIndex;

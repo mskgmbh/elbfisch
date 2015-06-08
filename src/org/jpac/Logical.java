@@ -39,6 +39,7 @@ public class Logical extends Signal{
      * constructs a logical signal
      * @param containingModule: module, this signal is contained in
      * @param identifier: identifier of the signal
+     * @throws org.jpac.SignalAlreadyExistsException
      */
     public Logical(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         super(containingModule, identifier);
@@ -53,6 +54,7 @@ public class Logical extends Signal{
      * @param containingModule: module, this signal is contained in
      * @param identifier: identifier of the signal
      * @param defaultState: default state of this logical
+     * @throws org.jpac.SignalAlreadyExistsException
      */
     public Logical(AbstractModule containingModule, String identifier, boolean defaultState) throws SignalAlreadyExistsException{
         this(containingModule, identifier);
@@ -68,8 +70,25 @@ public class Logical extends Signal{
      *         not the containing module
      */
     public void set(boolean state) throws SignalAccessException{
-        wrapperValue.set(state);
-        setValue(wrapperValue);
+        synchronized(this){
+            wrapperValue.set(state);
+            setValue(wrapperValue);
+        }
+    }
+
+    /**
+     * used to set the logical from any thread, which is not a module and not the jPac thread
+     * The value is changed synchronized to the jPac cycle
+     * @param state: state, the logical is set to
+     * @throws SignalAccessException, if the module invoking this method is
+     *         not the containing module
+     */
+    public void setDeferred(boolean state) throws SignalAccessException{
+        synchronized(this){
+            LogicalValue localWrapperValue = new LogicalValue();
+            localWrapperValue.set(state);
+            setValueDeferred(localWrapperValue);
+        }
     }
 
     /**
@@ -77,6 +96,7 @@ public class Logical extends Signal{
      * the state of the signal is returned. If the calling module is a foreign module the propagated (synchronized) signal is returned.
      * @param state: expected state
      * @return see above
+     * @throws org.jpac.SignalInvalidException
      */
     public boolean is(boolean state) throws SignalInvalidException{
         return ((LogicalValue)getValidatedValue()).is(state);
@@ -93,10 +113,12 @@ public class Logical extends Signal{
      */
     
     public boolean isToggled() throws SignalInvalidException{
-       if (!isValid()){
-          throw new SignalInvalidException(this.toString());
+       synchronized(this){
+            if (!isValid()){
+               throw new SignalInvalidException(this.toString());
+            }
+            return isChanged();
        }
-       return isChanged();
     }
     
     
@@ -112,7 +134,9 @@ public class Logical extends Signal{
      * @return 
      */
     public boolean isToggledTo(boolean state) throws SignalInvalidException{
-        return isToggled() && ((LogicalValue)getValue()).is(state);
+        synchronized(this){
+            return isToggled() && ((LogicalValue)getValue()).is(state);
+        }
     }
 
     /**
@@ -148,10 +172,13 @@ public class Logical extends Signal{
      * propagated to the signals it is connected to (targetSignal): sourceSignal.connect(targetSignal).
      * @param targetSignal the target signal
      * @param invert signal will be inverted on propagation over this connection
+     * @throws org.jpac.SignalAlreadyConnectedException
      */
     public void connect(Logical targetSignal, boolean invert) throws SignalAlreadyConnectedException{
-        super.connect(targetSignal);
-        targetSignal.setInvertOnUpdate(invert);
+        synchronized(this){
+            super.connect(targetSignal);
+            targetSignal.setInvertOnUpdate(invert);
+        }
     }
 
     /**
@@ -170,20 +197,25 @@ public class Logical extends Signal{
      * to multiple Logicals.
      * @param alarm the target alarm
      * @param invert signal will be inverted on propagation over this connection
+     * @throws org.jpac.SignalAlreadyConnectedException
      */
     public void connect(Alarm alarm, boolean invert) throws SignalAlreadyConnectedException{
-        super.connect(alarm);
-        alarm.setInvertOnUpdate(invert);
+        synchronized(this){
+            super.connect(alarm);
+            alarm.setInvertOnUpdate(invert);
+        }
     }
 
     /**
      * used to connect this Logical to an Alarm.
      * @param alarm the target alarm
+     * @throws org.jpac.SignalAlreadyConnectedException
      */
     public void connect(Alarm alarm) throws SignalAlreadyConnectedException{
         this.connect(alarm,false);
     }
 
+    @Override
     protected boolean isCompatibleSignal(Signal signal){
         return signal instanceof Logical;
     }

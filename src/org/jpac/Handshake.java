@@ -42,6 +42,7 @@ public class Handshake {
     private Logical                active;
     private SignedInteger          resultSig;
     private ProcessEvent           requestedEvent;
+    private ProcessEvent           requestedRemovedEvent;
     private ProcessEvent           acknowledgedEvent;
     private ProcessEvent           activeEvent;
     private AbstractModule         requestingModule;
@@ -51,7 +52,6 @@ public class Handshake {
     private long                   lastAcknowledgeCycle;
     private RequestRunner          requestRunner;
     private ResetRequestRunner     resetRequestRunner;
-    private ResetAcknowledgeRunner resetAcknowledgeRunner;
     private int                    result;
     
     /**
@@ -69,11 +69,11 @@ public class Handshake {
         this.acknowledgedEvent      = acknowledge.state(true);
         this.activeEvent            = active.state(true);
         this.requestedEvent         = request.state(true);
+        this.requestedRemovedEvent    = request.state(false);
         this.lastRequestCycle       = 0L;
         this.lastAcknowledgeCycle   = 0L;
         this.requestRunner          = new RequestRunner();
         this.resetRequestRunner     = new ResetRequestRunner();
-        this.resetAcknowledgeRunner = new ResetAcknowledgeRunner();
         this.result                 = OK;
     }
     
@@ -82,6 +82,13 @@ public class Handshake {
      */
     public ProcessEvent requested(){
         return requestedEvent;
+    }
+
+    /**
+     * @return returns a ProcessEvent which is fired, when the a pending request is reset. Can be awaited by the acknowledging module
+     */
+    public ProcessEvent requestRemoved(){
+        return requestedRemovedEvent;
     }
 
     /**
@@ -104,37 +111,62 @@ public class Handshake {
      */
     public void request() throws SignalAccessException, WrongUseException{
         if (requestingModule != null && !Thread.currentThread().equals(requestingModule)){
-            throw new SignalAccessException("handshake is seized by " + requestingModule);
+            throw new SignalAccessException("handshake " + this + " is seized by " + requestingModule);
         }
         if (active.isConnectedAsTarget() || resultSig.isConnectedAsTarget() || acknowledge.isConnectedAsTarget() || request.isConnectedAsTarget()){
-            throw new SignalAccessException("handshake cannot be requested directly, because it's acknowledge, active, resultSig or request signal is connected as a target ");            
+            throw new SignalAccessException("handshake " + this + " cannot be requested directly, because it's acknowledge, active, resultSig or request signal is connected as a target ");            
         }
+        
+        try{
+            if (acknowledge.is(true) || active.is(true) || result != OK){
+                throw new WrongUseException("handshake " + this + " not idle: acknowledge= " + acknowledge.is(true) + " active= " + active.is(true) + " result= " + result);
+            }
+        }catch(SignalInvalidException exc){/*cannot happen*/}
+        
         JPac.getInstance().invokeLater(requestRunner);
-        JPac.getInstance().invokeLater(resetAcknowledgeRunner);
     }
 
     /**
-     * used by the requesting module to remove a pending request to abort it
-     * HINT: the request will automatically be reset on every acknowledgement
+     * used by the requesting module to remove a pending request to abort it or to respond to a pending acknowledgement
+     * The acknowledging module should response by use of resetAcknowledgement()
      * @throws SignalAccessException 
      */
     public void resetRequest() throws SignalAccessException, WrongUseException{
         if (requestingModule != null && !Thread.currentThread().equals(requestingModule)){
-            throw new SignalAccessException("handshake is seized by " + requestingModule);
+            throw new SignalAccessException("handshake " + this + " is seized by " + requestingModule);
         }
         if (active.isConnectedAsTarget() || resultSig.isConnectedAsTarget() || acknowledge.isConnectedAsTarget() || request.isConnectedAsTarget()){
-            throw new SignalAccessException("request of handshake cannot be reset directly, because it's acknowledge, active, resultSig or request signal is connected as a target ");            
+            throw new SignalAccessException("request of handshake " + this + " cannot be reset directly, because it's acknowledge, active, resultSig or request signal is connected as a target ");            
         }
         JPac.getInstance().invokeLater(resetRequestRunner);
-        JPac.getInstance().invokeLater(resetAcknowledgeRunner);
     }    
+
     /**
-     * used by the acknowledgeing module to indicate, that the processing of a request has begun
+     * used by the acknowledging module to remove a pending acknowledgement
+     * After this call the handshake is idle and can be reused.
+     * @throws SignalAccessException 
+     */
+    public void resetAcknowledgement() throws SignalAccessException, WrongUseException{
+        if (acknowledgingModule != null && !Thread.currentThread().equals(acknowledgingModule)){
+            throw new SignalAccessException("handshake " + this + " can only be reset by the acknowledging module");
+        }
+        if (active.isConnectedAsTarget() || resultSig.isConnectedAsTarget() || acknowledge.isConnectedAsTarget() || request.isConnectedAsTarget()){
+            throw new SignalAccessException("handshake " + this + " cannot be reset directly, because it's acknowledge, active, resultSig or request signal is connected as a target ");            
+        }
+        active.set(false);
+        try{resultSig.set(OK);}catch(NumberOutOfRangeException exc){/*cannot happen*/};
+        acknowledge.set(false);
+    }    
+    
+    
+    
+    /**
+     * used by the acknowledging module to indicate, that the processing of a request has begun
      * @throws SignalAccessException 
      */
     public void setActive() throws SignalAccessException{
         if (active.isConnectedAsTarget()){
-            throw new SignalAccessException("handshake cannot be set active directly, because it's active signal is connected as a target ");            
+            throw new SignalAccessException("handshake " + this + " cannot be set active directly, because it's active signal is connected as a target ");            
         }        
         active.set(true);
     }
@@ -145,12 +177,25 @@ public class Handshake {
      */
     public void acknowledge(int result) throws SignalAccessException, NumberOutOfRangeException{
         if (active.isConnectedAsTarget() || resultSig.isConnectedAsTarget() || acknowledge.isConnectedAsTarget() || request.isConnectedAsTarget()){
-            throw new SignalAccessException("handshake cannot be acknowledged directly, because it's acknowledge, active, resultSig or request signal is connected as a target ");            
+            throw new SignalAccessException("handshake " + this + " cannot be acknowledged directly, because it's acknowledge, active, resultSig or request signal is connected as a target ");            
         }
         this.result = result;
-        active.set(false);
         resultSig.set(result);
         acknowledge.set(true);
+    }
+
+    /**
+     * used by the acknowledging module to reset the handshake for instance in case of a detected protocol error
+     * @throws SignalAccessException 
+     */
+    public void reset() throws SignalAccessException, NumberOutOfRangeException{
+        if (active.isConnectedAsTarget() || resultSig.isConnectedAsTarget() || acknowledge.isConnectedAsTarget() || request.isConnectedAsTarget()){
+            throw new SignalAccessException("handshake " + this + " cannot be reset directly, because it's acknowledge, active, resultSig or request signal is connected as a target ");            
+        }
+        this.result = OK;
+        resultSig.set(OK);
+        active.set(false);
+        acknowledge.set(false);
         JPac.getInstance().invokeLater(resetRequestRunner);
     }
 
@@ -195,7 +240,7 @@ public class Handshake {
      */
     public void seize(AbstractModule requestingModule) throws WrongUseException, SignalAlreadyExistsException{
         if (requestingModule == null){
-            throw new NullPointerException("requesting module must not be 'null'");
+            throw new WrongUseException("requesting module must not be 'null'");
         }
         if (this.requestingModule != null){
             throw new WrongUseException("requesting module already joined: " + this.requestingModule.getQualifiedName());
@@ -284,20 +329,6 @@ public class Handshake {
                 request.set(false);
             }
             catch(SignalAccessException exc){/*cannot happen*/};
-        }
-    }
-
-    private class ResetAcknowledgeRunner implements Runnable{
-        @Override
-        public void run() {
-            try{
-                result = OK;
-                resultSig.set(OK);
-                active.set(false);
-                acknowledge.set(false);
-            }
-            catch(SignalAccessException exc){/*cannot happen*/}
-            catch(NumberOutOfRangeException exc){/*cannot happen*/};
         }
     }
 }

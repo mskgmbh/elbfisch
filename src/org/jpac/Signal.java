@@ -39,27 +39,7 @@ import org.apache.log4j.Logger;
  * 
  */
 public abstract class Signal extends Observable implements Observer {
-    
-    private class ConnectionTask{
-        private ConnTask task;
-        private Object   target;
-
-        private ConnectionTask(ConnTask task, Signal targetSignal) {
-            this.task   = task;
-            this.target = targetSignal;
-        }  
-
-        private ConnectionTask(ConnTask task, RemoteSignalOutput targetSignal) {
-            this.task   = task;
-            this.target = targetSignal;
-        }  
-
-        private ConnectionTask(ConnTask task, SignalObserver targetObserver) {
-            this.task   = task;
-            this.target = targetObserver;
-        }  
-    }
-    
+        
     private   enum ConnTask{CONNECT,DISCONNECT, REMOTECONNECT, REMOTEDISCONNECT, SIGNALOBSERVERCONNECT, SIGNALOBSERVERDISCONNECT};
     
     static    Logger Log = Logger.getLogger("jpac.Signal");
@@ -163,21 +143,23 @@ public abstract class Signal extends Observable implements Observer {
      * @param targetSignal
      */
     public void connect(Signal targetSignal) throws SignalAlreadyConnectedException{
-        if (Log.isDebugEnabled()) Log.debug(this + ".connect(" + targetSignal + ")");
-        if (targetSignal.isConnectedAsTarget()){
-            throw new SignalAlreadyConnectedException(targetSignal);
+        synchronized(this){
+            if (Log.isDebugEnabled()) Log.debug(this + ".connect(" + targetSignal + ")");
+            if (targetSignal.isConnectedAsTarget()){
+                throw new SignalAlreadyConnectedException(targetSignal);
+            }
+            try{
+                connectionTasks.add(new ConnectionTask(ConnTask.CONNECT, targetSignal));
+            }
+            catch(IllegalStateException exc){
+                Log.error("Error connectionTask queue full: ", exc);
+            }
+            catch(Exception exc){
+                Log.error("Error: ", exc);
+            }
+            //invoke propagation of the state of this signal to the new target
+            setJustConnectedAsSource(true);
         }
-        try{
-            connectionTasks.add(new ConnectionTask(ConnTask.CONNECT, targetSignal));
-        }
-        catch(IllegalStateException exc){
-            Log.error("Error connectionTask queue full: ", exc);
-        }
-        catch(Exception exc){
-            Log.error("Error: ", exc);
-        }
-        //invoke propagation of the state of this signal to the new target
-        setJustConnectedAsSource(true);
     }
     
     /**
@@ -185,15 +167,17 @@ public abstract class Signal extends Observable implements Observer {
      * @param targetSignal
      */
     public void disconnect(Signal targetSignal){
-        if (Log.isDebugEnabled()) Log.debug(this + ".disconnect(" + targetSignal + ")");
-        try{
-            connectionTasks.add(new ConnectionTask(ConnTask.DISCONNECT, targetSignal));
-        }
-        catch(IllegalStateException exc){
-            Log.error("Error connectionTask queue full: ", exc);
-        }
-        catch(Exception exc){
-            Log.error("Error: ", exc);
+        synchronized(this){
+            if (Log.isDebugEnabled()) Log.debug(this + ".disconnect(" + targetSignal + ")");
+            try{
+                connectionTasks.add(new ConnectionTask(ConnTask.DISCONNECT, targetSignal));
+            }
+            catch(IllegalStateException exc){
+                Log.error("Error connectionTask queue full: ", exc);
+            }
+            catch(Exception exc){
+                Log.error("Error: ", exc);
+            }
         }
     }
 
@@ -224,21 +208,23 @@ public abstract class Signal extends Observable implements Observer {
      * @param targetSignal
      */
     public void connect(RemoteSignalOutput targetSignal) throws SignalAlreadyConnectedException{
-        if (Log.isDebugEnabled()) Log.debug(this + ".connect(" + targetSignal + ")");
-        if (targetSignal.isConnectedAsTarget()){
-            throw new SignalAlreadyConnectedException(targetSignal);
+        synchronized(this){
+            if (Log.isDebugEnabled()) Log.debug(this + ".connect(" + targetSignal + ")");
+            if (targetSignal.isConnectedAsTarget()){
+                throw new SignalAlreadyConnectedException(targetSignal);
+            }
+            try{
+                connectionTasks.add(new ConnectionTask(ConnTask.REMOTECONNECT, targetSignal));
+            }
+            catch(IllegalStateException exc){
+                Log.error("Error connectionTask queue full: ", exc);
+            }
+            catch(Exception exc){
+                Log.error("Error: ", exc);
+            }
+            //invoke propagation of the state of this signal to the new target
+            setJustConnectedAsSource(true);
         }
-        try{
-            connectionTasks.add(new ConnectionTask(ConnTask.REMOTECONNECT, targetSignal));
-        }
-        catch(IllegalStateException exc){
-            Log.error("Error connectionTask queue full: ", exc);
-        }
-        catch(Exception exc){
-            Log.error("Error: ", exc);
-        }
-        //invoke propagation of the state of this signal to the new target
-        setJustConnectedAsSource(true);
     }
     
     /**
@@ -246,15 +232,17 @@ public abstract class Signal extends Observable implements Observer {
      * @param targetSignal
      */
     public void disconnect(RemoteSignalOutput targetSignal){
-        if (Log.isDebugEnabled()) Log.debug(this + ".disconnect(" + targetSignal + ")");
-        try{
-            connectionTasks.add(new ConnectionTask(ConnTask.REMOTEDISCONNECT, targetSignal));
-        }
-        catch(IllegalStateException exc){
-            Log.error("Error connectionTask queue full: ", exc);
-        }
-        catch(Exception exc){
-            Log.error("Error: ", exc);
+        synchronized(this){
+            if (Log.isDebugEnabled()) Log.debug(this + ".disconnect(" + targetSignal + ")");
+            try{
+                connectionTasks.add(new ConnectionTask(ConnTask.REMOTEDISCONNECT, targetSignal));
+            }
+            catch(IllegalStateException exc){
+                Log.error("Error connectionTask queue full: ", exc);
+            }
+            catch(Exception exc){
+                Log.error("Error: ", exc);
+            }
         }
     }
 
@@ -283,21 +271,23 @@ public abstract class Signal extends Observable implements Observer {
      * @param targetObserver
      */
     public void connect(SignalObserver targetObserver) throws SignalAlreadyConnectedException{
-        if (Log.isDebugEnabled()) Log.debug(this + ".connect(" + targetObserver + ")");
-        if (targetObserver.isConnectedAsTarget()){
-            throw new SignalAlreadyConnectedException(targetObserver);
+        synchronized(this){
+            if (Log.isDebugEnabled()) Log.debug(this + ".connect(" + targetObserver + ")");
+            if (targetObserver.isConnectedAsTarget()){
+                throw new SignalAlreadyConnectedException(targetObserver);
+            }
+            try{
+                connectionTasks.add(new ConnectionTask(ConnTask.SIGNALOBSERVERCONNECT, targetObserver));
+            }
+            catch(IllegalStateException exc){
+                Log.error("Error connectionTask queue full: ", exc);
+            }
+            catch(Exception exc){
+                Log.error("Error: ", exc);
+            }
+            //invoke propagation of the state of this signal to the new target
+            setJustConnectedAsSource(true);
         }
-        try{
-            connectionTasks.add(new ConnectionTask(ConnTask.SIGNALOBSERVERCONNECT, targetObserver));
-        }
-        catch(IllegalStateException exc){
-            Log.error("Error connectionTask queue full: ", exc);
-        }
-        catch(Exception exc){
-            Log.error("Error: ", exc);
-        }
-        //invoke propagation of the state of this signal to the new target
-        setJustConnectedAsSource(true);
     }
     
     /**
@@ -305,15 +295,17 @@ public abstract class Signal extends Observable implements Observer {
      * @param targetObserver
      */
     public void disconnect(SignalObserver targetObserver){
-        if (Log.isDebugEnabled()) Log.debug(this + ".disconnect(" + targetObserver + ")");
-        try{
-            connectionTasks.add(new ConnectionTask(ConnTask.SIGNALOBSERVERDISCONNECT, targetObserver));
-        }
-        catch(IllegalStateException exc){
-            Log.error("Error connectionTask queue full: ", exc);
-        }
-        catch(Exception exc){
-            Log.error("Error: ", exc);
+        synchronized(this){
+            if (Log.isDebugEnabled()) Log.debug(this + ".disconnect(" + targetObserver + ")");
+            try{
+                connectionTasks.add(new ConnectionTask(ConnTask.SIGNALOBSERVERDISCONNECT, targetObserver));
+            }
+            catch(IllegalStateException exc){
+                Log.error("Error connectionTask queue full: ", exc);
+            }
+            catch(Exception exc){
+                Log.error("Error: ", exc);
+            }
         }
     }
 
@@ -343,7 +335,9 @@ public abstract class Signal extends Observable implements Observer {
      * @return the value
      */
     public Value getValue(){
-        return accessedByForeignModule() ? propagatedValue : value;
+        synchronized(this){        
+            return accessedByForeignModule() ? propagatedValue : value;
+        }
     }
 
     /**
@@ -386,6 +380,9 @@ public abstract class Signal extends Observable implements Observer {
         setValid(true);
     }
 
+    protected void setValueDeferred(Value value){
+        JPac.getInstance().invokeLater(new SetValueRunner(value));
+    }
     /**
      * @return the propagatedValue
      */
@@ -417,7 +414,11 @@ public abstract class Signal extends Observable implements Observer {
      * @return the signalValid
      */
     public boolean isValid() {
-        return accessedByForeignModule() || accessedByJPac() ? propagatedSignalValid : signalValid;
+        boolean valid = false;
+        synchronized(this){
+            valid = accessedByForeignModule() || accessedByJPac() ? propagatedSignalValid : signalValid;
+        }
+        return valid;
     }
 
     /**
@@ -437,8 +438,10 @@ public abstract class Signal extends Observable implements Observer {
     }
     
     public void invalidate() throws SignalAccessException{
-        assertContainingModule();
-        setValid(false);
+        synchronized(this){
+            assertSignalAccess();
+            setValid(false);
+        }
     }
 
     /**
@@ -478,9 +481,11 @@ public abstract class Signal extends Observable implements Observer {
      */
     @Override
     public void setChanged(){
-        lastChangeNanoTime     = System.nanoTime();
-        lastChangeCycleNumber  = jPac.getCycleNumber();
-        super.setChanged();//change flag of Observable
+        synchronized(this){
+            lastChangeNanoTime     = System.nanoTime();
+            lastChangeCycleNumber  = jPac.getCycleNumber();
+            super.setChanged();//change flag of Observable
+        }
     }
     
     /**
@@ -493,7 +498,11 @@ public abstract class Signal extends Observable implements Observer {
      * will return true on the following cycle regardless if the accessing module is the containing one or not 
      */
     public boolean isChanged(){
-        return accessedByForeignModule() || accessedByJPac() ? propagatedLastChangeCycleNumber == jPac.getCycleNumber() : lastChangeCycleNumber == jPac.getCycleNumber();
+        boolean retChanged = false;
+        synchronized(this){
+            retChanged = accessedByForeignModule() || accessedByJPac() ? propagatedLastChangeCycleNumber == jPac.getCycleNumber() : lastChangeCycleNumber == jPac.getCycleNumber();
+        }
+        return retChanged;
     }
     
     protected void assertContainingModule() throws SignalAccessException{
@@ -504,28 +513,30 @@ public abstract class Signal extends Observable implements Observer {
 
     protected void assertSignalAccess() throws SignalAccessException{
         if(accessedByForeignModule()){
-            throw new SignalAccessException("signal " + this + " cannot be set() by foreign modules");
+            throw new SignalAccessException("signal " + this + " cannot be altered by foreign modules");
         }
         //if connected as a target signal, it cannot be accessed by a module using set(...) directly
         if (isConnectedAsTarget() && !accessedByJPac()){
-            throw new SignalAccessException("signal " + this + " cannot be set() directly, because it's connected as target ");
+            throw new SignalAccessException("signal " + this + " cannot be altered directly, because it's connected as target ");
         }
     }
     
     @Override
     public void update(Observable o, Object arg){
-        try{
-            //take over the valid state of the source signal ...
-            setValid(((Signal)o).isValid());
-            if (signalValid){
-                //...  and its value, if valid ...
-                updateValue(o, arg);
+        synchronized(this){
+            try{
+                //take over the valid state of the source signal ...
+                setValid(((Signal)o).isValid());
+                if (signalValid){
+                    //...  and its value, if valid ...
+                    updateValue(o, arg);
+                }
+                //propagate alteration of valid state and/or value
+                propagate(); 
             }
-            //propagate alteration of valid state and/or value
-            propagate(); 
-        }
-        catch(Exception exc){
-            Log.error("Error: ", exc);
+            catch(Exception exc){
+                Log.error("Error: ", exc);
+            }
         }
     }
     
@@ -555,4 +566,35 @@ public abstract class Signal extends Observable implements Observer {
     abstract protected boolean isCompatibleSignal(Signal signal);
     abstract protected void updateValue(Object o, Object arg) throws SignalAccessException;
     abstract protected void propagateSignalInternally() throws SignalInvalidException;    
+
+    private class ConnectionTask{
+        private ConnTask task;
+        private Object   target;
+
+        private ConnectionTask(ConnTask task, Signal targetSignal) {
+            this.task   = task;
+            this.target = targetSignal;
+        }  
+
+        private ConnectionTask(ConnTask task, RemoteSignalOutput targetSignal) {
+            this.task   = task;
+            this.target = targetSignal;
+        }  
+
+        private ConnectionTask(ConnTask task, SignalObserver targetObserver) {
+            this.task   = task;
+            this.target = targetObserver;
+        }  
+    }
+    
+    private class SetValueRunner implements Runnable{
+        Value value;
+        public SetValueRunner(Value value){
+            this.value = value;
+        }
+        @Override
+        public void run() {
+            try{setValue(value);}catch(SignalAccessException exc){/*cannot happen*/};
+        }        
+    }
 }

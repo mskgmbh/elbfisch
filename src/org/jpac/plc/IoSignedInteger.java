@@ -49,6 +49,7 @@ public class IoSignedInteger extends SignedInteger implements IoSignal{
     private Connection   connection;
     private boolean      changedByCheck;
     private boolean      inCheck;
+    private boolean      outCheck;
     private boolean      toBePutOut;    
     
     public IoSignedInteger(AbstractModule containingModule, String name, Data data, Address address, IoDirection ioDirection) throws SignalAlreadyExistsException{
@@ -116,7 +117,26 @@ public class IoSignedInteger extends SignedInteger implements IoSignal{
      */    
     @Override
     public void checkOut() throws SignalAccessException, AddressException {
-        throw new UnsupportedOperationException("not implemented yet");
+        try{
+            outCheck = true;
+            switch(address.getSize()){
+                case 1:
+                    try{data.setBYTE(address.getByteIndex(),isValid() ? get() : 0);}catch(SignalInvalidException ex){/*cannot happen*/};
+                    break;
+                case 2:
+                    try{data.setINT(address.getByteIndex(),isValid() ? get() : 0);}catch(SignalInvalidException ex){/*cannot happen*/};
+                    break;
+                case 4:
+                    try{data.setDINT(address.getByteIndex(),isValid() ? get() : 0);}catch(SignalInvalidException ex){/*cannot happen*/};
+                    break;
+            }
+        }
+        catch(ValueOutOfRangeException exc){
+            Log.error("Error: ", exc);            
+        }
+        finally{
+            outCheck = false;
+        }
     }
 
     @Override
@@ -151,6 +171,7 @@ public class IoSignedInteger extends SignedInteger implements IoSignal{
      * @param connection
      * @return 
      */
+    @Override
     public WriteRequest getWriteRequest(Connection connection){
         boolean errorOccured = false;
         try{

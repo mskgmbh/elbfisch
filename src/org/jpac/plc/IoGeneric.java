@@ -36,42 +36,24 @@ import org.jpac.SignalInvalidException;
 /**
  *
  * @author berndschuster
+ * @param <ValueImpl> class must implement Value interface
  */
-public class IoGeneric<ValueImpl> extends Generic<ValueImpl> implements IoSignal{
+abstract public class IoGeneric<ValueImpl> extends Generic<ValueImpl> implements IoSignal{
     static  Logger  Log = Logger.getLogger("jpac.Signal");      
 
     private org.jpac.plc.Address    address;
     private Data                    data;
     private WriteRequest            writeRequest;
     private IoDirection             ioDirection;
-    private Connection              connection;
     private boolean                 changedByCheck;
     private boolean                 inCheck;
     private boolean                 toBePutOut;   
-    private LobRxTx                 lobRxTx;
     
     public IoGeneric(AbstractModule containingModule, String identifier, Data data, Address address, IoDirection ioDirection) throws SignalAlreadyExistsException, IndexOutOfRangeException{
         super(containingModule, identifier);
         this.data        = data;
         this.address     = address;
         this.ioDirection = ioDirection;
-        this.lobRxTx     = new LobRxTx(null, address, 0, data);
-    }
-    
-    @Override
-    public void checkIn() throws SignalAccessException, AddressException {
-        try{
-            inCheck = true;
-            set((ValueImpl)lobRxTx);
-        }
-        finally{
-            inCheck = false;
-        }
-    }
-    
-    @Override
-    public void checkOut() throws SignalAccessException, AddressException {
-        throw new UnsupportedOperationException("not implemented yet");
     }
     
     @Override
@@ -100,19 +82,7 @@ public class IoGeneric<ValueImpl> extends Generic<ValueImpl> implements IoSignal
     public void resetToBePutOut(){
         toBePutOut = false;
     }
-    
-    @Override
-    public WriteRequest getWriteRequest(Connection connection){
-        WriteRequest writeRequest = null;
-        try{
-            writeRequest = lobRxTx.getWriteRequest();
-        }   
-        catch(Exception exc){
-            Log.error("Error: ", exc);
-        }
-        return writeRequest;  
-    }
-    
+        
     /**
      * @param address address of the signal
      */
@@ -149,6 +119,15 @@ public class IoGeneric<ValueImpl> extends Generic<ValueImpl> implements IoSignal
     
     @Override
     public String toString(){
-       return "PlcGeneric<" + lobRxTx.getClass().getSimpleName() + "> <-> " + lobRxTx.getAddress().toString(); 
-    }    
+       return "IoGeneric<" + value + "> <-> " + getAddress().toString(); 
+    }
+    
+    @Override
+    abstract public void checkIn() throws SignalAccessException, AddressException;
+    
+    @Override
+    abstract public void checkOut() throws SignalAccessException, AddressException;
+    
+    @Override
+    abstract public WriteRequest getWriteRequest(Connection connection);
 }

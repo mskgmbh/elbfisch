@@ -31,12 +31,26 @@ package org.jpac;
  * 
  */
 public class Generic<ValueImpl> extends Signal{    
+    
+    /**
+     * constructs a Generic signal
+     * @param containingModule: module, this signal is contained in
+     * @param identifier: identifier of the signal
+     * @throws org.jpac.SignalAlreadyExistsException
+     */    
     public Generic(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         super(containingModule, identifier);
         value           = null;
         propagatedValue = null; 
     }
 
+    /**
+     * constructs a Generic signal with a given default value
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param defaultValue: default value of the signal
+     * @throws org.jpac.SignalAlreadyExistsException
+     */   
     public Generic(AbstractModule containingModule, String identifier, ValueImpl defaultValue) throws SignalAlreadyExistsException{
         this(containingModule, identifier);
         this.initializing = true;//prevent signal access assertion
@@ -49,10 +63,32 @@ public class Generic<ValueImpl> extends Signal{
         return signal instanceof Generic;
     }
     
+    /**
+     * used to set the Generic to the given value
+     * @param value: value, the signed integer is set to
+     * @throws org.jpac.SignalAccessException
+     */
     public void set(ValueImpl value) throws SignalAccessException{
         setValue((Value)value);
     }
 
+    /**
+     * used to set the Generic from any thread, which is not a module and not the jPac thread
+     * The value is changed synchronized to the jPac cycle
+     * @param value: value, the Generic is set to
+     * @throws SignalAccessException, if the module invoking this method is
+     *         not the containing module
+     */    
+    public void setDeferred(ValueImpl value) throws SignalAccessException{
+        setValueDeferred((Value)value);
+    }
+    
+    /**
+     * returns the value of the Generic. If the calling module is the containing module the value of this signal is returned.
+     * If the calling module is a foreign module the propagated signal is returned.
+     * @return see above
+     * @throws org.jpac.SignalInvalidException
+     */
     public ValueImpl get() throws SignalInvalidException{
         return (ValueImpl)getValidatedValue();
     }

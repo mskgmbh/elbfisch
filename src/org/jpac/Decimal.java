@@ -43,6 +43,7 @@ public class Decimal extends Signal{
      * @param identifier: identifier of the signal
      * @param minValue: minimum value signalValid for this decimal
      * @param maxValue: maximum value signalValid for this decimal
+     * @throws org.jpac.SignalAlreadyExistsException
      */
     public Decimal(AbstractModule containingModule, String identifier, double minValue, double maxValue) throws SignalAlreadyExistsException{
         super(containingModule, identifier);
@@ -60,6 +61,7 @@ public class Decimal extends Signal{
      * constructs a decimal signal without range check.
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
+     * @throws org.jpac.SignalAlreadyExistsException
      */
     public Decimal(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         this(containingModule, identifier, 0.0, 0.0);
@@ -71,6 +73,7 @@ public class Decimal extends Signal{
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
      * @param defaultValue: default value of the signal
+     * @throws org.jpac.SignalAlreadyExistsException
      */
     public Decimal(AbstractModule containingModule, String identifier, double defaultValue) throws SignalAlreadyExistsException{
         this(containingModule, identifier);
@@ -87,6 +90,7 @@ public class Decimal extends Signal{
      * @param maxValue: maximum value signalValid for this decimal
      * @param defaultValue: default value of the decimal
      * @throws NumberOutOfRangeException: if the default value is less than minValue or greater than maxValue
+     * @throws org.jpac.SignalAlreadyExistsException
      */
     public Decimal(AbstractModule containingModule, String identifier, double minValue, double maxValue, double defaultValue) throws NumberOutOfRangeException, SignalAlreadyExistsException{
         this(containingModule, identifier, minValue, maxValue);
@@ -99,17 +103,38 @@ public class Decimal extends Signal{
     /**
      * used to set the decimal to the given value
      * @param value: value, the decimal is set to
+     * @throws org.jpac.NumberOutOfRangeException
+     * @throws org.jpac.SignalAccessException
      */
     public void set(double value) throws NumberOutOfRangeException, SignalAccessException{
-        assertRange(value);
-        wrapperValue.set(value);
-        setValue(wrapperValue);
+        synchronized(this){
+            assertRange(value);
+            wrapperValue.set(value);
+            setValue(wrapperValue);
+        }
     }
+    
+    /**
+     * used to set the Decimal from any thread, which is not a module and not the jPac thread
+     * The value is changed synchronized to the jPac cycle
+     * @param value: value, the decimal is set to
+     * @throws SignalAccessException, if the module invoking this method is
+     *         not the containing module
+     */
+    public void setDeferred(double value) throws SignalAccessException{
+        DecimalValue localWrapperValue = new DecimalValue();
+        synchronized(this){
+            localWrapperValue.set(value);
+            setValueDeferred(localWrapperValue);
+        }
+    }
+    
 
     /**
      * returns the value of the decimal. If the calling module is the containing module the value of this signal is returned.
      * If the calling module is a foreign module the propagated signal is returned.
      * @return see above
+     * @throws org.jpac.SignalInvalidException
      */
     public double get() throws SignalInvalidException{
         return ((DecimalValue)getValidatedValue()).get();
@@ -133,6 +158,7 @@ public class Decimal extends Signal{
 
     /**
      * returns a process event (DecimalChanges), which is fired, if the decimal changes above the given threshold in relation to the given baseValue
+     * @param baseValue
      * @param threshold: threshold to be supervised
      */
     public DecimalChanges changes(double baseValue, double threshold){
@@ -142,7 +168,6 @@ public class Decimal extends Signal{
     /**
      * returns a process event (DecimalChanges), which is fired, whenever the decimal changes.
      * CAUTION: may be fired unintentionally due to noise in the last decimal places
-     * @param threshold: threshold to be supervised
      */
     public DecimalChanges changes(){
         return new DecimalChanges(this, 0.0, 0.0);
@@ -165,8 +190,10 @@ public class Decimal extends Signal{
      * @param targetSignal
      */
     public void connect(Decimal targetSignal) throws SignalAlreadyConnectedException{
-        targetSignal.setNewMapper(null);
-        super.connect(targetSignal);
+        synchronized(this){
+            targetSignal.setNewMapper(null);
+            super.connect(targetSignal);
+        }
     }
 
     /**
@@ -175,13 +202,17 @@ public class Decimal extends Signal{
      * The connection is unidirectional: Changes of the connecting signal (sourceSignal) will be
      * propagated to the signals it is connected to (targetSignal): sourceSignal.connect(targetSignal).
      * @param targetSignal
-     * @param mapper used to map the source decimal to the target decimal.
+     * @param decimalMapper
+     * @throws org.jpac.SignalAlreadyConnectedException
+     * @throws org.jpac.SignalAccessException
      *
      */
     public void connect(Decimal targetSignal, DecimalMapper decimalMapper) throws SignalAlreadyConnectedException, SignalAccessException{
-        //the target is responsible for correct value mapping
-        targetSignal.setNewMapper(decimalMapper);
-        super.connect(targetSignal);
+        synchronized(this){
+            //the target is responsible for correct value mapping
+            targetSignal.setNewMapper(decimalMapper);
+            super.connect(targetSignal);
+        }
     }
 
     /**
@@ -190,10 +221,13 @@ public class Decimal extends Signal{
      * The connection is unidirectional: Changes of the connecting signal (sourceSignal) will be
      * propagated to the signals it is connected to (targetSignal): sourceSignal.connect(targetSignal).
      * @param targetSignal
+     * @throws org.jpac.SignalAlreadyConnectedException
      */
     public void connect(SignedInteger targetSignal) throws SignalAlreadyConnectedException{
-        targetSignal.setNewMapper(new SignedIntegerMapper(Integer.MIN_VALUE, Integer.MAX_VALUE,Integer.MIN_VALUE, Integer.MAX_VALUE));        
-        super.connect(targetSignal);
+        synchronized(this){
+            targetSignal.setNewMapper(new SignedIntegerMapper(Integer.MIN_VALUE, Integer.MAX_VALUE,Integer.MIN_VALUE, Integer.MAX_VALUE));        
+            super.connect(targetSignal);
+        }
     }
 
     /**
@@ -202,13 +236,17 @@ public class Decimal extends Signal{
      * The connection is unidirectional: Changes of the connecting signal (sourceSignal) will be
      * propagated to the signals it is connected to (targetSignal): sourceSignal.connect(targetSignal).
      * @param targetSignal
-     * @param mapper used to map the source decimal to the target decimal.
+     * @param signedIntegerMapper
+     * @throws org.jpac.SignalAlreadyConnectedException
+     * @throws org.jpac.SignalAccessException
      *
      */
     public void connect(SignedInteger targetSignal, SignedIntegerMapper signedIntegerMapper) throws SignalAlreadyConnectedException, SignalAccessException{
-        //the target is responsible for correct value mapping
-        targetSignal.setNewMapper(signedIntegerMapper);
-        super.connect(targetSignal);
+        synchronized(this){
+            //the target is responsible for correct value mapping
+            targetSignal.setNewMapper(signedIntegerMapper);
+            super.connect(targetSignal);
+        }
     }
     
     @Override
@@ -244,6 +282,7 @@ public class Decimal extends Signal{
 
     /**
      * @param rangeChecked the rangeChecked to set
+     * @throws org.jpac.SignalAccessException
      */
     protected void setRangeChecked(boolean rangeChecked) throws SignalAccessException {
         assertContainingModule();
@@ -259,6 +298,7 @@ public class Decimal extends Signal{
 
     /**
      * @param minValue the minValue to set
+     * @throws org.jpac.SignalAccessException
      */
     protected void setMinValue(double minValue) throws SignalAccessException{
         assertContainingModule();
@@ -275,6 +315,7 @@ public class Decimal extends Signal{
 
     /**
      * @param maxValue the maxValue to set
+     * @throws org.jpac.SignalAccessException
      */
     protected void setMaxValue(double maxValue) throws SignalAccessException{
         assertContainingModule();
@@ -291,6 +332,7 @@ public class Decimal extends Signal{
 
     /**
      * @param unit: string representation of the unit
+     * @throws org.jpac.SignalAccessException
      */
     protected void setUnit(String unit) throws SignalAccessException{
         assertContainingModule();
@@ -305,7 +347,7 @@ public class Decimal extends Signal{
     }
 
     /**
-     * @param mapper the mapper to set
+     * @param decimalMapper
      */
     protected void setMapper(DecimalMapper decimalMapper){   
         this.mapper = decimalMapper;
@@ -319,7 +361,7 @@ public class Decimal extends Signal{
     }
 
     /**
-     * @param mapper the mapper to set
+     * @param decimalMapper
      */
     protected void setNewMapper(DecimalMapper decimalMapper){   
         this.newMapper = decimalMapper;

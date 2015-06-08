@@ -33,6 +33,8 @@ import java.util.Observer;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.log4j.Logger;
+import org.jpac.ProcessEvent;
+import org.jpac.ProcessException;
 
 /**
  * central registry for all alarms instantiated inside an application
@@ -51,9 +53,17 @@ public class AlarmQueue extends Observable implements Observer{
     private ArrayBlockingQueue<AlarmQueueEntry> queue;  
     private Observer                            observer;
     
-    private Integer                             pendingAlarmsCountForSeverityAlarm;
-    private Integer                             pendingAlarmsCountForSeverityWarning;
-    private Integer                             pendingAlarmsCountForSeverityMessage;
+    protected Integer                           pendingAlarmsCountForSeverityAlarm;
+    protected Integer                           pendingAlarmsCountForSeverityWarning;
+    protected Integer                           pendingAlarmsCountForSeverityMessage;
+    
+    protected boolean                           alarmCountIncremented;
+    protected boolean                           warningCountIncremented;
+    protected boolean                           messageCountIncremented;
+
+    protected ProcessEvent                      newAlarmRaised;
+    protected ProcessEvent                      newWarningRaised;
+    protected ProcessEvent                      newMessageRaised;
     
     protected AlarmQueue(){
         this.alarms        = Collections.synchronizedList(new ArrayList<Alarm>());
@@ -64,6 +74,9 @@ public class AlarmQueue extends Observable implements Observer{
         this.pendingAlarmsCountForSeverityAlarm   = 0;
         this.pendingAlarmsCountForSeverityWarning = 0;
         this.pendingAlarmsCountForSeverityMessage = 0;   
+        this.alarmCountIncremented                = false;
+        this.warningCountIncremented              = false;
+        this.messageCountIncremented              = false;
     }
     /**
      * @return the instance of the alarm queue
@@ -100,6 +113,7 @@ public class AlarmQueue extends Observable implements Observer{
        
     }
 
+    @Override
     public void update(Observable o, Object o1) {
         if (o instanceof Alarm){
            //queue changed alarm
@@ -142,16 +156,19 @@ public class AlarmQueue extends Observable implements Observer{
             case ALARM:
                 synchronized(pendingAlarmsCountForSeverityAlarm){
                     pendingAlarmsCountForSeverityAlarm++;
+                    alarmCountIncremented = true;
                 }
                 break;                
             case WARNING:
                 synchronized(pendingAlarmsCountForSeverityWarning){
                     pendingAlarmsCountForSeverityWarning++;
+                    warningCountIncremented = true;
                 }
                 break;                
             case MESSAGE:
                 synchronized(pendingAlarmsCountForSeverityMessage){
                     pendingAlarmsCountForSeverityMessage++;
+                    messageCountIncremented = true;
                 }
                 break;                
         }
@@ -215,4 +232,102 @@ public class AlarmQueue extends Observable implements Observer{
         return pending;
     }
 
+    /**
+     * @return the pendingAlarmsCountForSeverityAlarm
+     */
+    public Integer getPendingAlarmsCountForSeverityAlarm() {
+        synchronized(pendingAlarmsCountForSeverityAlarm){
+            return pendingAlarmsCountForSeverityAlarm;
+        }
+    }
+
+    /**
+     * @return the pendingAlarmsCountForSeverityWarning
+     */
+    public Integer getPendingAlarmsCountForSeverityWarning() {
+        synchronized(pendingAlarmsCountForSeverityWarning){
+            return pendingAlarmsCountForSeverityWarning;
+        }
+    }
+
+    /**
+     * @return the pendingAlarmsCountForSeverityMessage
+     */
+    public Integer getPendingAlarmsCountForSeverityMessage() {
+        synchronized(pendingAlarmsCountForSeverityMessage){
+           return pendingAlarmsCountForSeverityMessage;
+        }
+    }
+
+    /**
+     * @return ProcessEvent which is fired, when a new alarm has been raised
+     *         HINT: On every call one and the same ProcessEvent will be returned. As
+     *               a consequence only one module can use it at a time
+     */
+    public ProcessEvent getNewAlarmRaised() {
+        if (newAlarmRaised == null){
+            newAlarmRaised = new NewAlarmRaised();
+        }
+        return newAlarmRaised;
+    }
+
+    /**
+     * @return ProcessEvent which is fired, when a new alarm has been raised
+     *         HINT: On every call one and the same ProcessEvent will be returned. As
+     *               a consequence only one module can use it at a time
+     */
+    public ProcessEvent getNewWarningRaised() {
+        if (newWarningRaised == null){
+            newWarningRaised = new NewWarningRaised();
+        }
+        return newWarningRaised;
+    }
+
+    /**
+     * @return ProcessEvent which is fired, when a new alarm has been raised
+     *         HINT: On every call one and the same ProcessEvent will be returned. As
+     *               a consequence only one module can use it at a time
+     */
+    public ProcessEvent getNewMessageRaised() {
+        if (newMessageRaised == null){
+            newMessageRaised = new NewMessageRaised();
+        }
+        return newMessageRaised;
+    }
+
+    class NewAlarmRaised extends ProcessEvent{
+        @Override
+        public boolean fire() throws ProcessException {
+            boolean retFired;
+            synchronized(pendingAlarmsCountForSeverityAlarm){
+                retFired = alarmCountIncremented;
+                alarmCountIncremented = false;
+            }
+            return retFired;
+        }
+    }
+
+    class NewWarningRaised extends ProcessEvent{
+        @Override
+        public boolean fire() throws ProcessException {
+            boolean retFired;
+            synchronized(pendingAlarmsCountForSeverityWarning){
+                retFired = warningCountIncremented;
+                warningCountIncremented = false;
+            }
+            return retFired;
+        }  
+    }
+    
+    class NewMessageRaised extends ProcessEvent{
+        @Override
+        public boolean fire() throws ProcessException {
+            boolean retFired;
+            synchronized(pendingAlarmsCountForSeverityMessage){
+                retFired = messageCountIncremented;
+                messageCountIncremented = false;
+            }
+            return retFired;
+        } 
+    }
 }

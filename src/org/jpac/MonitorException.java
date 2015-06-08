@@ -33,17 +33,55 @@ import java.util.ArrayList;
  */
 public class MonitorException extends ProcessException{
     ArrayList<Fireable> fireables;
+
     public MonitorException(ArrayList<Fireable> fireables){
         super("");
         this.fireables = fireables;
     }
 
+    public MonitorException(MonitorException original){
+        super(original);
+        this.fireables = original.getFireables();
+    }
+    
     /**
      *
      * @return a ArrayList of fireables which caused this exception
      */
     public ArrayList<Fireable> getFireables(){
         return fireables;
+    }
+
+    /**
+     * used to check, if a certain fireable is causal for a thrown monitor exception
+     * CAUTION: if a fireable has been found as being causal for the monitor exception, its
+     *          fired state is reset. Subsequent calls to potentialCause.isFired() will return 'false'.
+     * @param potentialCause
+     * @return 
+     */
+    public boolean isCausal(Fireable potentialCause){
+        boolean fired = false;
+        for(Fireable f: this.fireables){
+            if (f.equals(potentialCause) && f.isFired()){
+                f.reset();
+                fired = true;
+            }
+        }        
+        return fired;
+    }
+    
+    /**
+     * used to check, if at least one fired firable is present in the list
+     * @return true, if at least one fired firebale is present in the list
+     */
+    public boolean isAnyCauseLeft(){
+        boolean found = false;
+        for(Fireable f: this.fireables){
+            if (f.isFired()){
+                found = true;
+            }
+        }                
+        return found;
     }
     
     @Override

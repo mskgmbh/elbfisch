@@ -59,7 +59,7 @@ public class IoLogical extends Logical implements IoSignal{
     }
 
     /**
-     * used to checkIn, if this signal has been changed by the plc. If so, the signal change is automatically
+     * used to checkIn, if this signal has been changed inside the process image. If so, the signal change is automatically
      * propagated to all connected signals
      * @throws SignalAccessException
      * @throws AddressException 
@@ -77,7 +77,7 @@ public class IoLogical extends Logical implements IoSignal{
     
     /**
      * used to check, if this signal has been changed by this jPac instance. If so, the signal change is
-     * propagated to the process image (data)
+     * propagated to the process image
      * @throws SignalAccessException
      * @throws AddressException 
      */

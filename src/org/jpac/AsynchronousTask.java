@@ -61,9 +61,9 @@ public abstract class AsynchronousTask{
     }
 
     /**
-     * Invokes the asynchronous task on separate thread. On first call a thread (task runner) is started which
+     * Invokes the asynchronous task on a separate thread. On first call a thread (task runner) is started which
      * calls the doIt() method. The thread keeps running after doIt() returns. Afterwards it waits for its
-     * next invocation by start(). The thread keeps on running, until terminate() is called or the application shuts down.
+     * next invocation by start(). The thread ends when terminate() is called or the application shuts down.
      * @throws WrongUseException thrown, when start() is called outside the context of a module or jPac
      */
     public void start() throws WrongUseException{
@@ -161,10 +161,10 @@ public abstract class AsynchronousTask{
                 catch(Error exc){
                     finishedEvent.setProcessException(new AsynchronousTaskException(exc));
                 };
-                //denote completion
-                done = true;
-                //wait for next invocation
                 synchronized(this){
+                    //denote completion
+                    done = true;
+                    //and wait for next invocation
                     do{
                         try{wait();}catch(InterruptedException exc){}                
                         }
@@ -175,7 +175,9 @@ public abstract class AsynchronousTask{
             while(!stopRequested);
             //denote completion
             stopRequested = false;
-            done          = true;
+            synchronized(this){
+                done = true;
+            }
         }
         
         public void invoke(boolean startStop){
@@ -200,7 +202,11 @@ public abstract class AsynchronousTask{
         }
         
         public boolean isDone(){
-            return done;
+            boolean returnValue;
+            synchronized(this){
+                returnValue = done;
+            }
+            return returnValue;
         }
     }
     

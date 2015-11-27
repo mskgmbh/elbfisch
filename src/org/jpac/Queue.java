@@ -54,7 +54,7 @@ public class Queue<T> {
         this.identifier       = identifier;
         this.size             = new SignedInteger(consumer, "queue." + identifier + ".size", 0);
         this.maxSize          = maxSize;
-        this.queue            = new LinkedBlockingQueue<>();
+        this.queue            = new LinkedBlockingQueue<T>();
         this.prodSize         = 0;
         this.consSize         = 0;
         this.cyclicTaskRunner = new CyclicTaskRunner();
@@ -230,7 +230,7 @@ public class Queue<T> {
         public void run() {
             //update size values for both producer and consumer side
             prodSize = consSize = queue.size();
-            try{size.set(prodSize);}catch(NumberOutOfRangeException | SignalAccessException exc){/*cannot happen*/};
+            try{size.set(prodSize);}catch(Exception exc){/*cannot happen*/};
         }
         @Override
         public void prepare() {/*nothing to do*/}

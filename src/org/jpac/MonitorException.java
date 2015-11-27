@@ -36,7 +36,7 @@ public class MonitorException extends ProcessException{
 
     public MonitorException(ArrayList<Fireable> fireables){
         super("");
-        this.fireables = new ArrayList<>();
+        this.fireables = new ArrayList<Fireable>();
         for (Fireable f: fireables){
             this.fireables.add(f);
         }

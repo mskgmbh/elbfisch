@@ -49,8 +49,6 @@ import org.jpac.configuration.Configuration;
 import org.jpac.configuration.IntProperty;
 import org.jpac.configuration.LongProperty;
 import org.jpac.configuration.StringProperty;
-import org.jpac.opc.Opc;
-import org.jpac.opc.OpcUaService;
 import org.jpac.statistics.Histogramm;
 
 /**
@@ -141,7 +139,6 @@ public class JPac extends Thread {
     private boolean         opcUaServiceEnabled;
     private int             opcUaServicePort;
     private String          opcUaServiceName;
-    private Opc.AccessLevel opcUaDefaultAccessLevel;
 
     private CountingLock    activeEventsLock;
     
@@ -167,8 +164,6 @@ public class JPac extends Thread {
     private int             decrementCounter;
 
     private boolean         stopBeforeStartup;
-    
-    private OpcUaService    opcUaService;   
 
     protected JPac(){
         super();
@@ -236,9 +231,6 @@ public class JPac extends Thread {
             propHistogrammFile                = new StringProperty(this,"HistogrammFile","./data/histogramm.csv","file in which the histogramms are stored", true);
             propCyclicTaskShutdownTimeoutTime = new LongProperty(this,"CyclicTaskShutdownTimeoutTime",DEFAULTCYCLICTASKSHUTDOWNTIMEOUTTIME,"Timeout for all cyclic tasks to stop on shutdown [ns]",true);
             propOpcUaServiceEnabled           = new BooleanProperty(this,"OpcUaServiceEnabled",false,"enables the opc ua service", true);
-            propOpcUaServicePort              = new IntProperty(this,"OpcUaServicePort",OpcUaService.DEFAULTPORT,"port over which the opc ua service is provided", true);
-            propOpcUaServiceName              = new StringProperty(this,"OpcUaServiceName",OpcUaService.DEFAULTSERVERNAME,"name of the server instance", true);
-            propOpcUaDefaultAccessLevel       = new StringProperty(this,"OpcUaDefaultAccessLevel","NONE","access levels can be NONE,READ_ONLY,READ_WRITE", true);
             
             instanceIdentifier            = InetAddress.getLocalHost().getHostName() + ":" + propRemoteSignalPort.get();
             cycleTime                     = propCycleTime.get();
@@ -257,18 +249,6 @@ public class JPac extends Thread {
             opcUaServiceEnabled           = propOpcUaServiceEnabled.get();
             opcUaServicePort              = propOpcUaServicePort.get();
             opcUaServiceName              = propOpcUaServiceName.get();
-            if (opcUaServiceEnabled){
-                if (propOpcUaDefaultAccessLevel.get().equals(OPCACCESSLEVELNONE)){
-                    opcUaDefaultAccessLevel = Opc.AccessLevel.NONE;
-                } else if (propOpcUaDefaultAccessLevel.get().equals(OPCACCESSLEVELREADONLY)){
-                    opcUaDefaultAccessLevel = Opc.AccessLevel.READ_ONLY;
-                } else if (propOpcUaDefaultAccessLevel.get().equals(OPCACCESSLEVELREADWRITE)){
-                    opcUaDefaultAccessLevel = Opc.AccessLevel.READ_WRITE;
-                } else {
-                    opcUaDefaultAccessLevel = Opc.AccessLevel.NONE;                    
-                }
-                    
-            }
             
             //install configuration saver
             try{registerCyclicTask(Configuration.getInstance().getConfigurationSaver());}catch(WrongUseException exc){/*cannot happen*/}
@@ -321,7 +301,6 @@ public class JPac extends Thread {
                 }
                 prepareTrace();
                 prepareHistogramms();
-                prepareOpcUaService();
                 prepareRemoteConnections(); 
                 prepareCyclicTasks();
             }
@@ -431,8 +410,6 @@ public class JPac extends Thread {
             shutdownAwaitingModules(getAwaitedEventList());
             //shutdown RemoteSignalConnection's
             closeRemoteConnections();
-            //stop opc ua service, if running
-            stopOpcUaService();
             //clean up context of registered cyclic tasks
             stopCyclicTasks();
             //acknowledge request
@@ -1101,29 +1078,6 @@ public class JPac extends Thread {
             }
         }
     }
-
-    protected void prepareOpcUaService() throws Exception{
-        if (opcUaServiceEnabled){
-            opcUaService = new OpcUaService(opcUaServiceName, opcUaServicePort);
-        }
-    }
-    
-    protected void stopOpcUaService(){
-        //stop opc server, if running
-        if (opcUaService != null){
-            Log.info("stopping opc ua service ...");
-            opcUaService.stop();
-            Log.info("opc ua service stopped");
-            boolean stopped = opcUaService.waitUntilStopped(OPCSHUTDOWNTIME);
-//            if (stopped){
-//                Log.info("opc ua service stopped");
-//            }
-//            else{
-//                Log.error("failed to stop opc ua service");                
-//            }
-        }
-        
-    }
     
     protected void pushSignalsOverRemoteConnections() throws ConfigurationException, RemoteSignalException{
         if (remoteSignalsEnabled){
@@ -1198,10 +1152,6 @@ public class JPac extends Thread {
         if (Log.isInfoEnabled()) Log.info("aborting jPac before startup");
         this.stopBeforeStartup = true;
         startCycling.request();
-    }
-    
-    public Opc.AccessLevel getOpcUaDefaultAccesslevel(){
-        return this.opcUaDefaultAccessLevel;
     }
     
     class ShutdownHook extends Thread{

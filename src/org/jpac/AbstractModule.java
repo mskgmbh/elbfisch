@@ -26,6 +26,7 @@
 
 package org.jpac;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Stack;
@@ -311,8 +312,7 @@ public abstract class AbstractModule extends Thread{
 
     /**
      * 
-     * @return the qualified name of the module which is dot separated string of the modules simple name and the names 
-     * of all containing modules
+     * @return the qualified name of the module which is a unique dot separated string
      */
     public String getQualifiedName(){
         return qualifiedName;
@@ -477,6 +477,51 @@ public abstract class AbstractModule extends Thread{
     
     protected void enableCyclicTasks(boolean enable){
         this.inEveryCycleDoActive = enable;
+    }
+    
+    public ArrayList<Field> getSignalFields(){
+        ArrayList<Field> signalFields = new ArrayList<Field>();
+        //get inheritated and public fields
+        for (Field f: getClass().getFields()){
+            if (Signal.class.isAssignableFrom(f.getType())){
+                signalFields.add(f);
+            }
+        }
+        for (Field f: getClass().getDeclaredFields()){
+            if (Signal.class.isAssignableFrom(f.getType()) && !signalFields.contains(f)){
+                signalFields.add(f);
+            }
+        }
+        return signalFields;
+    }
+    
+    public Signal getSignal(Field signalField){
+        Signal signal = null;
+        try{
+            signal = (Signal)signalField.get(this);
+        }
+        catch(IllegalAccessException exc){
+           Log.error("Error:", exc); 
+        }
+        return signal;
+    }
+    
+    public Field getField(Signal signal){
+        Field field = null;
+        try{        
+            for(Field f: getSignalFields()){
+                f.setAccessible(true);
+                if (f.get(this) == signal){
+                    field = f;
+                    break;
+                }
+                f.setAccessible(false);
+            }
+        }
+        catch(IllegalAccessException exc){
+           Log.error("Error:", exc); 
+        }
+        return field;
     }
     
     /**

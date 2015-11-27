@@ -33,4 +33,5 @@ public interface Value {
     public void copy(Value aValue);
     public boolean equals(Value aValue);
     public Value clone() throws CloneNotSupportedException;
+    public Object getValue();
 }

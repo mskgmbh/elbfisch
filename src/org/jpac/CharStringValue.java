@@ -44,6 +44,12 @@ public class CharStringValue implements Value, Cloneable, Serializable{
     }
     
     @Override
+    public Object getValue(){
+        return get();
+    }
+
+    
+    @Override
     public void copy(Value aValue){
         if (((CharStringValue)aValue).get() != null){
             set(new String(((CharStringValue)aValue).get()));//TODO: copy without construction of a new string ??

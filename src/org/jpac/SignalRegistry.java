@@ -82,7 +82,7 @@ public class SignalRegistry {
     /*
      * @return the ArrayList of registered signals
      */
-    public List getSignals(){
+    public List<Signal> getSignals(){
         return signals;
     }
     

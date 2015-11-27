@@ -38,10 +38,15 @@ public class SignedIntegerValue implements Value, Cloneable, Serializable{
     public void set(int value){
         this.value = value;
     }
-    
+        
     public int get(){
         return value;
     }
+    
+    @Override
+    public Object getValue(){
+        return get();
+    }    
     
     @Override
     public void copy(Value aValue){

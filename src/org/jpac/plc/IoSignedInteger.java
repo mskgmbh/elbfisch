@@ -27,7 +27,6 @@ package org.jpac.plc;
 
 import org.apache.log4j.Logger;
 import org.jpac.AbstractModule;
-import org.jpac.JPac;
 import org.jpac.NumberOutOfRangeException;
 import org.jpac.SignalAccessException;
 import org.jpac.SignalAlreadyExistsException;
@@ -39,27 +38,29 @@ import org.jpac.SignedInteger;
  * @author berndschuster
  */
 public class IoSignedInteger extends SignedInteger implements IoSignal{
-    static  Logger  Log = Logger.getLogger("jpac.Signal");      
+    static  Logger           Log         = Logger.getLogger("jpac.Signal");      
+    private final static int DEFAULTSIZE = 4;
     
-    private Address      address;
-    private Data         data;
-    private Data         intData;
-    private WriteRequest writeRequest;
-    private IoDirection  ioDirection;
-    private Connection   connection;
-    private boolean      changedByCheck;
-    private boolean      inCheck;
-    private boolean      outCheck;
-    private boolean      toBePutOut;    
+    private   Address      address;
+    private   Data         data;
+    private   Data         intData;
+    private   WriteRequest writeRequest;
+    private   IoDirection  ioDirection;
+    private   Connection   connection;
+    private   boolean      changedByCheck;
+    protected boolean      inCheck;
+    protected boolean      outCheck;
+    protected boolean      toBePutOut;    
     
     public IoSignedInteger(AbstractModule containingModule, String name, Data data, Address address, IoDirection ioDirection) throws SignalAlreadyExistsException{
         super(containingModule, name);
-        int minVal       = 0;
-        int maxVal       = 0;
-        this.data        = data;
-        this.address     = address;
-        this.ioDirection = ioDirection;
-        switch(address.getSize()){
+        int minVal        = 0;
+        int maxVal        = 0;
+        this.data         = data;
+        this.address      = address;
+        this.ioDirection  = ioDirection;
+        int size          = address == null ? DEFAULTSIZE : address.getSize();
+        switch(size){
             case 1:
                 minVal = Byte.MIN_VALUE;
                 maxVal = Byte.MAX_VALUE;
@@ -84,9 +85,10 @@ public class IoSignedInteger extends SignedInteger implements IoSignal{
      * propagated to all connected signals
      * @throws SignalAccessException
      * @throws AddressException 
+     * @throws org.jpac.NumberOutOfRangeException 
      */    
     @Override
-    public void checkIn() throws SignalAccessException, AddressException {
+    public void checkIn() throws SignalAccessException, AddressException, NumberOutOfRangeException {
         try{
             inCheck = true;
             switch(address.getSize()){
@@ -110,13 +112,13 @@ public class IoSignedInteger extends SignedInteger implements IoSignal{
     }
     
    /**
-     * used to checkIn, if this signal has been changed by the plc. If so, the signal change is automatically
-     * propagated to all connected signals
+     * used to check, if this signal is changed and therefore to be put out to the plc.
      * @throws SignalAccessException
      * @throws AddressException 
+     * @throws org.jpac.NumberOutOfRangeException 
      */    
     @Override
-    public void checkOut() throws SignalAccessException, AddressException {
+    public void checkOut() throws SignalAccessException, AddressException, NumberOutOfRangeException {
         try{
             outCheck = true;
             switch(address.getSize()){
@@ -241,6 +243,13 @@ public class IoSignedInteger extends SignedInteger implements IoSignal{
         
     @Override
     public String toString(){
-       return super.toString() + (ioDirection == IoDirection.INPUT ? " <- " : " -> ") + address.toString(); 
+       String ts = null;
+       if (address != null){
+           ts = super.toString() + (ioDirection == IoDirection.INPUT ? " <- " : " -> ") + address.toString(); 
+       }
+       else{
+           ts = super.toString(); 
+       }
+       return ts;
     }    
 }

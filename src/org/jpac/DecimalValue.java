@@ -43,6 +43,11 @@ public class DecimalValue implements Value, Cloneable, Serializable{
     }
     
     @Override
+    public Object getValue(){
+        return get();
+    }
+    
+    @Override
     public void copy(Value aValue){
         set(((DecimalValue)aValue).get());
     }

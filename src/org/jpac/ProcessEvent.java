@@ -76,7 +76,7 @@ public abstract class ProcessEvent extends Fireable{
             if (monitoredEvents != null){
                 //check whole list of monitored events
                 for(Fireable f : monitoredEvents){
-                    if (f.evaluateFiredCondition()){
+                    if (f != this && f.evaluateFiredCondition()){
                         //if at least one is fired
                         //prepare notification of the observing module
                         monitoredEventOccured = true;

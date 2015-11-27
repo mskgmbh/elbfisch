@@ -80,10 +80,8 @@ public class Logical extends Signal{
      * used to set the logical from any thread, which is not a module and not the jPac thread
      * The value is changed synchronized to the jPac cycle
      * @param state: state, the logical is set to
-     * @throws SignalAccessException, if the module invoking this method is
-     *         not the containing module
      */
-    public void setDeferred(boolean state) throws SignalAccessException{
+    public void setDeferred(boolean state){
         synchronized(this){
             LogicalValue localWrapperValue = new LogicalValue();
             localWrapperValue.set(state);

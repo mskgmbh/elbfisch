@@ -278,7 +278,7 @@ public class Data {
         else{
             value =                (bytes[byteIndex + 3] & 0x000000FF);
             value = (value << 8) + (bytes[byteIndex + 2] & 0x000000FF);
-            value = (value << 8) + (bytes[byteIndex + 2] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 1] & 0x000000FF);
             value = (value << 8) + (bytes[byteIndex]     & 0x000000FF);            
         }
         return value;

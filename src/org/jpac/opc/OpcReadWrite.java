@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : LogicalValue.java
+ * MODULE    : OpcReadWrite.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -23,49 +23,18 @@
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jpac;
+package org.jpac.opc;
 
-import java.io.Serializable;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * represents the value of a logical signal
+ *
  * @author berndschuster
  */
-public class LogicalValue implements Value, Cloneable, Serializable{
-    boolean value = false;
-
-    public void set(boolean value){
-       this.value = value;  
-    }
-    
-    public boolean get(){
-        return this.value;
-    }
-    
-    @Override
-    public Object getValue(){
-        return get();
-    }
-    
-    public boolean is(boolean state){
-        return this.value == state;
-    }
-    
-    public void copy(Value aValue) {
-        this.value = ((LogicalValue)aValue).get();
-    }
-
-    public boolean equals(Value aValue) {
-        return aValue instanceof LogicalValue && this.value == ((LogicalValue)aValue).get();
-    }
-    
-    @Override
-    public String toString(){
-        return Boolean.toString(this.value);
-    }
-
-    @Override
-    public Value clone() throws CloneNotSupportedException {
-        return (LogicalValue) super.clone();
-    }
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface OpcReadWrite {
 }

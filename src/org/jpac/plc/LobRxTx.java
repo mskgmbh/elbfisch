@@ -323,4 +323,10 @@ public class LobRxTx implements Value{
         }
         return clonedLobRxTx;
     };
+    
+    @Override
+    public Object getValue(){
+        throw new UnsupportedOperationException();
+    }
+
 }

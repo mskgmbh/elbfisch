@@ -119,10 +119,8 @@ public class SignedInteger extends Signal{
      * used to set the SignedInteger from any thread, which is not a module and not the jPac thread
      * The value is changed synchronized to the jPac cycle
      * @param value: value, the signed integer is set to
-     * @throws SignalAccessException, if the module invoking this method is
-     *         not the containing module
      */
-    public void setDeferred(int value) throws SignalAccessException{
+    public void setDeferred(int value){
         SignedIntegerValue localWrapperValue = new SignedIntegerValue();
         synchronized(this){
             localWrapperValue.set(value);

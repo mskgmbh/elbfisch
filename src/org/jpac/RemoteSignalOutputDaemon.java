@@ -27,6 +27,7 @@ package org.jpac;
 
 import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -212,25 +213,15 @@ public class RemoteSignalOutputDaemon extends Thread{
         if (Log.isDebugEnabled()) Log.debug("try to connect to " + remoteSignalConnection.getHost() + " ...");                
         do{
             try{
-                if (InetAddress.getByName(remoteSignalConnection.getHost()).isReachable(1000)){
-                    //if host of remote instance is reachable, connect desired signals.
+                if (isReachable(remoteSignalConnection)){
+                    //if remote instance is reachable, connect desired signals.
                     getRemoteSignalHandler().connect(jPacInstance, remoteSignalConnection.getOutputSignals());
                     connected = true;                
                     if (Log.isDebugEnabled()) Log.debug("... connected to " + remoteSignalConnection.getHost());                
                 }
             }
-            catch(java.net.ConnectException exc){
-                //thrown by InetAdress... .isReachable())
-                //do nothing
-            }
-            catch(java.rmi.ConnectException exc){
-                //if (Log.isDebugEnabled()) Log.debug("connection failed: ",exc);
-            }
-            catch(NotBoundException exc){
-                //if (Log.isDebugEnabled()) Log.debug("connection failed: ",exc);
-            }
-            catch(RemoteException exc){
-                //if (Log.isDebugEnabled()) Log.debug("connection failed: ",exc);
+            catch(Exception exc){
+                if (Log.isDebugEnabled()) Log.debug("connection failed: ",exc);
             }
             catch(Error exc){
                 Log.error("other errors: ", exc);
@@ -243,6 +234,21 @@ public class RemoteSignalOutputDaemon extends Thread{
         }
         while(!connected && !stopRunning);
         return connected;
+    }
+    
+    private boolean isReachable(RemoteSignalConnection remoteSignalConnection){
+        boolean reachable = false;
+        try{
+            //try to connect to remote signal service
+            Socket  socket = new Socket(remoteSignalConnection.getHost(), remoteSignalConnection.getPort());
+            //if succeeded, close it at once
+            socket.close();
+            reachable = true;
+        }
+        catch(Exception exc){
+            reachable = false;
+        }
+        return reachable;
     }
         
     RemoteSignalHandler getRemoteSignalHandler() throws RemoteException, NotBoundException, MalformedURLException, UnknownHostException{

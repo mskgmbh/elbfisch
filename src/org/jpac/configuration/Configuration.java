@@ -36,7 +36,6 @@ import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.log4j.Logger;
 import org.jpac.AsynchronousTask;
 import org.jpac.CyclicTask;
-import org.jpac.JPac;
 import org.jpac.ProcessException;
 import org.jpac.WrongUseException;
 
@@ -208,7 +207,9 @@ public class Configuration extends XMLConfiguration{
 
         @Override
         public void stop() {
-            try{runner.terminate();}catch(WrongUseException exc){/*cannot happen*/};
+            if (runner != null){
+                try{runner.terminate();}catch(WrongUseException exc){/*cannot happen*/};
+            }
         }
 
         @Override

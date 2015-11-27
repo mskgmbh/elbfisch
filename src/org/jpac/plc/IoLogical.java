@@ -184,6 +184,13 @@ public class IoLogical extends Logical implements IoSignal{
     
     @Override
     public String toString(){
-       return super.toString() + (ioDirection == IoDirection.INPUT ? " <- " : " -> ") + address.toString(); 
+       String ts = null;
+       if (address != null){
+           ts = super.toString() + (ioDirection == IoDirection.INPUT ? " <- " : " -> ") + address.toString(); 
+       }
+       else{
+           ts = super.toString(); 
+       }
+       return ts;
     }    
 }

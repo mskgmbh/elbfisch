@@ -332,6 +332,13 @@ public abstract class Signal extends Observable implements Observer {
     }
 
     /**
+     * @return the identifier
+     */
+    public String getQualifiedIdentifier() {
+        return getContainingModule() == null ? identifier : getContainingModule().getQualifiedName() + "." + identifier;
+    }
+
+    /**
      * @return the value
      */
     public Value getValue(){

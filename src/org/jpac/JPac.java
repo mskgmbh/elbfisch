@@ -49,6 +49,8 @@ import org.jpac.configuration.Configuration;
 import org.jpac.configuration.IntProperty;
 import org.jpac.configuration.LongProperty;
 import org.jpac.configuration.StringProperty;
+import org.jpac.opc.Opc;
+import org.jpac.opc.OpcUaService;
 import org.jpac.statistics.Histogramm;
 
 /**
@@ -61,11 +63,16 @@ public class JPac extends Thread {
     private     final int       OWNMODULEINDEX                       = 0;
     private     final long      DEFAULTCYCLETIME                     = 100000000L; // 100 ms
     private     final long      DEFAULTCYCLETIMEOUTTIME              = 1000000000L;// 1 s
-    private     final long      MAXSHUTDOWNTIME                      = 2000;       // 2 s
-    private     final CycleMode DEFAULTCYCLEMODE                     = CycleMode.FreeRunning;//TODO !!!! CycleMode.FreeRunning;
+    private     final int       MAXSHUTDOWNTIME                      = 2000;       // 2 s
+    private     final int       OPCSHUTDOWNTIME                      = 5000;       // 2 s
+    private     final CycleMode DEFAULTCYCLEMODE                     = CycleMode.FreeRunning;
     private     final int       EXITCODEINITIALIZATIONERROR          = 100;
     private     final int       EXITCODEINTERNALERROR                = 101;
     private     final long      DEFAULTCYCLICTASKSHUTDOWNTIMEOUTTIME = 5000000000L; //5 s
+    private     final String    OPCACCESSLEVELNONE                   = "NONE";
+    private     final String    OPCACCESSLEVELREADONLY               = "READ_ONLY";
+    private     final String    OPCACCESSLEVELREADWRITE              = "READ_WRITE";
+    
     public enum CycleMode{OneCycle, Bound, LazyBound, FreeRunning}
     
     public      enum    Status{initializing, ready, running, halted};
@@ -112,6 +119,10 @@ public class JPac extends Thread {
     private BooleanProperty propStoreHistogrammsOnShutdown;
     private StringProperty  propHistogrammFile;
     private LongProperty    propCyclicTaskShutdownTimeoutTime;
+    private BooleanProperty propOpcUaServiceEnabled;
+    private IntProperty     propOpcUaServicePort;
+    private StringProperty  propOpcUaServiceName;
+    private StringProperty  propOpcUaDefaultAccessLevel;
  
     private String          instanceIdentifier;
     private long            cycleTime;
@@ -127,6 +138,10 @@ public class JPac extends Thread {
     private boolean         storeHistogrammsOnShutdown;
     private String          histogrammFile;
     private long            cyclicTaskShutdownTimeoutTime;
+    private boolean         opcUaServiceEnabled;
+    private int             opcUaServicePort;
+    private String          opcUaServiceName;
+    private Opc.AccessLevel opcUaDefaultAccessLevel;
 
     private CountingLock    activeEventsLock;
     
@@ -153,244 +168,8 @@ public class JPac extends Thread {
 
     private boolean         stopBeforeStartup;
     
-    class ShutdownHook extends Thread{
+    private OpcUaService    opcUaService;   
 
-        public ShutdownHook(){
-            setName(getClass().getSimpleName());
-        }
-        
-        private void waitUntilShutdownComplete(){
-            int times100ms;
-            for(times100ms = 0; times100ms < 100 && !readyToShutdown; times100ms++){
-                try {Thread.sleep(100);}catch(InterruptedException ex) {}
-            }
-            if (times100ms == 100){
-                //automation controller did not finish in time
-                Log.error("jPac stopped abnormaly !");
-            }            
-        }
-        
-        @Override
-        public void run() {
-            if (Log.isInfoEnabled()) Log.info("shutdown requested. Informing jPac ...");
-//    public      enum    Status{initializing, ready, running, halted};
-            switch (status){
-                case initializing:
-                case ready:
-                    //JPac has been initialized but did start cycling
-                    stopBeforeStartUp();
-                    waitUntilShutdownComplete();                    
-                    break;
-                case running:
-                    if (!readyToShutdown){
-                        shutdownRequest.request();
-                        waitUntilShutdownComplete();                    
-                    }
-                    else{
-                        if (Log.isInfoEnabled()) Log.info("automation controller already shutdown");
-                    }
-                    break;
-                case halted:
-                    //nothing to do
-                    break;
-            }
-            if (Log.isInfoEnabled()) Log.info("shutdown complete");
-        }
-    }
-        
-    protected class CountingLock{
-        private       int    count       = 0;
-        private       int    maxcount    = 0;
-        private final Object zeroReached = new Object();
-        
-        protected void increment(){
-            synchronized(zeroReached){
-                count++;
-                maxcount++;
-            }
-        }
-        
-        protected boolean decrement() throws InconsistencyException{
-            synchronized(zeroReached){
-                count--;
-                if (count < 0){
-                    throw new InconsistencyException("CountingLock.decrement(): module counter inconsistent !!!!!!");
-                }
-                if (count == 0){
-                    zeroReached.notify();
-                }
-            }
-            return count == 0;
-        }
-        
-        protected int getCount(){
-            int localCount = 0;
-            synchronized(zeroReached){
-                localCount = count;
-            }
-            return localCount;
-        }
-        
-        protected int getMaxCount(){
-            int localCount = 0;
-            synchronized(zeroReached){
-                localCount = maxcount;
-            }
-            return localCount;
-        }
-
-        protected void reset(){
-            synchronized(zeroReached){
-                count    = 0;
-                maxcount = 0;
-            }
-        }
-        
-        protected void waitForUnlock(){
-            synchronized(zeroReached){
-                while(count > 0 && !shutdownRequest.isRequested()){
-                    try{zeroReached.wait(100);}catch(InterruptedException exc){};
-                }
-            }            
-        }
-        
-        protected void waitForUnlock(long waittime){//nanoseconds
-            boolean waitReturned = false;
-            if (waittime > 0){
-                synchronized(zeroReached){
-                    while(count > 0 && !waitReturned){
-                        try{
-                            zeroReached.wait(waittime / 1000000L, (int)(waittime % 1000000));
-                            //wait returned normally or due to timeout
-                            waitReturned = true;
-                        }catch(InterruptedException exc){};
-                    }
-                }
-            }
-            else{
-                if (Log.isDebugEnabled()) Log.debug("cycle time expired before synchronization on modules !!!!!!: " + (-waittime) + " ns");
-            }
-        }
-    }
-    
-    protected class Synchronisation{
-        private boolean       requested                = false;
-        private boolean       acknowledged             = false;
-        private final Object  syncPointRequest         = new Object();
-        private final Object  syncPointAcknowledgement = new Object();
-        
-        protected void waitForRequest(){
-            synchronized(syncPointRequest){
-                while(!requested){
-                    try{syncPointRequest.wait();}catch(InterruptedException exc){};
-                }
-                requested = false;
-            }            
-        }
-        
-        protected void acknowledge(){
-            synchronized(syncPointAcknowledgement){
-                requested    = false;
-                acknowledged = true;
-                syncPointAcknowledgement.notify();
-            }
-        }
-
-        protected void request(){
-            synchronized(syncPointRequest){
-               acknowledged = false;
-               requested    = true;
-               syncPointRequest.notify();
-            }
-            synchronized(syncPointAcknowledgement){
-                while(!acknowledged){
-                    try{syncPointAcknowledgement.wait();}catch(InterruptedException exc){};
-                }
-               acknowledged = false;
-            }
-        }
-        
-        protected boolean isRequested(){
-            return requested;
-        }
-        
-    }
-
-    /**
-     * used to hold the latest tracing information for a given number of execution cycles.
-     */
-    public class TraceQueue extends ArrayBlockingQueue<ModuleTrace>{
-        private int  numberOfEntries;
-                
-        protected TraceQueue(int numberOfEntries){
-            super(numberOfEntries);
-            this.numberOfEntries = numberOfEntries;
-        }
-                
-        public void putTrace(long cycleNumber, int moduleIndex, long startNanos, long endNanos) {
-            ModuleTrace moduleTrace;
-            synchronized(this){
-                moduleTrace = getNextModuleTrace();
-                moduleTrace.setCycleNumber(cycleNumber);
-                moduleTrace.setModuleIndex(moduleIndex);
-                moduleTrace.setStartNanos(startNanos);
-                moduleTrace.setEndNanos(endNanos);
-                //put the actual entry
-                try{super.put(moduleTrace);} catch(InterruptedException exc){/*cannot happen*/}
-            }
-        }
-        private ModuleTrace getNextModuleTrace(){
-            ModuleTrace moduleTrace;
-            if(remainingCapacity() == 0){
-                //queue is full, remove the oldest entry (head)
-                //and recycle it
-                moduleTrace = poll();
-            }
-            else{
-                //create an new module trace record
-                moduleTrace = new ModuleTrace();
-            }
-            return moduleTrace;
-        }
-    }
-
-    public class ModuleTrace{
-        private long cycleNumber;
-        private long moduleIndex;
-        private long startNanos;
-        private long endNanos;
-                
-        public long getStartNanos() {
-            return startNanos;
-        }
-
-        public long getEndNanos() {
-            return endNanos;
-        }
-        
-        protected void setCycleNumber(long cycleNumber){
-            this.cycleNumber = cycleNumber;
-        }
-        protected void setModuleIndex(int moduleIndex){
-            this.moduleIndex = moduleIndex;
-        }
-        protected void setStartNanos(long nanos){
-            this.startNanos = nanos;
-        }
-        protected void setEndNanos(long nanos){
-            this.endNanos = nanos;
-        }
-        
-        public String toCSV(){
-            StringBuffer csvString = new StringBuffer();
-            csvString.append(cycleNumber);csvString.append(';');
-            csvString.append(moduleIndex);csvString.append(';');
-            csvString.append(startNanos);csvString.append(';');
-            csvString.append(endNanos);csvString.append(';');
-            return csvString.toString();
-        }
-    }
-    
     protected JPac(){
         super();
         setName(getClass().getSimpleName());
@@ -440,8 +219,7 @@ public class JPac extends Thread {
         exitCode                    = 0;
         
         incrementCounter            = 0;
-        decrementCounter            = 0;
-        
+        decrementCounter            = 0;        
         
         try{
             propCycleTime                     = new LongProperty(this,"CycleTime",DEFAULTCYCLETIME,"[ns]",true);
@@ -457,6 +235,11 @@ public class JPac extends Thread {
             propStoreHistogrammsOnShutdown    = new BooleanProperty(this,"storeHistogrammsOnShutdown",false,"enables storing of histogramm data on shutdown", true);
             propHistogrammFile                = new StringProperty(this,"HistogrammFile","./data/histogramm.csv","file in which the histogramms are stored", true);
             propCyclicTaskShutdownTimeoutTime = new LongProperty(this,"CyclicTaskShutdownTimeoutTime",DEFAULTCYCLICTASKSHUTDOWNTIMEOUTTIME,"Timeout for all cyclic tasks to stop on shutdown [ns]",true);
+            propOpcUaServiceEnabled           = new BooleanProperty(this,"OpcUaServiceEnabled",false,"enables the opc ua service", true);
+            propOpcUaServicePort              = new IntProperty(this,"OpcUaServicePort",OpcUaService.DEFAULTPORT,"port over which the opc ua service is provided", true);
+            propOpcUaServiceName              = new StringProperty(this,"OpcUaServiceName",OpcUaService.DEFAULTSERVERNAME,"name of the server instance", true);
+            propOpcUaDefaultAccessLevel       = new StringProperty(this,"OpcUaDefaultAccessLevel","NONE","access levels can be NONE,READ_ONLY,READ_WRITE", true);
+            
             instanceIdentifier            = InetAddress.getLocalHost().getHostName() + ":" + propRemoteSignalPort.get();
             cycleTime                     = propCycleTime.get();
             cycleTimeoutTime              = propCycleTimeoutTime.get();
@@ -471,6 +254,22 @@ public class JPac extends Thread {
             storeHistogrammsOnShutdown    = propStoreHistogrammsOnShutdown.get();
             histogrammFile                = propHistogrammFile.get();
             cyclicTaskShutdownTimeoutTime = propCyclicTaskShutdownTimeoutTime.get();
+            opcUaServiceEnabled           = propOpcUaServiceEnabled.get();
+            opcUaServicePort              = propOpcUaServicePort.get();
+            opcUaServiceName              = propOpcUaServiceName.get();
+            if (opcUaServiceEnabled){
+                if (propOpcUaDefaultAccessLevel.get().equals(OPCACCESSLEVELNONE)){
+                    opcUaDefaultAccessLevel = Opc.AccessLevel.NONE;
+                } else if (propOpcUaDefaultAccessLevel.get().equals(OPCACCESSLEVELREADONLY)){
+                    opcUaDefaultAccessLevel = Opc.AccessLevel.READ_ONLY;
+                } else if (propOpcUaDefaultAccessLevel.get().equals(OPCACCESSLEVELREADWRITE)){
+                    opcUaDefaultAccessLevel = Opc.AccessLevel.READ_WRITE;
+                } else {
+                    opcUaDefaultAccessLevel = Opc.AccessLevel.NONE;                    
+                }
+                    
+            }
+            
             //install configuration saver
             try{registerCyclicTask(Configuration.getInstance().getConfigurationSaver());}catch(WrongUseException exc){/*cannot happen*/}
         }
@@ -522,6 +321,7 @@ public class JPac extends Thread {
                 }
                 prepareTrace();
                 prepareHistogramms();
+                prepareOpcUaService();
                 prepareRemoteConnections(); 
                 prepareCyclicTasks();
             }
@@ -631,6 +431,8 @@ public class JPac extends Thread {
             shutdownAwaitingModules(getAwaitedEventList());
             //shutdown RemoteSignalConnection's
             closeRemoteConnections();
+            //stop opc ua service, if running
+            stopOpcUaService();
             //clean up context of registered cyclic tasks
             stopCyclicTasks();
             //acknowledge request
@@ -1300,6 +1102,29 @@ public class JPac extends Thread {
         }
     }
 
+    protected void prepareOpcUaService() throws Exception{
+        if (opcUaServiceEnabled){
+            opcUaService = new OpcUaService(opcUaServiceName, opcUaServicePort);
+        }
+    }
+    
+    protected void stopOpcUaService(){
+        //stop opc server, if running
+        if (opcUaService != null){
+            Log.info("stopping opc ua service ...");
+            opcUaService.stop();
+            Log.info("opc ua service stopped");
+            boolean stopped = opcUaService.waitUntilStopped(OPCSHUTDOWNTIME);
+//            if (stopped){
+//                Log.info("opc ua service stopped");
+//            }
+//            else{
+//                Log.error("failed to stop opc ua service");                
+//            }
+        }
+        
+    }
+    
     protected void pushSignalsOverRemoteConnections() throws ConfigurationException, RemoteSignalException{
         if (remoteSignalsEnabled){
             ConcurrentHashMap<String, RemoteSignalConnection> remoteHosts = RemoteSignalRegistry.getInstance().getRemoteHosts();
@@ -1342,6 +1167,10 @@ public class JPac extends Thread {
         return moduleList.get(i);
     }
 
+    public ArrayList<AbstractModule> getModules(){
+        return moduleList;
+    }
+
     /**
      * @return the cycleMode
      */
@@ -1370,4 +1199,247 @@ public class JPac extends Thread {
         this.stopBeforeStartup = true;
         startCycling.request();
     }
+    
+    public Opc.AccessLevel getOpcUaDefaultAccesslevel(){
+        return this.opcUaDefaultAccessLevel;
+    }
+    
+    class ShutdownHook extends Thread{
+
+        public ShutdownHook(){
+            setName(getClass().getSimpleName());
+        }
+        
+        private void waitUntilShutdownComplete(){
+            int times100ms;
+            for(times100ms = 0; times100ms < 100 && !readyToShutdown; times100ms++){
+                try {Thread.sleep(100);}catch(InterruptedException ex) {}
+            }
+            if (times100ms == 100){
+                //automation controller did not finish in time
+                Log.error("jPac stopped abnormaly !");
+            }            
+        }
+        
+        @Override
+        public void run() {
+            if (Log.isInfoEnabled()) Log.info("shutdown requested. Informing jPac ...");
+//    public      enum    Status{initializing, ready, running, halted};
+            switch (status){
+                case initializing:
+                case ready:
+                    //JPac has been initialized but did start cycling
+                    stopBeforeStartUp();
+                    waitUntilShutdownComplete();                    
+                    break;
+                case running:
+                    if (!readyToShutdown){
+                        shutdownRequest.request();
+                        waitUntilShutdownComplete();                    
+                    }
+                    else{
+                        if (Log.isInfoEnabled()) Log.info("automation controller already shutdown");
+                    }
+                    break;
+                case halted:
+                    //nothing to do
+                    break;
+            }
+            if (Log.isInfoEnabled()) Log.info("shutdown complete");
+        }
+    }
+        
+    protected class CountingLock{
+        private       int    count       = 0;
+        private       int    maxcount    = 0;
+        private final Object zeroReached = new Object();
+        
+        protected void increment(){
+            synchronized(zeroReached){
+                count++;
+                maxcount++;
+            }
+        }
+        
+        protected boolean decrement() throws InconsistencyException{
+            synchronized(zeroReached){
+                count--;
+                if (count < 0){
+                    throw new InconsistencyException("CountingLock.decrement(): module counter inconsistent !!!!!!");
+                }
+                if (count == 0){
+                    zeroReached.notify();
+                }
+            }
+            return count == 0;
+        }
+        
+        protected int getCount(){
+            int localCount = 0;
+            synchronized(zeroReached){
+                localCount = count;
+            }
+            return localCount;
+        }
+        
+        protected int getMaxCount(){
+            int localCount = 0;
+            synchronized(zeroReached){
+                localCount = maxcount;
+            }
+            return localCount;
+        }
+
+        protected void reset(){
+            synchronized(zeroReached){
+                count    = 0;
+                maxcount = 0;
+            }
+        }
+        
+        protected void waitForUnlock(){
+            synchronized(zeroReached){
+                while(count > 0 && !shutdownRequest.isRequested()){
+                    try{zeroReached.wait(100);}catch(InterruptedException exc){};
+                }
+            }            
+        }
+        
+        protected void waitForUnlock(long waittime){//nanoseconds
+            boolean waitReturned = false;
+            if (waittime > 0){
+                synchronized(zeroReached){
+                    while(count > 0 && !waitReturned){
+                        try{
+                            zeroReached.wait(waittime / 1000000L, (int)(waittime % 1000000));
+                            //wait returned normally or due to timeout
+                            waitReturned = true;
+                        }catch(InterruptedException exc){};
+                    }
+                }
+            }
+            else{
+                if (Log.isDebugEnabled()) Log.debug("cycle time expired before synchronization on modules !!!!!!: " + (-waittime) + " ns");
+            }
+        }
+    }
+    
+    protected class Synchronisation{
+        private boolean       requested                = false;
+        private boolean       acknowledged             = false;
+        private final Object  syncPointRequest         = new Object();
+        private final Object  syncPointAcknowledgement = new Object();
+        
+        protected void waitForRequest(){
+            synchronized(syncPointRequest){
+                while(!requested){
+                    try{syncPointRequest.wait();}catch(InterruptedException exc){};
+                }
+                requested = false;
+            }            
+        }
+        
+        protected void acknowledge(){
+            synchronized(syncPointAcknowledgement){
+                requested    = false;
+                acknowledged = true;
+                syncPointAcknowledgement.notify();
+            }
+        }
+
+        protected void request(){
+            synchronized(syncPointRequest){
+               acknowledged = false;
+               requested    = true;
+               syncPointRequest.notify();
+            }
+            synchronized(syncPointAcknowledgement){
+                while(!acknowledged){
+                    try{syncPointAcknowledgement.wait();}catch(InterruptedException exc){};
+                }
+               acknowledged = false;
+            }
+        }
+        
+        protected boolean isRequested(){
+            return requested;
+        }
+        
+    }
+
+    /**
+     * used to hold the latest tracing information for a given number of execution cycles.
+     */
+    public class TraceQueue extends ArrayBlockingQueue<ModuleTrace>{
+        private int  numberOfEntries;
+                
+        protected TraceQueue(int numberOfEntries){
+            super(numberOfEntries);
+            this.numberOfEntries = numberOfEntries;
+        }
+                
+        public void putTrace(long cycleNumber, int moduleIndex, long startNanos, long endNanos) {
+            ModuleTrace moduleTrace;
+            synchronized(this){
+                moduleTrace = getNextModuleTrace();
+                moduleTrace.setCycleNumber(cycleNumber);
+                moduleTrace.setModuleIndex(moduleIndex);
+                moduleTrace.setStartNanos(startNanos);
+                moduleTrace.setEndNanos(endNanos);
+                //put the actual entry
+                try{super.put(moduleTrace);} catch(InterruptedException exc){/*cannot happen*/}
+            }
+        }
+        private ModuleTrace getNextModuleTrace(){
+            ModuleTrace moduleTrace;
+            if(remainingCapacity() == 0){
+                //queue is full, remove the oldest entry (head)
+                //and recycle it
+                moduleTrace = poll();
+            }
+            else{
+                //create an new module trace record
+                moduleTrace = new ModuleTrace();
+            }
+            return moduleTrace;
+        }
+    }
+
+    public class ModuleTrace{
+        private long cycleNumber;
+        private long moduleIndex;
+        private long startNanos;
+        private long endNanos;
+                
+        public long getStartNanos() {
+            return startNanos;
+        }
+
+        public long getEndNanos() {
+            return endNanos;
+        }
+        
+        protected void setCycleNumber(long cycleNumber){
+            this.cycleNumber = cycleNumber;
+        }
+        protected void setModuleIndex(int moduleIndex){
+            this.moduleIndex = moduleIndex;
+        }
+        protected void setStartNanos(long nanos){
+            this.startNanos = nanos;
+        }
+        protected void setEndNanos(long nanos){
+            this.endNanos = nanos;
+        }
+        
+        public String toCSV(){
+            StringBuffer csvString = new StringBuffer();
+            csvString.append(cycleNumber);csvString.append(';');
+            csvString.append(moduleIndex);csvString.append(';');
+            csvString.append(startNanos);csvString.append(';');
+            csvString.append(endNanos);csvString.append(';');
+            return csvString.toString();
+        }
+    }
+    
 }

@@ -100,6 +100,10 @@ public abstract class AsynchronousTask{
         taskTerminated = true;
     }
     
+    public boolean isTerminated(){
+        return taskTerminated;
+    }
+    
     /**
      * returns a ProcessEvent which indicates the conclusion of an asynchronous task
      * @return 
@@ -200,7 +204,7 @@ public abstract class AsynchronousTask{
                 }
             }
         }
-        
+                
         public boolean isDone(){
             boolean returnValue;
             synchronized(this){

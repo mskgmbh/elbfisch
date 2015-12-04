@@ -201,7 +201,7 @@ public class Queue<T> {
     /**
      * @return a process event which will be fired, as soon as the queue contains at least one item
      */
-    public ProcessEvent NotEmpty(){
+    public ProcessEvent notEmpty(){
         ProcessEvent pe = new ProcessEvent(){
             @Override
             public boolean fire() throws ProcessException {
@@ -214,7 +214,7 @@ public class Queue<T> {
     /**
      * @return a process event which will be fired, as soon as the queue is able to receive at least one new item
      */
-    public ProcessEvent NotFull(){
+    public ProcessEvent notFull(){
         ProcessEvent pe = new ProcessEvent(){
             @Override
             public boolean fire() throws ProcessException {

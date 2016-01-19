@@ -61,6 +61,7 @@ public class PeriodOfTime extends ProcessEvent{
         }
     };
 
+    @Override
     public boolean fire() throws ProcessException{
        boolean localFired = false;
         switch(this.cycleMode){
@@ -87,5 +88,5 @@ public class PeriodOfTime extends ProcessEvent{
                 break;
         }
         super.reset();
-    }
+    }    
 }

@@ -70,7 +70,7 @@ public class Timer {
                 break;
             default:
         }
-        timeoutTime = JPac.getInstance().getCycleNanoTime() + periodOfTime;
+        timeoutTime = JPac.getInstance().getExpandedCycleNanoTime() + periodOfTime;
     }
     
     /**

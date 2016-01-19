@@ -87,8 +87,8 @@ public class JPac extends Thread {
     private     long                   maxRemainingCycleTime;
     private     long                   expectedCycleEndTime;
     private     long                   cycleStartTime;
+    private     long                   expansionTime;
     private     long                   numberOfCyclesExceeded;
-//    private     long                   nextCycleStartTime;
     private     long                   cycleNumber;
     private     Status                 status;
     private     boolean                emergencyStopRequested;
@@ -179,7 +179,7 @@ public class JPac extends Thread {
         maxRemainingCycleTime       = 0;
         expectedCycleEndTime        = 0;
         cycleStartTime              = 0;
-//        nextCycleStartTime          = 0;
+        expansionTime               = 0;
         status                      = Status.initializing;
         cycleNumber                 = 0;
 
@@ -558,7 +558,9 @@ public class JPac extends Thread {
                     //a module might have run on a break point
                     //wait until all modules have completed their tasks without time limit
                     if (Log.isInfoEnabled()) Log.info("jPac paused ...");
-                    activeEventsLock.waitForUnlock();                    
+                    activeEventsLock.waitForUnlock();  
+                    //lengthen time line for the time halted on the break point (time line is freezed for that period of time)
+                    expansionTime += System.nanoTime() - expectedCycleEndTime;
                     if (Log.isInfoEnabled()) Log.info("jPac continued ...");
                 }
                 else{
@@ -698,7 +700,7 @@ public class JPac extends Thread {
     /*
      * used to register a task, which is run at the beginning of every jpac cycle
      */
-    public void unregisterCyclicTask(Runnable task){
+    public void unregisterCyclicTask(CyclicTask task){
         synchronized(cyclicTasks){
             cyclicTasks.remove(task);
         }
@@ -1161,6 +1163,14 @@ public class JPac extends Thread {
      */
     public long getCycleNanoTime(){
         return cycleStartTime;
+    }
+    
+    /**
+     * 
+     * @return the start time of the current cycle (ns) corrected by the time spent on break points during a debug session
+     */
+    public long getExpandedCycleNanoTime(){
+        return cycleStartTime - expansionTime;
     }
     
     public AbstractModule getModule(int i){

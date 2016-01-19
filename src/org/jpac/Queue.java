@@ -48,9 +48,15 @@ public class Queue<T> {
     private int                    prodSize;
     private int                    consSize;
     
-    public Queue(AbstractModule consumer, String identifier, Integer maxSize) throws SignalAlreadyExistsException, WrongUseException{
+    public Queue(AbstractModule producer, AbstractModule consumer, String identifier, Integer maxSize) throws SignalAlreadyExistsException, WrongUseException{
+        if (consumer == null){
+            throw new WrongUseException("consumer must not be null");
+        }
+        if (producer == null){
+            throw new WrongUseException("producer must not be null");
+        }
+        this.producer         = producer;
         this.consumer         = consumer;
-        this.producer         = null;      //must be specified by seize()
         this.identifier       = identifier;
         this.size             = new SignedInteger(consumer, "queue." + identifier + ".size", 0);
         this.maxSize          = maxSize;
@@ -61,18 +67,8 @@ public class Queue<T> {
         JPac.getInstance().registerCyclicTask(cyclicTaskRunner);
     }
 
-    public Queue(AbstractModule consumer, AbstractModule producer, String identifier, Integer maxSize) throws SignalAlreadyExistsException, WrongUseException{
-        this(consumer, identifier, maxSize);
-        seize(producer);
-    }
-    
-    public Queue(AbstractModule consumer, String identifier) throws SignalAlreadyExistsException, WrongUseException{
-        this(consumer, identifier, null);
-    }
-
     public Queue(AbstractModule consumer, AbstractModule producer, String identifier) throws SignalAlreadyExistsException, WrongUseException{
-        this(consumer, identifier, null);
-        seize(producer);
+        this(consumer, producer, identifier, null);
     }
 
     /**
@@ -107,8 +103,15 @@ public class Queue<T> {
         if (!Thread.currentThread().equals(consumer)){
             throw new SignalAccessException("queue " + this + " can only be dequeued by " + consumer.getQualifiedName());
         }
-        item     = queue.poll();
-        consSize--;        
+        if (isEmpty()){
+            throw new SignalAccessException("queue " + this + " empty");                        
+        }
+        
+        item = queue.poll();
+        consSize--;  
+        if (consSize < 0){
+            consSize = 0;
+        }
         return item;
     }
     
@@ -121,26 +124,12 @@ public class Queue<T> {
         if (!Thread.currentThread().equals(consumer)){
             throw new SignalAccessException("queue " + this + " can only be dequeued by " + consumer.getQualifiedName());
         }
-        item     = queue.peek();
+        if (isEmpty()){
+            throw new SignalAccessException("queue " + this + " empty");                        
+        }
+
+        item = queue.peek();
         return item;
-    }
-    
-    
-    /**
-     * used to seize the queue. Can be done by a producing module to make shure,
-     * that no other module can enqueue items into this queue.
-     * @param  producer
-     * @throws WrongUseException
-     * @throws SignalAlreadyExistsException 
-     */
-    public void seize(AbstractModule producer) throws WrongUseException, SignalAlreadyExistsException{
-        if (producer == null){
-            throw new WrongUseException("producing module must not be 'null'");
-        }
-        if (this.producer != null){
-            throw new WrongUseException("queue already seized by " + this.producer.getQualifiedName());
-        }
-        this.producer = producer;
     }
     
     /**
@@ -164,7 +153,7 @@ public class Queue<T> {
     }
     
     /**
-     * queue contains items. Subsequent dequeue() operations will succeed
+     * queue contains items. Subsequent dequeue(), peek() operations will succeed
      * @return true = queue contains items
      * @throws org.jpac.SignalAccessException
      */
@@ -188,7 +177,7 @@ public class Queue<T> {
       int result = 0;
       if (Thread.currentThread().equals(producer)){
           result = prodSize;
-      } else if (consumer != null && Thread.currentThread().equals(consumer)){
+      } else if (Thread.currentThread().equals(consumer)){
           result = consSize;
       } else if (Thread.currentThread().equals(JPac.getInstance())){
           result = queue.size();
@@ -242,6 +231,6 @@ public class Queue<T> {
     
     @Override
     public String toString(){
-        return producer.getQualifiedName() + ".queue." + identifier + "(" + queue.size() +")";
+        return consumer.getQualifiedName() + ".queue." + identifier + "(" + queue.size() +")";
     }
 }

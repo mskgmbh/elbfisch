@@ -388,7 +388,11 @@ public abstract class Signal extends Observable implements Observer {
     }
 
     protected void setValueDeferred(Value value){
-        JPac.getInstance().invokeLater(new SetValueRunner(value));
+        JPac.getInstance().invokeLater(new SetValueRunner(this, value));
+    }
+
+    public void invalidateDeferred(){
+        JPac.getInstance().invokeLater(new InvalidateRunner(this));
     }
     /**
      * @return the propagatedValue
@@ -595,13 +599,26 @@ public abstract class Signal extends Observable implements Observer {
     }
     
     private class SetValueRunner implements Runnable{
-        Value value;
-        public SetValueRunner(Value value){
-            this.value = value;
+        private Signal signal;
+        private Value  value;
+        public SetValueRunner(Signal signal, Value value){
+            this.signal = signal;
+            this.value  = value;
         }
         @Override
         public void run() {
-            try{setValue(value);}catch(SignalAccessException exc){/*cannot happen*/};
+            try{signal.setValue(value);}catch(SignalAccessException exc){/*cannot happen*/};
+        }        
+    }
+
+    private class InvalidateRunner implements Runnable{
+        private Signal signal;
+        public InvalidateRunner(Signal signal){
+            this.signal = signal;
+        }
+        @Override
+        public void run() {
+            try{signal.invalidate();}catch(SignalAccessException exc){/*cannot happen*/};
         }        
     }
 }

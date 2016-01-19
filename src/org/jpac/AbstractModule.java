@@ -140,6 +140,8 @@ public abstract class AbstractModule extends Thread{
     private  Histogramm           histogramm;
     private  boolean              requestingEmergencyStop;
     private  boolean              inEveryCycleDoActive;
+    
+    private  CharString[]         stackTraceSignals;
 
     /**
      * used to construct a module
@@ -185,6 +187,11 @@ public abstract class AbstractModule extends Thread{
         //let the application class initialize its modules and signals
         setPriority(MAX_PRIORITY - 1);
         histogramm  = new Histogramm(getJPac().getCycleTime());
+
+        stackTraceSignals  = new CharString[10];
+        for(int i = 0; i < stackTraceSignals.length; i++){
+            try{stackTraceSignals[i] = new CharString(this,":StackTrace[" + i + "]");}catch(SignalAlreadyExistsException exc){/*cannot happen*/}
+        }
     }
 
     /**
@@ -387,6 +394,10 @@ public abstract class AbstractModule extends Thread{
 
     protected boolean isAwakenedByProcessEvent() {
         return awakenedByProcessEvent;
+    }
+    
+    public CharString[] getStackTraceSignals(){
+        return stackTraceSignals;
     }
 
     @Override

@@ -201,6 +201,7 @@ public class Handshake {
         }
         active.set(false);
         try{resultSig.set(OK);}catch(NumberOutOfRangeException exc){/*cannot happen*/};
+        result = OK;
         acknowledge.set(false);
     }    
     
@@ -267,17 +268,13 @@ public class Handshake {
         }
         this.requestingModule = requestingModule;
     }
-    
-    /**
-     * used to connect a handshake to a target handshake. Useful in situations, where both a source module supplies an "output handshake" and
-     * a target module supplies an "input handshake".
-     * @param targetHandshake 
-     */
-    public void connect(Handshake targetHandshake) throws SignalAlreadyConnectedException{
-        this.getRequest().connect(targetHandshake.getRequest());
-        targetHandshake.getAcknowledge().connect(this.getAcknowledge());
-        targetHandshake.getActive().connect(this.getActive());
-        targetHandshake.getResultSig().connect(this.getResultSig());
+        
+    public AbstractModule getServingModule(){
+        return this.servingModule;
+    }
+
+    public AbstractModule getRequestingModule(){
+        return this.requestingModule;
     }
 
     @Override

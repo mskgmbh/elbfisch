@@ -31,7 +31,8 @@ import java.util.ArrayList;
  * base class for all process events which can be await()ed by modules
  */
 public abstract class ProcessEvent extends Fireable{
-
+    final static int                   STACKTRACEOFFSET = 3;
+    
     private   boolean                  timedout;
     private   boolean                  timeoutActive;
     private   boolean                  emergencyStopOccured;
@@ -133,6 +134,13 @@ public abstract class ProcessEvent extends Fireable{
     }
 
     private ProcessEvent awaitImpl(boolean withTimeout, long nanoseconds, boolean noteStatus) throws ShutdownRequestException, EmergencyStopException, ProcessException, OutputInterlockException, InputInterlockException, MonitorException, InconsistencyException{
+        StackTraceElement[] stackTrace;
+        StackTraceElement   stackTraceElement; 
+        CharString[]        stacktraceSignals;
+        int                 traceLength;
+        int                 i,j;
+        String              methodName; 
+        
         if (!(Thread.currentThread() instanceof AbstractModule)){
             throw new InconsistencyException("ProcessEvents cannot be awaited outside the work() context of modules");
         }
@@ -151,11 +159,31 @@ public abstract class ProcessEvent extends Fireable{
         //store the module awaiting me
         setObservingModule(module);
         module.setAwaitedEvent(this);
+        //propagagate current trace point
+        stackTrace         = module.getStackTrace();
+        stacktraceSignals  = module.getStackTraceSignals();
+        traceLength        = stackTrace.length;
+        i                  = 0;
+        j                  = traceLength;
+        //trace back to Module.work()
+        do{j--;} while(j > 0 && !stackTrace[j].getMethodName().equals("work"));
+        if (j >= 0){
+            do{
+                stackTraceElement = stackTrace[j]; 
+                methodName        = stackTraceElement.getMethodName();
+                stacktraceSignals[i].set(stackTraceElement.getClassName() + "." + methodName + "(): " + stackTraceElement.getLineNumber());
+                i++;j--;
+            }
+            while(j >= STACKTRACEOFFSET && i < stacktraceSignals.length);
+        }
+        while(i < stacktraceSignals.length){
+            stacktraceSignals[i++].invalidate();
+        }
         //register myself as an active waiting event
         register();
         //prepare timeout related vars
         setTimeoutPeriod(nanoseconds);
-        setTimeoutNanoTime(System.nanoTime() + nanoseconds);
+        setTimeoutNanoTime(JPac.getInstance().getExpandedCycleNanoTime() + nanoseconds);
         timeoutActive = withTimeout;
         //now lay observing module to sleep until this event occurs
         synchronized(this){
@@ -261,7 +289,7 @@ public abstract class ProcessEvent extends Fireable{
     public boolean evaluateTimedOutCondition() {
         boolean localTimedout = false;
         if (timeoutActive){
-            localTimedout = this.timedout || (System.nanoTime() - getTimeoutNanoTime()) > 0;
+            localTimedout = this.timedout || (JPac.getInstance().getExpandedCycleNanoTime() - getTimeoutNanoTime()) > 0;
             this.timedout = localTimedout;
         }
         else{

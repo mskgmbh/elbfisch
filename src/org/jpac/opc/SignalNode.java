@@ -85,13 +85,14 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
         this.lock            = false;
         this.signal          = signalNode.getSignal();
         this.signalValue     = getSignalValue();
-        this.lastSignalValue = null;
         this.valid           = false;
         this.lastValid       = this.valid;        
+
+        try{this.lastSignalValue = signalValue.clone();}catch(CloneNotSupportedException exc){/*cannot happen*/}
         
         setDataType(getSignalDataType());
         dataValue = new DataValue(new Variant(getSignalValue().getValue()), StatusCode.BAD);
-        setValue(dataValue);
+        //setValue(dataValue);
         EnumSet<AccessLevel> accessLevels = AccessLevel.NONE;
         Opc.AccessLevel opcAccessLevel = retrieveOpcAccessLevel(signal);
         switch(opcAccessLevel){
@@ -111,6 +112,9 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
         if (opcAccessLevel != Opc.AccessLevel.NONE){
             //if any kind of access is permitted, connect this node to the assigned signal
             try{this.signal.connect(this);}catch(SignalAlreadyConnectedException exc){/*cannot happen*/};
+        }
+        if (opcAccessLevel == opcAccessLevel.READ_WRITE){
+            signal.setConnectedAsTarget(retrieveOpcConnectAsTarget(signal));
         }
     }  
     
@@ -136,12 +140,34 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
         return accessLevel;
     }
     
+    protected boolean retrieveOpcConnectAsTarget(Signal signal){
+        Field   field           = signal.getContainingModule().getField(signal);
+        boolean connectAsTarget = false;
+        if (field != null){
+            //signal is instantiated by the module directly
+            if (field.getAnnotation(Opc.class) != null){
+                connectAsTarget = ((Opc)field.getAnnotation(Opc.class)).connectAsTarget();
+            }
+        }
+        else{
+            //signal might be embedded inside another class, such like Handshake
+            connectAsTarget = retrieveOpcConnectAsTargetForEmbeddedSignals(signal);
+        }
+        return connectAsTarget;
+    }
+
     protected Opc.AccessLevel retrieveOpcAccessLevelForEmbeddedSignals(Signal signal){
       //TODO to be implemented (Handshake etc.)
       Opc.AccessLevel accessLevel = JPac.getInstance().getOpcUaDefaultAccesslevel();
       return accessLevel;
     };
 
+    protected boolean retrieveOpcConnectAsTargetForEmbeddedSignals(Signal signal){
+      //TODO to be implemented (Handshake etc.)
+      return false;
+    };
+
+    
     @Override
     public void update(Observable o, Object o1) {
         Signal sourceSignal = (Signal)o;
@@ -181,20 +207,13 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
     public DataValue getValue() {
         DataValue theDataValue;
         synchronized(lock){
-            if (signalValueChanged()){
-                dataValue = new DataValue(new Variant(getSignalValue().getValue()), valid ? StatusCode.GOOD : StatusCode.BAD);
-                saveSignalState();
-                Log.info("getValue():" + dataValue);//TODO Test!!!!
-            }            
+            dataValue = new DataValue(new Variant(getSignalValue().getValue()), valid ? StatusCode.GOOD : StatusCode.BAD);
+            saveSignalState();   
             theDataValue = dataValue;
         }
         return theDataValue;
     }
-    
-    protected boolean signalValueChanged(){
-        return lastValid != valid || !signalValue.equals(lastSignalValue);
-    }
-        
+            
     protected void saveSignalState(){
         try{
             if (lastSignalValue == null){
@@ -212,6 +231,10 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
     
     protected void setValid(boolean valid){
         this.valid = valid;
+    }
+    
+    protected boolean isValid(){
+        return this.valid;
     }
     
     abstract protected Value     getSignalValue();

@@ -44,10 +44,8 @@
 package org.jpac.opc;
 
 import java.io.File;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
 import java.util.EnumSet;
 import java.util.UUID;
 
@@ -63,7 +61,6 @@ import com.digitalpetri.opcua.stack.core.application.DefaultCertificateValidator
 import com.digitalpetri.opcua.stack.core.security.SecurityPolicy;
 import com.digitalpetri.opcua.stack.core.types.builtin.DateTime;
 import com.digitalpetri.opcua.stack.core.types.builtin.LocalizedText;
-import com.digitalpetri.opcua.stack.core.types.builtin.unsigned.UShort;
 import com.digitalpetri.opcua.stack.core.types.structured.BuildInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

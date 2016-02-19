@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : IoLogical.java
+ * MODULE    : IoDecimal.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -27,7 +27,8 @@ package org.jpac.plc;
 
 import org.apache.log4j.Logger;
 import org.jpac.AbstractModule;
-import org.jpac.Logical;
+import org.jpac.Decimal;
+import org.jpac.NumberOutOfRangeException;
 import org.jpac.SignalAccessException;
 import org.jpac.SignalAlreadyExistsException;
 import org.jpac.SignalInvalidException;
@@ -36,71 +37,64 @@ import org.jpac.SignalInvalidException;
  *
  * @author berndschuster
  */
-public class IoLogical extends Logical implements IoSignal{
-    static  Logger       Log = Logger.getLogger("jpac.Signal");      
+public class IoDecimal extends Decimal implements IoSignal{
+    static  Logger           Log         = Logger.getLogger("jpac.Signal");      
+    private final static int DEFAULTSIZE = 6;
     
     private   Address      address;
     private   Data         data;
-    private   Data         bitData;
+    private   Data         intData;
     private   WriteRequest writeRequest;
     private   IoDirection  ioDirection;
     private   Connection   connection;
     protected boolean      changedByCheck;
     protected boolean      inCheck;
     protected boolean      outCheck;
-    protected boolean      toBePutOut;
-    
-    public IoLogical(AbstractModule containingModule, String name, Data data, Address address, IoDirection ioDirection) throws SignalAlreadyExistsException{
-        super(containingModule, name);
-        this.data        = data;
-        this.address     = address; 
-        this.ioDirection = ioDirection;
-    }
+    protected boolean      toBePutOut;    
 
+    public IoDecimal(AbstractModule containingModule, String name, Data data, Address address, IoDirection ioDirection) throws SignalAlreadyExistsException{
+        super(containingModule, name);
+        int minVal        = 0;
+        int maxVal        = 0;
+        this.data         = data;
+        this.address      = address;
+        this.ioDirection  = ioDirection;
+        int size          = address == null ? DEFAULTSIZE : address.getSize();
+    }
+    
     /**
-     * used to checkIn, if this signal has been changed inside the process image. If so, the signal change is automatically
+     * used to checkIn, if this signal has been changed by the plc. If so, the signal change is automatically
      * propagated to all connected signals
      * @throws SignalAccessException
      * @throws AddressException 
-     */
+     * @throws org.jpac.NumberOutOfRangeException 
+     */    
     @Override
-    public void checkIn() throws SignalAccessException, AddressException{
-        try{
-            inCheck = true;
-            set(data.getBIT(address.getByteIndex(), address.getBitIndex()));        
-        }
-        finally{
-            inCheck = false;
-        }
+    public void checkIn() throws SignalAccessException, AddressException, NumberOutOfRangeException {
+        throw new UnsupportedOperationException("not implemented yet");
     }
     
-    /**
-     * used to check, if this signal has been changed by this jPac instance. If so, the signal change is
-     * propagated to the process image
+   /**
+     * used to check, if this signal is changed and therefore to be put out to the plc.
      * @throws SignalAccessException
      * @throws AddressException 
-     */
+     * @throws org.jpac.NumberOutOfRangeException 
+     */    
     @Override
-    public void checkOut() throws SignalAccessException, AddressException{
-        try{
-            outCheck = true;
-            try{data.setBIT(address.getByteIndex(), address.getBitIndex(), isValid() ? is(true) : false);}catch(SignalInvalidException exc){/*cannot happen*/}
-        }
-        finally{
-            outCheck = false;
-        }
+    public void checkOut() throws SignalAccessException, AddressException, NumberOutOfRangeException {
+        throw new UnsupportedOperationException("not implemented yet");
     }
 
     @Override
-    public void set(boolean value) throws SignalAccessException{
+    public void set(double value) throws SignalAccessException, NumberOutOfRangeException{
         super.set(value);
         changedByCheck = isChanged() && inCheck;
     }
-    
+ 
     @Override
     public void propagate() throws SignalInvalidException{
         if (hasChanged() && signalValid && !changedByCheck){
-            //this signal has been altered inside the Elbfisch application (not by the external device).
+            //this signal has been altered inside the Elbfisch application  (not by the external device).
             //Mark it as to be put out to the external device
             toBePutOut = true;
         }
@@ -116,7 +110,7 @@ public class IoLogical extends Logical implements IoSignal{
     @Override
     public void resetToBePutOut(){
         toBePutOut = false;
-    }
+    }    
 
     /**
      * returns a write request suitable for transmitting this signal to the plc
@@ -125,29 +119,10 @@ public class IoLogical extends Logical implements IoSignal{
      */
     @Override
     public WriteRequest getWriteRequest(Connection connection){
-       boolean errorOccured = false;
-        try{
-            if (bitData == null || this.connection == null || this.connection != connection){
-                bitData           = connection.generateDataObject(1);
-                this.connection   = connection;
-                this.writeRequest = null;
-            }
-            bitData.setBYTE(0, isValid() && is(true) ? 0x01 : 0x00);
-            if (writeRequest == null){
-               writeRequest = connection.generateWriteRequest(Request.DATATYPE.BIT, address, 0, bitData);
-            }
-            else{
-               writeRequest.setData(bitData);
-            }
-        }
-        catch(Exception exc){
-            Log.error("Error: " + exc);
-            errorOccured = true;
-        }
-        return errorOccured ? null : writeRequest;  
+       throw new UnsupportedOperationException("not implemented yet");
     }
     
-    /**
+   /**
      * 
      * @param ioDirection to be set 
      */
@@ -164,7 +139,7 @@ public class IoLogical extends Logical implements IoSignal{
     public IoDirection getIoDirection(){
         return this.ioDirection;
     }    
-    
+
     /**
      * @param address address of the signal
      */
@@ -179,8 +154,8 @@ public class IoLogical extends Logical implements IoSignal{
     @Override
     public Address getAddress(){
         return this.address;
-    }
-    
+    }    
+        
     @Override
     public String toString(){
        String ts = null;

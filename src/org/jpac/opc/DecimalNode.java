@@ -46,6 +46,7 @@ import com.digitalpetri.opcua.sdk.server.api.UaNamespace;
 import com.digitalpetri.opcua.stack.core.Identifiers;
 import com.digitalpetri.opcua.stack.core.types.builtin.DataValue;
 import com.digitalpetri.opcua.stack.core.types.builtin.NodeId;
+import org.jpac.Decimal;
 import org.jpac.DecimalValue;
 import org.jpac.Value;
 
@@ -70,8 +71,15 @@ public class DecimalNode extends SignalNode{
     @Override
     protected void setSignalValue(DataValue dataValue) {
         saveSignalState();
-        ((DecimalValue)signalValue).set((double)dataValue.getValue().getValue());
+        double value = (double)dataValue.getValue().getValue();
+        ((DecimalValue)signalValue).set(value);
         setValid(dataValue.getStatusCode().isGood());
+        if (isValid()){
+            ((Decimal)signal).setDeferred(value);
+        }
+        else{
+            ((Decimal)signal).invalidateDeferred();
+        }        
     }
 
     @Override
@@ -84,5 +92,6 @@ public class DecimalNode extends SignalNode{
         saveSignalState();
         ((DecimalValue)signalValue).set(0.0);
         setValid(false);
+        ((Decimal)signal).invalidateDeferred();        
     }
 }

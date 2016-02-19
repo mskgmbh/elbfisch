@@ -46,6 +46,7 @@ import com.digitalpetri.opcua.sdk.server.api.UaNamespace;
 import com.digitalpetri.opcua.stack.core.Identifiers;
 import com.digitalpetri.opcua.stack.core.types.builtin.DataValue;
 import com.digitalpetri.opcua.stack.core.types.builtin.NodeId;
+import org.jpac.CharString;
 import org.jpac.CharStringValue;
 import org.jpac.Value;
 
@@ -70,8 +71,15 @@ public class CharStringNode extends SignalNode{
     @Override
     protected void setSignalValue(DataValue dataValue) {
         saveSignalState();
-        ((CharStringValue)signalValue).set((String)dataValue.getValue().getValue());
+        String value = (String)dataValue.getValue().getValue();
+        ((CharStringValue)signalValue).set(value);
         setValid(dataValue.getStatusCode().isGood());
+        if (isValid()){
+            ((CharString)signal).setDeferred(value);
+        }
+        else{
+            ((CharString)signal).invalidateDeferred();
+        }        
     }
 
     @Override
@@ -84,5 +92,6 @@ public class CharStringNode extends SignalNode{
         saveSignalState();
         ((CharStringValue)signalValue).set("");
         setValid(false);
+        ((CharString)signal).invalidateDeferred();
     }
 }

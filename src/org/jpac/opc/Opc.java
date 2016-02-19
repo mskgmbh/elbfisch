@@ -39,4 +39,5 @@ import java.lang.annotation.Target;
 public @interface Opc {
     enum AccessLevel {NONE, READ_ONLY, READ_WRITE};
     AccessLevel accessLevel() default AccessLevel.READ_ONLY;
+    boolean     connectAsTarget() default false;
 }

@@ -46,6 +46,7 @@ import com.digitalpetri.opcua.sdk.server.api.UaNamespace;
 import com.digitalpetri.opcua.stack.core.Identifiers;
 import com.digitalpetri.opcua.stack.core.types.builtin.DataValue;
 import com.digitalpetri.opcua.stack.core.types.builtin.NodeId;
+import org.jpac.Logical;
 import org.jpac.LogicalValue;
 import org.jpac.Value;
 
@@ -71,8 +72,15 @@ public class LogicalNode extends SignalNode{
     @Override
     protected void setSignalValue(DataValue dataValue) {
         saveSignalState();
-        ((LogicalValue)signalValue).set((boolean)dataValue.getValue().getValue());
+        boolean value = (boolean)dataValue.getValue().getValue();
+        ((LogicalValue)signalValue).set(value);
         setValid(dataValue.getStatusCode().isGood());
+        if (isValid()){
+            ((Logical)signal).setDeferred(value);
+        }
+        else{
+            ((Logical)signal).invalidateDeferred();
+        }
     }
 
     @Override
@@ -85,5 +93,6 @@ public class LogicalNode extends SignalNode{
         saveSignalState();
         ((LogicalValue)signalValue).set(false);
         setValid(false);
+        ((Logical)signal).invalidateDeferred();
     }
 }

@@ -46,6 +46,7 @@ import com.digitalpetri.opcua.sdk.server.api.UaNamespace;
 import com.digitalpetri.opcua.stack.core.Identifiers;
 import com.digitalpetri.opcua.stack.core.types.builtin.DataValue;
 import com.digitalpetri.opcua.stack.core.types.builtin.NodeId;
+import org.jpac.SignedInteger;
 import org.jpac.SignedIntegerValue;
 import org.jpac.Value;
 
@@ -70,8 +71,15 @@ public class SignedIntegerNode extends SignalNode{
     @Override
     protected void setSignalValue(DataValue dataValue) {
         saveSignalState();
-        ((SignedIntegerValue)signalValue).set((int)dataValue.getValue().getValue());
+        int value = (int)dataValue.getValue().getValue();
+        ((SignedIntegerValue)signalValue).set(value);
         setValid(dataValue.getStatusCode().isGood());
+        if (isValid()){
+            ((SignedInteger)signal).setDeferred(value);
+        }
+        else{
+            ((SignedInteger)signal).invalidateDeferred();
+        }
     }
 
     @Override
@@ -84,5 +92,6 @@ public class SignedIntegerNode extends SignalNode{
         saveSignalState();
         ((SignedIntegerValue)signalValue).set(0);
         setValid(false);
+        ((SignedInteger)signal).invalidateDeferred();
     }
 }

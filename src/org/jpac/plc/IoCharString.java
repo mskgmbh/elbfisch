@@ -45,11 +45,11 @@ public class IoCharString extends CharString implements IoSignal{
     private WriteRequest writeRequest;
     private IoDirection  ioDirection;
     private Connection   connection;
-    private boolean      changedByCheck;
     private PlcString    plcString;
-    private boolean      inCheck;
-    private boolean      outCheck;
-    private boolean      toBePutOut;
+    protected boolean    changedByCheck;
+    protected boolean    inCheck;
+    protected boolean    outCheck;
+    protected boolean    toBePutOut;    
     
     
     public IoCharString(AbstractModule containingModule, String name, Data data, Address address, IoDirection ioDirection) throws SignalAlreadyExistsException, StringLengthException{

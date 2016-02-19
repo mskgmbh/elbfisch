@@ -47,7 +47,7 @@ public class IoSignedInteger extends SignedInteger implements IoSignal{
     private   WriteRequest writeRequest;
     private   IoDirection  ioDirection;
     private   Connection   connection;
-    private   boolean      changedByCheck;
+    protected boolean      changedByCheck;
     protected boolean      inCheck;
     protected boolean      outCheck;
     protected boolean      toBePutOut;    

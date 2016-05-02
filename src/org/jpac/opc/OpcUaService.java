@@ -66,6 +66,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.collect.Lists.newArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class OpcUaService {
@@ -88,23 +89,22 @@ public class OpcUaService {
     private String            serverName;
     private int               port;
     private boolean           stopRequested;
-
-    public OpcUaService() throws Exception{
-        this(DEFAULTSERVERNAME, DEFAULTPORT);
-    }
     
-    public OpcUaService(String serverName, int port) throws Exception {
+    public OpcUaService(String serverName, List<String> bindAddresses, int port, Double minSupportedSampleRate) throws Exception {
         this.serverName    = serverName;
         this.port          = port;
         this.stopRequested = false;
         
         CertificateManager certificateManager = new DefaultCertificateManager();
         CertificateValidator certificateValidator = new DefaultCertificateValidator(new File("./cfg/security"));
+        
+        OpcUaServerConfigLimits limits = new OpcUaServerConfigLimits()
+                                                .setMinSupportedSampleRate(minSupportedSampleRate);
 
         OpcUaServerConfig serverConfig = OpcUaServerConfig.builder()
                 .setApplicationName(getApplicationName())
                 .setApplicationUri(getApplicationUri())
-                .setBindAddresses(newArrayList("0.0.0.0"))
+                .setBindAddresses(bindAddresses)
                 .setBindPort(port)
                 .setBuildInfo(getBuildInfo())
                 .setCertificateManager(certificateManager)
@@ -114,6 +114,7 @@ public class OpcUaService {
                 .setSecurityPolicies(EnumSet.allOf(SecurityPolicy.class))
                 .setServerName(getServerName())
                 .setUserTokenPolicies(newArrayList(OpcUaServerConfig.USER_TOKEN_POLICY_ANONYMOUS))
+                .setLimits(limits)
                 .build();
 
         server = new OpcUaServer(serverConfig);

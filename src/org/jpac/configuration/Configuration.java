@@ -123,20 +123,18 @@ public class Configuration extends XMLConfiguration{
         return touchedProperties;
     }
     
+    public void cleanUp(){
+        for(Iterator<String> keys = getKeys(); keys.hasNext();){
+            String key = keys.next();
+            if (!getTouchedProperties().contains(key)){
+                Log.info("key:" + key);
+                clearTree(key);
+            }
+        }
+    }
+    
     @Override
     public void save() throws ConfigurationException{        
-      //check, if the configuration has to be cleaned up
-      if(isCleanupOnSave()){
-          //reset flag: This flag must be explictly set for every cleanup
-          cleanupOnSave.set(false);
-          //remove all properties which have not been touched during actual session
-          for(Iterator<String> keys = getKeys();keys.hasNext();){
-              String key = keys.next();
-              if (!getTouchedProperties().contains(key)){
-                  clearProperty(key);
-              }
-          }
-      }
       //if the configuration has changed during this session
       if (changed){
           //then save the cleaned up configuration
@@ -164,23 +162,6 @@ public class Configuration extends XMLConfiguration{
         super.addPropertyDirect(key, value);
         changed = true;
         invokeSaveOperation = true;
-    }
-
-    /**
-     * @return the cleanupOnSave
-     */
-    public static boolean isCleanupOnSave() throws ConfigurationException {
-        if (cleanupOnSave == null){
-            cleanupOnSave = new BooleanProperty(null,"CleanupOnSave",false,"removes unused properties on next save(). !!! Will be automatically reset !!!");        
-        }
-        return cleanupOnSave.get();
-    }
-
-    /**
-     * @param aCleanupOnSave the cleanupOnSave to set
-     */
-    public static void setCleanupOnSave(boolean cleanUp) throws ConfigurationException {
-        cleanupOnSave.set(cleanUp);
     }
         
     public ConfigurationSaver getConfigurationSaver(){

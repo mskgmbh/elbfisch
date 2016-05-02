@@ -107,6 +107,7 @@ public class StringProperty extends Property{
      * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
      */
     public String get() throws ConfigurationException{
+        touched = true;
         return Configuration.getInstance().getString(key);
     }
     
@@ -116,6 +117,7 @@ public class StringProperty extends Property{
      * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
      */
     public void set(String value) throws ConfigurationException{
+        touched = true;
         Configuration.getInstance().setProperty(key, value);
     }
 }

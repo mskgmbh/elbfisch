@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : Histogrammm.java
+ * MODULE    : SnapshotSignal.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -21,48 +21,25 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
-package org.jpac.statistics;
+package org.jpac.snapshot;
+
+import org.jpac.Signal;
 
 /**
  *
- * used to calculate statistical information concerning the 
- * time consumption of system internal or module actions
  * @author berndschuster
  */
-public class Histogramm{
-    private long[] histogramm;
-    private long  scale;
-    private long  cycleTime;
-
-    public Histogramm(long cycleTime){
-        scale      = cycleTime / 100L;
-        histogramm = new long[100];
-    }
-
-    public void update(long durationNanos){
-        long index = durationNanos/scale;
-        if (index < 0){
-            index = 0;
-        }
-        if (index > histogramm.length - 1){
-            index = histogramm.length - 1;
-        }
-        histogramm[(int)index]++;
-    }
-
-    public long[] getValues(){
-        return histogramm;
-    }
+public class SnapshotSignal {
+    public String  identifier;
+    public boolean valid;
+    public String  value;
     
-    public StringBuffer toCSV(){
-        StringBuffer sb = new StringBuffer();
-        for (long value: histogramm){
-            sb.append(value).append(';');
-        }
-        sb.deleteCharAt(sb.length()-1);//remove trailing ';'
-        return sb;
+    public SnapshotSignal(Signal signal){
+       this.identifier = signal.getIdentifier();
+       this.valid      = signal.isValid();
+       this.value      = signal.getValue().toString();
     }
 }
-

@@ -96,6 +96,7 @@ public class DoubleProperty extends Property{
      * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
      */
     public double get() throws ConfigurationException{
+        touched = true;        
         return Configuration.getInstance().getDouble(key);
     }
     
@@ -105,6 +106,7 @@ public class DoubleProperty extends Property{
      * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
      */
     public void set(double value) throws ConfigurationException{
+        touched = true;
         Configuration.getInstance().setProperty(key, value);
     }
 }

@@ -42,7 +42,6 @@
 
 package org.jpac.opc;
 
-import com.digitalpetri.opcua.sdk.server.api.UaNamespace;
 import com.digitalpetri.opcua.stack.core.Identifiers;
 import com.digitalpetri.opcua.stack.core.types.builtin.DataValue;
 import com.digitalpetri.opcua.stack.core.types.builtin.NodeId;
@@ -56,7 +55,7 @@ import org.jpac.Value;
  */
 public class LogicalNode extends SignalNode{
     
-    public LogicalNode(UaNamespace nameSpace, TreeItem signalNode) {
+    public LogicalNode(Namespace nameSpace, TreeItem signalNode) {
         super(nameSpace, signalNode);
     }
 

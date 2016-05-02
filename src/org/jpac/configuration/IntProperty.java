@@ -97,6 +97,7 @@ public class IntProperty extends Property{
      * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
      */
     public int get() throws ConfigurationException{
+        touched = true;        
         return Configuration.getInstance().getInt(key);
     }
     
@@ -106,6 +107,7 @@ public class IntProperty extends Property{
      * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
      */
     public void set(int value) throws ConfigurationException{
+        touched = true;        
         Configuration.getInstance().setProperty(key, value);
     }
 }

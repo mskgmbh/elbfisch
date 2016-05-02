@@ -51,7 +51,7 @@ import com.digitalpetri.opcua.sdk.core.Reference;
 import com.digitalpetri.opcua.sdk.server.NamespaceManager;
 import com.digitalpetri.opcua.sdk.server.api.DataItem;
 import com.digitalpetri.opcua.sdk.server.api.MonitoredItem;
-import com.digitalpetri.opcua.sdk.server.api.UaNamespace;
+import com.digitalpetri.opcua.sdk.server.api.UaNodeManager;
 import com.digitalpetri.opcua.sdk.server.model.UaNode;
 import com.digitalpetri.opcua.sdk.server.model.UaObjectNode;
 import com.digitalpetri.opcua.sdk.server.model.UaVariableNode;
@@ -73,6 +73,8 @@ import com.digitalpetri.opcua.stack.core.types.structured.WriteValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import static com.google.common.collect.Lists.newArrayListWithCapacity;
+import java.util.Collection;
+import java.util.Set;
 import java.util.StringTokenizer;
 import org.apache.log4j.Logger;
 import org.jpac.CharString;
@@ -83,7 +85,7 @@ import org.jpac.SignalRegistry;
 import org.jpac.SignedInteger;
 import org.jpac.alarm.Alarm;
 
-public class Namespace implements UaNamespace {
+public class Namespace implements com.digitalpetri.opcua.sdk.server.api.Namespace, com.digitalpetri.opcua.sdk.server.api.UaNodeManager {
     static  Logger Log = Logger.getLogger("jpac.opc");
 
     public static final String NAMESPACE_URI = "urn:mskgmbh:elbfisch-opc-ua-server:elbfisch-namespace";
@@ -134,7 +136,7 @@ public class Namespace implements UaNamespace {
                     if (signal instanceof Logical || signal instanceof SignedInteger || signal instanceof Decimal || signal instanceof CharString || signal instanceof Alarm){//TODO other signal types will be added later
                         StringTokenizer partialIdentifiers  = new StringTokenizer(signal.getQualifiedIdentifier(),".");
                         TreeItem  currentNode = rootNode;
-                        partialIdentifiers.nextToken();//skip "root token"
+                        // partialIdentifiers.nextToken();//skip "main module"
                         int numberOfPartialIdentifiers = partialIdentifiers.countTokens();
                         for (int i = 0; i < numberOfPartialIdentifiers; i++){
                             TreeItem nextNode = new TreeItem(partialIdentifiers.nextToken());
@@ -150,9 +152,9 @@ public class Namespace implements UaNamespace {
                         Log.debug("found: " + signal.getQualifiedIdentifier());
                     }
                 }
-                    //recursively add UaNodes
-                    registerNode(rootNode, rootFolder);
-                }
+                //recursively add UaNodes
+                registerNode(rootNode, rootFolder);
+            }
         }
         catch(Exception ex){
             Log.error("Error: ", ex);            
@@ -189,11 +191,12 @@ public class Namespace implements UaNamespace {
     }
     
     private  UaObjectNode addSubFolder(UaObjectNode folder, TreeItem signalNode){
-        String identifier = signalNode.getPartialIdentifier();
+        String partialIdentifier  = signalNode.getPartialIdentifier();
+        String identifier         = folder == rootFolder ? partialIdentifier : ((String)folder.getNodeId().getIdentifier()) + "." + partialIdentifier;
         UaObjectNode objectFolder = UaObjectNode.builder(this)
-                                    .setNodeId(new NodeId(namespaceIndex,  identifier + (idIndex++)))
-                                    .setBrowseName(new QualifiedName(namespaceIndex, identifier))
-                                    .setDisplayName(LocalizedText.english(identifier))
+                                    .setNodeId(new NodeId(namespaceIndex, identifier))
+                                    .setBrowseName(new QualifiedName(namespaceIndex, partialIdentifier))
+                                    .setDisplayName(LocalizedText.english(partialIdentifier))
                                     .setTypeDefinition(Identifiers.FolderType)
                                     .build(); 
         nodes.put(objectFolder.getNodeId(), objectFolder);
@@ -340,4 +343,84 @@ public class Namespace implements UaNamespace {
     public void onMonitoringModeChanged(List<MonitoredItem> monitoredItems) {
         subscriptionModel.onMonitoringModeChanged(monitoredItems);
     }    
+
+    @Override
+    public UaNode putIfAbsent(NodeId key, UaNode value) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean remove(Object key, Object value) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean replace(NodeId key, UaNode oldValue, UaNode newValue) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public UaNode replace(NodeId key, UaNode value) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public int size() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean isEmpty() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public UaNode get(Object key) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public UaNode put(NodeId key, UaNode value) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public UaNode remove(Object key) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void putAll(Map<? extends NodeId, ? extends UaNode> m) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Set<NodeId> keySet() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Collection<UaNode> values() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Set<Entry<NodeId, UaNode>> entrySet() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

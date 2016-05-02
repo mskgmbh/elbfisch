@@ -35,6 +35,8 @@ import org.jpac.AbstractModule;
 public abstract class Property {
     String  key;
     boolean classProperty;
+    boolean touched;
+    
     public Property(Object owningObject, String key, Object defaultValue, String comment, boolean classProperty) throws ConfigurationException{
         this.classProperty = classProperty;
         Configuration configuration = Configuration.getInstance();
@@ -97,6 +99,10 @@ public abstract class Property {
 
     public boolean isClassProperty(){
         return classProperty;
+    }
+    
+    public boolean isTouched(){
+        return touched;
     }
     
     @Override

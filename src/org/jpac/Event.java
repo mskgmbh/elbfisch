@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : OpcUaServerDaemon.java
+ * MODULE    : Event.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -23,36 +23,27 @@
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jpac.opc;
+package org.jpac;
 
-import org.apache.log4j.Logger;
+import java.util.function.BooleanSupplier;
 
 /**
  *
  * @author berndschuster
+ * represents an process event implementing an easy to use constructor utilizeing lambda operators
  */
-public class OpcUaServerDaemon extends Thread{
-    static  Logger Log = Logger.getLogger("jpac.opc");
+public class Event extends ProcessEvent{
+    private BooleanSupplier booleanSupplier;
     
-    OpcUaService service;
-    String       serverName;
-    int          port;
-    
-    public OpcUaServerDaemon(String serverName, int port){
-        this.serverName = serverName;
-        this.port       = port;
+    public Event(BooleanSupplier booleanSupplier){
+        if (booleanSupplier == null){
+            throw new NullPointerException("booleanSupplier must not be null");
+        }
+        this.booleanSupplier = booleanSupplier;
     }
     
-    
     @Override
-    public void run(){
-        Log.info("starting up opc ua server daemon ...");
-        try{
-            service = new OpcUaService(serverName, port);
-        }
-        catch(Exception exc){
-            Log.error("Error: ", exc);
-        }
-        Log.info("opc ua server daemon stopped");
+    public boolean fire() throws ProcessException {
+        return booleanSupplier.getAsBoolean();
     }
 }

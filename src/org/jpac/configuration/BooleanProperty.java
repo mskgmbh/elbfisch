@@ -106,6 +106,7 @@ public class BooleanProperty extends Property{
      * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
      */
     public boolean get() throws ConfigurationException{
+        touched = true;
         return Configuration.getInstance().getBoolean(key);
     }
     
@@ -115,6 +116,7 @@ public class BooleanProperty extends Property{
      * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
      */
     public void set(boolean value) throws ConfigurationException{
+        touched = true;
         Configuration.getInstance().setProperty(key, value);
     }
 }

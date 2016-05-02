@@ -108,6 +108,7 @@ public class LongProperty extends Property{
      * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
      */
     public long get() throws ConfigurationException{
+        touched = true;
         return Configuration.getInstance().getLong(key);
     }
     
@@ -117,6 +118,7 @@ public class LongProperty extends Property{
      * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
      */
     public void set(long value) throws ConfigurationException{
+        touched = true;
         Configuration.getInstance().setProperty(key, value);
     }
 }

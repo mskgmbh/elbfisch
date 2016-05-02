@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Stack;
 import org.apache.log4j.Logger;
-import org.jpac.statistics.Histogramm;
+import org.jpac.statistics.Histogram;
 
 /**
  * base class of elbfisch modules
@@ -137,7 +137,7 @@ public abstract class AbstractModule extends Thread{
     
     private  int                  debugIndex;
     
-    private  Histogramm           histogramm;
+    private  Histogram           histogramm;
     private  boolean              requestingEmergencyStop;
     private  boolean              inEveryCycleDoActive;
     
@@ -186,7 +186,7 @@ public abstract class AbstractModule extends Thread{
         setName(getQualifiedName());
         //let the application class initialize its modules and signals
         setPriority(MAX_PRIORITY - 1);
-        histogramm  = new Histogramm(getJPac().getCycleTime());
+        histogramm  = new Histogram(getQualifiedName(), getJPac().getCycleTime());
 
         stackTraceSignals  = new CharString[10];
         for(int i = 0; i < stackTraceSignals.length; i++){
@@ -446,7 +446,7 @@ public abstract class AbstractModule extends Thread{
         }        
     }
     
-    public Histogramm getHistogramm(){
+    public Histogram getHistogram(){
         return histogramm;
     }
     

@@ -27,11 +27,12 @@ package org.jpac;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,16 +43,25 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
+import javax.xml.stream.XMLStreamException;
 import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.log4j.Logger;
 import org.jpac.configuration.BooleanProperty;
 import org.jpac.configuration.Configuration;
+import org.jpac.configuration.DoubleProperty;
 import org.jpac.configuration.IntProperty;
 import org.jpac.configuration.LongProperty;
+import org.jpac.configuration.Property;
 import org.jpac.configuration.StringProperty;
+import org.jpac.console.TelnetService;
 import org.jpac.opc.Opc;
+import org.jpac.opc.OpcUaServerConfigLimits;
 import org.jpac.opc.OpcUaService;
-import org.jpac.statistics.Histogramm;
+import org.jpac.snapshot.Snapshot;
+import org.jpac.statistics.Histogram;
 
 /**
  * central runtime engine of JPac
@@ -72,6 +82,11 @@ public class JPac extends Thread {
     private     final String    OPCACCESSLEVELNONE                   = "NONE";
     private     final String    OPCACCESSLEVELREADONLY               = "READ_ONLY";
     private     final String    OPCACCESSLEVELREADWRITE              = "READ_WRITE";
+    private     final int       CONSOLESERVICEDEFAULTPORT            = 8023;
+    private     final String    DEFAULTCONSOLESERVICEBINDADDRESS     = "localhost";
+    
+    private     final String    CFGDIR                               = "./cfg";
+    private     final String    DATADIR                              = "./data";
     
     public enum CycleMode{OneCycle, Bound, LazyBound, FreeRunning}
     
@@ -116,33 +131,43 @@ public class JPac extends Thread {
     private IntProperty     propTraceTimeMinutes;
     private BooleanProperty propRemoteSignalsEnabled;
     private IntProperty     propRemoteSignalPort;
-    private BooleanProperty propStoreHistogrammsOnShutdown;
-    private StringProperty  propHistogrammFile;
+    private StringProperty  propHistogramFile;
     private LongProperty    propCyclicTaskShutdownTimeoutTime;
     private BooleanProperty propOpcUaServiceEnabled;
     private IntProperty     propOpcUaServicePort;
     private StringProperty  propOpcUaServiceName;
+    private DoubleProperty  propOpcUaMinSupportedSampleRate;
     private StringProperty  propOpcUaDefaultAccessLevel;
- 
-    private String          instanceIdentifier;
-    private long            cycleTime;
-    private long            cycleTimeoutTime;
-    private CycleMode       cycleMode;
-    private boolean         runningInsideAnIde;
-    private boolean         runningInjUnitTest;
-    private boolean         enableTrace;
-    private boolean         pauseOnBreakPoint;
-    private int             traceTimeMinutes;
-    private boolean         remoteSignalsEnabled;
-    private int             remoteSignalPort;
-    private boolean         storeHistogrammsOnShutdown;
-    private String          histogrammFile;
-    private long            cyclicTaskShutdownTimeoutTime;
-    private boolean         opcUaServiceEnabled;
-    private int             opcUaServicePort;
-    private String          opcUaServiceName;
-    private Opc.AccessLevel opcUaDefaultAccessLevel;
-
+    private StringProperty  propOpcUaDefaultBindAddress;
+    private Property        propOpcUaBindAddresses;
+    private BooleanProperty propConsoleServiceEnabled;
+    private IntProperty     propConsoleServicePort;
+    private StringProperty  propConsoleBindAddress;
+    
+    private String            instanceIdentifier;
+    private long              cycleTime;
+    private long              cycleTimeoutTime;
+    private CycleMode         cycleMode;
+    private boolean           runningInsideAnIde;
+    private boolean           runningInjUnitTest;
+    private boolean           enableTrace;
+    private boolean           pauseOnBreakPoint;
+    private int               traceTimeMinutes;
+    private boolean           remoteSignalsEnabled;
+    private int               remoteSignalPort;
+    private boolean           storeHistogramsOnShutdown;
+    private String            histogramFile;
+    private long              cyclicTaskShutdownTimeoutTime;
+    private boolean           opcUaServiceEnabled;
+    private int               opcUaServicePort;
+    private String            opcUaServiceName;
+    private double            opcUaMinSupportedSampleRate;
+    private Opc.AccessLevel   opcUaDefaultAccessLevel;
+    private List<String>      opcUaBindAddresses;
+    private boolean           consoleServiceEnabled;
+    private int               consoleServicePort;
+    private String            consoleBindAddress;
+    
     private CountingLock    activeEventsLock;
     
     private Synchronisation startCycling;
@@ -157,9 +182,9 @@ public class JPac extends Thread {
     private ArrayList<AbstractModule> moduleList;
     private TraceQueue                traceQueue;
     
-    private Histogramm      cycleHistogramm;   //used to determine the overall load per cycle
-    private Histogramm      systemHistogramm;  //used to determine the system load during a cycle
-    private Histogramm      modulesHistogramm; //used to determine the load produced by the application modules during a cycle
+    private Histogram      cycleHistogram;   //used to determine the overall load per cycle
+    private Histogram      systemHistogram;  //used to determine the system load during a cycle
+    private Histogram      modulesHistogram; //used to determine the load produced by the application modules during a cycle
     
     private AbstractModule  processedModule;   //
     
@@ -168,7 +193,13 @@ public class JPac extends Thread {
 
     private boolean         stopBeforeStartup;
     
+    private String          versionNumber;
+    private String          buildNumber;
+    private String          buildDate;
+    private String          projectName;
+    
     private OpcUaService    opcUaService;   
+    private TelnetService   consoleService;
 
     protected JPac(){
         super();
@@ -211,9 +242,9 @@ public class JPac extends Thread {
         moduleList                  = new ArrayList<AbstractModule>(20);
         traceQueue                  = null;
         
-        cycleHistogramm             = null;
-        systemHistogramm            = null;
-        modulesHistogramm           = null;
+        cycleHistogram             = null;
+        systemHistogram            = null;
+        modulesHistogram           = null;
         processedModule             = null;
         
         exitCode                    = 0;
@@ -232,13 +263,17 @@ public class JPac extends Thread {
             propPauseOnBreakPoint             = new BooleanProperty(this,"pauseOnBreakPoint", false, "cycle is paused, until all modules enter waiting state", true);
             propRemoteSignalsEnabled          = new BooleanProperty(this,"RemoteSignalsEnabled", false, "enable connections to/from remote JPac instances", true);
             propRemoteSignalPort              = new IntProperty(this,"RemoteSignalPort",10002,"server port for remote signal access",true);
-            propStoreHistogrammsOnShutdown    = new BooleanProperty(this,"storeHistogrammsOnShutdown",false,"enables storing of histogramm data on shutdown", true);
-            propHistogrammFile                = new StringProperty(this,"HistogrammFile","./data/histogramm.csv","file in which the histogramms are stored", true);
+            propHistogramFile                 = new StringProperty(this,"HistogramFile","./data/histogram.csv","file in which the histograms are stored", true);
             propCyclicTaskShutdownTimeoutTime = new LongProperty(this,"CyclicTaskShutdownTimeoutTime",DEFAULTCYCLICTASKSHUTDOWNTIMEOUTTIME,"Timeout for all cyclic tasks to stop on shutdown [ns]",true);
-            propOpcUaServiceEnabled           = new BooleanProperty(this,"OpcUaServiceEnabled",false,"enables the opc ua service", true);
-            propOpcUaServicePort              = new IntProperty(this,"OpcUaServicePort",OpcUaService.DEFAULTPORT,"port over which the opc ua service is provided", true);
-            propOpcUaServiceName              = new StringProperty(this,"OpcUaServiceName",OpcUaService.DEFAULTSERVERNAME,"name of the server instance", true);
-            propOpcUaDefaultAccessLevel       = new StringProperty(this,"OpcUaDefaultAccessLevel","NONE","access levels can be NONE,READ_ONLY,READ_WRITE", true);
+            propOpcUaServiceEnabled           = new BooleanProperty(this,"OpcUa.ServiceEnabled",false,"enables the opc ua service", true);
+            propOpcUaServicePort              = new IntProperty(this,"OpcUa.ServicePort",OpcUaService.DEFAULTPORT,"port over which the opc ua service is provided", true);
+            propOpcUaServiceName              = new StringProperty(this,"OpcUa.ServiceName",OpcUaService.DEFAULTSERVERNAME,"name of the server instance", true);
+            propOpcUaMinSupportedSampleRate   = new DoubleProperty(this,"OpcUa.MinSupportedSampleRate",OpcUaServerConfigLimits.DEFAULTMINSUPPORTEDSAMPLERATE,"minimum supported sample rate", true);
+            propOpcUaDefaultAccessLevel       = new StringProperty(this,"OpcUa.DefaultAccessLevel","NONE","access levels can be NONE,READ_ONLY,READ_WRITE", true);
+            propOpcUaDefaultBindAddress       = new StringProperty(this,"OpcUa.BindAddresses.BindAddress","0.0.0.0","bind address", true);
+            propConsoleServiceEnabled         = new BooleanProperty(this,"Console.ServiceEnabled",true,"enables the console service", true);
+            propConsoleServicePort            = new IntProperty(this,"Console.ServicePort",CONSOLESERVICEDEFAULTPORT,"port over which the console service is provided", true);
+            propConsoleBindAddress            = new StringProperty(this,"Console.BindAddress",DEFAULTCONSOLESERVICEBINDADDRESS,"address the console service is bound to", true);
             
             instanceIdentifier            = InetAddress.getLocalHost().getHostName() + ":" + propRemoteSignalPort.get();
             cycleTime                     = propCycleTime.get();
@@ -251,12 +286,21 @@ public class JPac extends Thread {
             pauseOnBreakPoint             = propPauseOnBreakPoint.get();
             remoteSignalsEnabled          = propRemoteSignalsEnabled.get();
             remoteSignalPort              = propRemoteSignalPort.get();
-            storeHistogrammsOnShutdown    = propStoreHistogrammsOnShutdown.get();
-            histogrammFile                = propHistogrammFile.get();
+            histogramFile                 = propHistogramFile.get();
             cyclicTaskShutdownTimeoutTime = propCyclicTaskShutdownTimeoutTime.get();
+
             opcUaServiceEnabled           = propOpcUaServiceEnabled.get();
             opcUaServicePort              = propOpcUaServicePort.get();
             opcUaServiceName              = propOpcUaServiceName.get();
+            opcUaMinSupportedSampleRate   = propOpcUaMinSupportedSampleRate.get();
+            opcUaBindAddresses            = new ArrayList<>();
+            Configuration configuration   = Configuration.getInstance();
+            opcUaBindAddresses            = configuration.getList("org..jpac..JPac.OpcUa.BindAddresses.BindAddress");
+            
+            consoleServiceEnabled         = propConsoleServiceEnabled.get();
+            consoleServicePort            = propConsoleServicePort.get();
+            consoleBindAddress            = propConsoleBindAddress.get();
+            
             if (opcUaServiceEnabled){
                 if (propOpcUaDefaultAccessLevel.get().equals(OPCACCESSLEVELNONE)){
                     opcUaDefaultAccessLevel = Opc.AccessLevel.NONE;
@@ -269,21 +313,41 @@ public class JPac extends Thread {
                 }
                     
             }
-            
+            try{
+                //get version.number, build.number and build.date
+                Class clazz = JPac.class;
+                String className = clazz.getSimpleName() + ".class";
+                String classPath = clazz.getResource(className).toString();
+                String manifestPath = "";
+                if(classPath.endsWith("org.jpac/build/classes/org/jpac/JPac.class")){
+                    //instantiated inside IDE
+                    manifestPath = classPath.replace("build/classes/org/jpac/JPac.class", "").concat("MANIFEST.MF");
+                }
+                else{
+                    //contained in org.jpac.jar
+                    manifestPath = classPath.substring(0, classPath.lastIndexOf("!") + 1) + "/META-INF/MANIFEST.MF";
+                }
+                Manifest manifest = new Manifest(new URL(manifestPath).openStream());
+                Attributes attr = manifest.getMainAttributes();
+                versionNumber = attr.getValue("Bundle-Version");
+                buildNumber   = attr.getValue("Bundle-Build");
+                buildDate     = attr.getValue("Bundle-Date");
+                projectName   = attr.getValue("Bundle-Name");
+            }
+            catch(Exception exc){
+                //build information cannot be retrieved
+                versionNumber = "unknown";
+                buildNumber   = "unknown";
+                buildDate     = "unknown";
+            }
             //install configuration saver
             try{registerCyclicTask(Configuration.getInstance().getConfigurationSaver());}catch(WrongUseException exc){/*cannot happen*/}
         }
-        catch(UnknownHostException ex){
+        catch(ConfigurationException | IOException ex){
             Log.error("Error: ", ex);
             //properties cannot be initialized
             //kill application
             System.exit(99);            
-        }
-        catch(ConfigurationException ex){
-            Log.error("Error: ", ex);
-            //properties cannot be initialized
-            //kill application
-            System.exit(99);
         }
                 
         //install a shutdown hook to handle application shutdowns
@@ -303,8 +367,8 @@ public class JPac extends Thread {
     @Override
     public void run(){
         boolean done                 = false;
-        long    systemLoadStartTime  = 0L; //used to compute the system histogramm
-        long    modulesLoadStartTime = 0L; //used to compute the modules histogramm
+        long    systemLoadStartTime  = 0L; //used to compute the system histogram
+        long    modulesLoadStartTime = 0L; //used to compute the modules histogram
         
         if (Log.isInfoEnabled()) Log.info("STARTING");
         try{
@@ -322,6 +386,7 @@ public class JPac extends Thread {
                 prepareTrace();
                 prepareHistogramms();
                 prepareOpcUaService();
+                prepareConsoleService();
                 prepareRemoteConnections(); 
                 prepareCyclicTasks();
             }
@@ -365,9 +430,9 @@ public class JPac extends Thread {
                     tracePoint = 1300;
                     handleFireables(getAwaitedEventList());
                     
-                    //acquire system histogramm information
+                    //acquire system histogram information
                     modulesLoadStartTime = System.nanoTime();
-                    systemHistogramm.update(modulesLoadStartTime - systemLoadStartTime);
+                    systemHistogram.update(modulesLoadStartTime - systemLoadStartTime);
                     //invoke the inEveryCycleDo() for every active module
                     tracePoint = 1400;
                     handleInEveryCycleDos();                    
@@ -375,8 +440,8 @@ public class JPac extends Thread {
                     tracePoint = 1450;
                     handleAwakenedModules();
                     
-                    //acquire modules histogramm information
-                    modulesHistogramm.update(System.nanoTime() - modulesLoadStartTime);
+                    //acquire modules histogram information
+                    modulesHistogram.update(System.nanoTime() - modulesLoadStartTime);
                     
                     //handle emergency stop requests occured in current cycle
                     emergencyStopIsToBeThrown = false; //true only for one cycle
@@ -386,8 +451,8 @@ public class JPac extends Thread {
                         emergencyStopIsToBeThrown = true;
                     }
 
-                    //acquire overall load histogramm information
-                    cycleHistogramm.update(System.nanoTime() - systemLoadStartTime);
+                    //acquire overall load histogram information
+                    cycleHistogram.update(System.nanoTime() - systemLoadStartTime);
 
                     tracePoint = 1500;
                     long remainingCycleTime = expectedCycleEndTime - System.nanoTime();
@@ -424,33 +489,25 @@ public class JPac extends Thread {
                 traceCycle();
             }
             while(!done);
-            if (storeHistogrammsOnShutdown){
-               storeHistogramms();
-            }
             //shutdown all active modules
             shutdownAwaitingModules(getAwaitedEventList());
             //shutdown RemoteSignalConnection's
             closeRemoteConnections();
             //stop opc ua service, if running
             stopOpcUaService();
+            //stop opc ua service, if running
+            stopConsoleService();
             //clean up context of registered cyclic tasks
             stopCyclicTasks();
             //acknowledge request
             acknowledgeShutdownRequest();
             //new state is halted
             setStatus(Status.halted);
-            logStatistics();
-//            if(storeConfigOnShutdown){
-//                try{
-//                    if (Log.isInfoEnabled()) Log.info("saving the configuration ...");
-//                    Configuration.getInstance().save();
-//                    if (Log.isInfoEnabled()) Log.info("... saving of the configuration done");
-//                }
-//                catch(ConfigurationException exc){
-//                    Log.error("Error: while saving the configuration",exc);
-//                }
-//            }
-            if (Log.isInfoEnabled()) Log.info("SHUTDOWN COMPLETE");
+            if (Log.isInfoEnabled()){
+                ArrayList<String> lines = logStatistics();
+                lines.forEach(l -> Log.info(l));
+                Log.info("SHUTDOWN COMPLETE");
+            }
             readyToShutdown = true;// inform the shutdown hook that we are done
             try{sleep(MAXSHUTDOWNTIME);} catch (InterruptedException ex){}
             //jUnit test need special handling
@@ -950,7 +1007,8 @@ public class JPac extends Thread {
         }
     }
     
-    protected void logStatistics(){
+    public ArrayList<String> logStatistics(){
+        ArrayList<String> lines = new ArrayList<>();
         if (minRemainingCycleTime < 0){
             minRemainingCycleTime = 0;
         }
@@ -961,48 +1019,67 @@ public class JPac extends Thread {
         int percentageMinRemainingCycleTime = (int)(100L * minRemainingCycleTime/getCycleTime());
         int percentageMaxRemainingCycleTime = (int)(100L * maxRemainingCycleTime/getCycleTime());
         int percentageCyclesExceeded        = (int)(100L * numberOfCyclesExceeded/getCycleNumber());        
-        if (Log.isInfoEnabled()){
-            Log.info("cycle mode                : " + getCycleMode());
-            Log.info("cycle time                : " + getCycleTime() + " ns");
-            if (getCycleMode() != CycleMode.FreeRunning){
-                Log.info("min remaining cycle time  : " + minRemainingCycleTime + " ns (" + percentageMinRemainingCycleTime + "%)");
-                Log.info("max remaining cycle time  : " + maxRemainingCycleTime + " ns (" + percentageMaxRemainingCycleTime + "%)");
-            }
-            if (getCycleMode() == CycleMode.LazyBound){
-                Log.info("number of cycles exceeded : " + numberOfCyclesExceeded + " of " + getCycleNumber() + " (" + percentageCyclesExceeded + "%)");
-            }
+        lines.add("cycle mode                : " + getCycleMode());
+        lines.add("cycle time                : " + getCycleTime() + " ns");
+        if (getCycleMode() != CycleMode.FreeRunning){
+            lines.add("min remaining cycle time  : " + minRemainingCycleTime + " ns (" + percentageMinRemainingCycleTime + "%)");
+            lines.add("max remaining cycle time  : " + maxRemainingCycleTime + " ns (" + percentageMaxRemainingCycleTime + "%)");
         }
+        if (getCycleMode() == CycleMode.LazyBound){
+            lines.add("number of cycles exceeded : " + numberOfCyclesExceeded + " of " + getCycleNumber() + " (" + percentageCyclesExceeded + "%)");
+        }
+        return lines;
     }
     
-    protected void storeHistogramms(){
-        File         file  = new File(histogrammFile);
-
-        try{
-            
-            if (Log.isInfoEnabled()) Log.info("storing histogramm informationen to " + histogrammFile);
-            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(file)), true);
-            out.println("Cycle overall;" + cycleHistogramm.toCSV());
-            out.println("System;" + systemHistogramm.toCSV());
-            out.println("Modules;" + modulesHistogramm.toCSV());
-            for (Fireable f: getAwaitedEventList()){
-                AbstractModule module = f.getObservingModule();
-                StringBuffer sb = new StringBuffer();
-                sb.append(module.getQualifiedName()).append(';').append(module.getHistogramm().toCSV());
-                out.println(sb);
+    public ArrayList<String> showStateOfModule(String qualifiedName){
+        ArrayList<String> lines = new ArrayList<>();
+        AbstractModule module = getModules().stream().filter(m -> m.getQualifiedName().equals(qualifiedName)).findFirst().get();
+        if (module != null){
+            CharString[] cs = module.getStackTraceSignals();
+            for (int i = 0; i < cs.length; i++){
+                if (cs[i].isValid()){
+                    try{lines.add(cs[i].get());}catch(SignalInvalidException exc){/*cannot happen*/};
+                }
+                else{
+                    break;
+                }
             }
-            out.close();
         }
-        catch(IOException exc){
-           Log.error("Error: ", exc); 
-        }
+        return lines;
     }
-            
+
+    public ArrayList<Histogram> getHistograms(){
+        ArrayList<Histogram> histograms = new ArrayList<>();
+        histograms.add(cycleHistogram);
+        histograms.add(systemHistogram);
+        histograms.add(modulesHistogram);
+        getModules().stream().sorted((m1,m2) -> m1.getQualifiedName().compareTo(m2.getQualifiedName())).forEach(m -> histograms.add(m.getHistogram()));
+        return histograms;
+    }
+    
+    public Snapshot getSnapshot(){
+        Snapshot snapshot = new Snapshot();    
+        return snapshot;
+    }
+
     protected void setStatus(Status status){
         this.status = status;
     }
 
     public Status getStatus(){
         return this.status;
+    }
+    
+    public String getDataDir(){
+        return this.DATADIR;
+    }
+    
+    public String getCfgDir(){
+        return this.CFGDIR;
+    }
+
+    public String getHistogramFile(){
+        return this.histogramFile;
     }
     
     protected int register(AbstractModule module){
@@ -1106,7 +1183,8 @@ public class JPac extends Thread {
 
     protected void prepareOpcUaService() throws Exception{
         if (opcUaServiceEnabled){
-            opcUaService = new OpcUaService(opcUaServiceName, opcUaServicePort);
+            opcUaService = new OpcUaService(opcUaServiceName, opcUaBindAddresses, opcUaServicePort, opcUaMinSupportedSampleRate);
+            Log.info("OPC UA service started");
         }
     }
     
@@ -1127,6 +1205,34 @@ public class JPac extends Thread {
         
     }
     
+    protected void prepareConsoleService() throws Exception{
+        if (consoleServiceEnabled){
+            consoleService = new TelnetService(false, consoleBindAddress, consoleServicePort);
+            Log.info("console service started");            
+        }
+    }
+
+    protected void stopConsoleService(){
+        //stop console server, if running
+        if (consoleService != null){
+            Log.info("stopping console service ...");
+            consoleService.stop();
+            Log.info("console service stopped");
+        }        
+    }
+
+    public Boolean cleanUpConfiguration() throws ConfigurationException{
+        boolean done = false;
+        try{
+            Configuration.getInstance().cleanUp();
+            done = true;
+        }
+        catch(ConfigurationException exc){
+            Log.error("Error:", exc);
+        }
+        return done;
+    }
+    
     protected void pushSignalsOverRemoteConnections() throws ConfigurationException, RemoteSignalException{
         if (remoteSignalsEnabled){
             ConcurrentHashMap<String, RemoteSignalConnection> remoteHosts = RemoteSignalRegistry.getInstance().getRemoteHosts();
@@ -1145,16 +1251,16 @@ public class JPac extends Thread {
     }
     
     protected void prepareHistogramms(){
-        cycleHistogramm   = new Histogramm(cycleTime);
-        systemHistogramm  = new Histogramm(cycleTime);
-        modulesHistogramm = new Histogramm(cycleTime);
+        cycleHistogram   = new Histogram("overall cycle", cycleTime);
+        systemHistogram  = new Histogram("system load", cycleTime);
+        modulesHistogram = new Histogram("modules load", cycleTime);
     }
     
-    public Histogramm getSystemHistogramm(){
-        return systemHistogramm;
+    public Histogram getSystemHistogramm(){
+        return systemHistogram;
     }
-    public Histogramm getModulesHistogramm(){
-        return modulesHistogramm;
+    public Histogram getModulesHistogramm(){
+        return modulesHistogram;
     }
 
     /**
@@ -1212,6 +1318,22 @@ public class JPac extends Thread {
     
     public Opc.AccessLevel getOpcUaDefaultAccesslevel(){
         return this.opcUaDefaultAccessLevel;
+    }
+        
+    public String getVersion(){
+        return versionNumber;
+    }
+    
+    public String getBuild(){
+        return buildNumber;
+    }
+
+    public String getBuildDate(){
+        return buildDate;
+    }
+    
+    public String getProjectName(){
+        return projectName;
     }
     
     class ShutdownHook extends Thread{

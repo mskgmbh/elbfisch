@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : ProcessException.java
+ * MODULE    : SnapshotModule.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -21,29 +21,35 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
-package org.jpac;
+package org.jpac.snapshot;
+
+import java.util.ArrayList;
+import java.util.List;
+import org.jpac.AbstractModule;
+import org.jpac.Signal;
+import org.jpac.SignalRegistry;
 
 /**
- * base class of all jPac related exceptions
+ *
  * @author berndschuster
  */
-public class ProcessException extends RuntimeException{
-
-    public ProcessException(){
-        super();
+public class SnapshotModule {
+    public String qualifiedName;
+    public List<SnapshotSignal> signals;
+    
+    public SnapshotModule(AbstractModule module){
+        this.qualifiedName = module.getQualifiedName();
+        this.signals       = new ArrayList<SnapshotSignal>();
+        
+        SignalRegistry.getInstance().getSignals().stream()
+            .filter(s -> s.getContainingModule().equals(module))
+            .sorted((s1,s2) -> s1.getIdentifier().compareTo(s1.getIdentifier()))
+            .forEach(s -> {if (!isUnusedStackTrace(s)) signals.add(new SnapshotSignal(s));});
     }
-
-    public ProcessException(String string){
-        super(string);
-    }
-
-    public ProcessException(String string, Throwable cause) {
-        super(string, cause);
-    }
-
-    public ProcessException(Throwable cause) {
-        super(cause);
+    private boolean isUnusedStackTrace(Signal signal){
+        return signal.getIdentifier().startsWith(":StackTrace[") && !signal.isValid();
     }
 }

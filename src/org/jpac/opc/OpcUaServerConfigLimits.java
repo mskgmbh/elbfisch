@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : DecimalNode.java
+ * MODULE    : OpcUaServerConfigLimits.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -37,60 +37,30 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.* 
+ * limitations under the License.
  */
 
 package org.jpac.opc;
-
-import com.digitalpetri.opcua.stack.core.Identifiers;
-import com.digitalpetri.opcua.stack.core.types.builtin.DataValue;
-import com.digitalpetri.opcua.stack.core.types.builtin.NodeId;
-import org.jpac.Decimal;
-import org.jpac.DecimalValue;
-import org.jpac.Value;
 
 /**
  *
  * @author berndschuster
  */
-public class DecimalNode extends SignalNode{
-
-    public DecimalNode(Namespace nameSpace, TreeItem signalNode) {
-        super(nameSpace, signalNode);
+public class OpcUaServerConfigLimits implements com.digitalpetri.opcua.sdk.server.api.config.OpcUaServerConfigLimits{
+    public  final static Double DEFAULTMINSUPPORTEDSAMPLERATE = 100.0;
+    private              Double minSupportedSampleRate;
+    
+    public OpcUaServerConfigLimits(){
+        this.minSupportedSampleRate = DEFAULTMINSUPPORTEDSAMPLERATE;
     }
-    @Override
-    protected Value getSignalValue() {
-        if (signalValue == null){
-            signalValue = new DecimalValue();
-            setValid(false);
-        }
-        return signalValue;
+    
+    public OpcUaServerConfigLimits setMinSupportedSampleRate(Double minSupportedSampleRate){
+        this.minSupportedSampleRate = minSupportedSampleRate;
+        return this;
     }
-
+    
     @Override
-    protected void setSignalValue(DataValue dataValue) {
-        saveSignalState();
-        double value = (double)dataValue.getValue().getValue();
-        ((DecimalValue)signalValue).set(value);
-        setValid(dataValue.getStatusCode().isGood());
-        if (isValid()){
-            ((Decimal)signal).setDeferred(value);
-        }
-        else{
-            ((Decimal)signal).invalidateDeferred();
-        }        
-    }
-
-    @Override
-    protected NodeId getSignalDataType() {
-        return Identifiers.Double;
-    }
-
-    @Override
-    protected void invalidateSignalValue() {
-        saveSignalState();
-        ((DecimalValue)signalValue).set(0.0);
-        setValid(false);
-        ((Decimal)signal).invalidateDeferred();        
+    public Double getMinSupportedSampleRate(){
+        return this.minSupportedSampleRate;
     }
 }

@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : ProcessException.java
+ * MODULE    : SnapshotBuild.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -21,29 +21,27 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
-package org.jpac;
+package org.jpac.snapshot;
+
+import org.jpac.JPac;
 
 /**
- * base class of all jPac related exceptions
+ *
  * @author berndschuster
  */
-public class ProcessException extends RuntimeException{
-
-    public ProcessException(){
-        super();
-    }
-
-    public ProcessException(String string){
-        super(string);
-    }
-
-    public ProcessException(String string, Throwable cause) {
-        super(string, cause);
-    }
-
-    public ProcessException(Throwable cause) {
-        super(cause);
+public class SnapshotBuild {
+    public String projectName;
+    public String version;
+    public String build;
+    public String buildDate;
+    
+    public SnapshotBuild(){
+        version     = JPac.getInstance().getVersion();
+        build       = JPac.getInstance().getBuild();
+        buildDate   = JPac.getInstance().getBuildDate();
+        projectName = JPac.getInstance().getProjectName();
     }
 }

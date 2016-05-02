@@ -45,7 +45,6 @@
 package org.jpac.opc;
 
 import com.digitalpetri.opcua.sdk.core.AccessLevel;
-import com.digitalpetri.opcua.sdk.server.api.UaNamespace;
 import com.digitalpetri.opcua.sdk.server.model.UaVariableNode;
 import com.digitalpetri.opcua.stack.core.types.builtin.DataValue;
 import com.digitalpetri.opcua.stack.core.types.builtin.LocalizedText;
@@ -80,7 +79,7 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
     protected       boolean   valid;    
     protected       boolean   lastValid;
     
-    public SignalNode(UaNamespace nameSpace, TreeItem signalNode) {
+    public SignalNode(Namespace nameSpace, TreeItem signalNode) {
         super(nameSpace, new NodeId(nameSpace.getNamespaceIndex(), signalNode.getSignal().getQualifiedIdentifier()), new QualifiedName(nameSpace.getNamespaceIndex(), signalNode.getSignal().getIdentifier()), LocalizedText.english(signalNode.getSignal().getIdentifier()));
         this.lock            = false;
         this.signal          = signalNode.getSignal();

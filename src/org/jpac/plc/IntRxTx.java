@@ -60,7 +60,7 @@ public class IntRxTx extends RxTx{
     /**
      * used to set the data item to a given value. <br>
      * The data item is written to {@link #data} first.<br>
-     * The actual transfer to the plc is done by invocation of {@link #writeInt()}: aRxTx.set(aValue).writeInt();
+     * The actual transfer to the plc is done by invocation of writeInt(): aRxTx.set(aValue).writeInt();
      * @param value a value
      * @return this. Useful in cases where the data item should be written to the plc immediately (see above).
      * @throws AddressException
@@ -72,8 +72,8 @@ public class IntRxTx extends RxTx{
 
     /**
      * used to retrieve the current value of the data item. <br>
-     * The data item is locally retrieved from {@link #data}.<br>
-     * to get the actual value from the plc use {@link #read()} first: value = aRxTx.read().get();
+     * The data item is locally retrieved from data.<br>
+     * to get the actual value from the plc use read() first: value = aRxTx.read().get();
      * @return value
      * @throws AddressException
      */

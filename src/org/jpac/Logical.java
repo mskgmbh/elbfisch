@@ -66,8 +66,7 @@ public class Logical extends Signal{
     /**
      * used to set the logical to the given state
      * @param state: state, the logical is set to
-     * @throws SignalAccessException, if the module invoking this method is
-     *         not the containing module
+     * @throws SignalAccessException
      */
     public void set(boolean state) throws SignalAccessException{
         synchronized(this){

@@ -27,7 +27,6 @@ package org.jpac;
 
 /**
  * used to map a decimal signal to another decimal signal.
- * @author Andreas Ulbrich<ulbrich@mskgmbh.com>
  */
 public class DecimalMapper{
     protected double  minSourceValue;
@@ -75,7 +74,6 @@ public class DecimalMapper{
     
     /**
      * maps a double value
-     * @param  the source value
      * @return the mapped value
      * @throws NumberOutOfRangeException thrown, if the sourceValue does not fit into the range given by min and max source value
      */
@@ -89,7 +87,6 @@ public class DecimalMapper{
 
     /**
      * maps an int value
-     * @param  the source value
      * @return the mapped value
      * @throws NumberOutOfRangeException thrown, if the sourceValue does not fit into the range given by min and max source value
      */

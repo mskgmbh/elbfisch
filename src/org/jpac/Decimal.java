@@ -89,7 +89,7 @@ public class Decimal extends Signal{
      * @param minValue: minimum value signalValid for this decimal
      * @param maxValue: maximum value signalValid for this decimal
      * @param defaultValue: default value of the decimal
-     * @throws NumberOutOfRangeException: if the default value is less than minValue or greater than maxValue
+     * @throws NumberOutOfRangeException
      * @throws org.jpac.SignalAlreadyExistsException
      */
     public Decimal(AbstractModule containingModule, String identifier, double minValue, double maxValue, double defaultValue) throws NumberOutOfRangeException, SignalAlreadyExistsException{

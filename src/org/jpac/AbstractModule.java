@@ -145,8 +145,8 @@ public abstract class AbstractModule extends Thread{
 
     /**
      * used to construct a module
-     * @param containingModule null  : module is the top most module, which by definition must contain all other modules of the application.
-     *                         <>null: module, which instantiated this module and therefor is the containing module
+     * @param containingModule null   : module is the top most module, which by definition must contain all other modules of the application.
+     *                         != null: module, which instantiated this module and therefor is the containing module
      * @param name: the short name of the module. This name will be supplemented by the name of all containing module in a given hierarchical order
      */
     public AbstractModule(AbstractModule containingModule, String name){

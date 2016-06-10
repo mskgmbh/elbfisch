@@ -30,7 +30,7 @@ import java.io.IOException;
 import org.jpac.Address;
 
 /**
- * represents a write request. Can be added to a an instance of {@link WriteMultipleData}.
+ * represents a write request. Can be added to a an instance of WriteMultipleData.
  */
 public abstract class WriteRequest extends Request{
     public WriteRequest() {

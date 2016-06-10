@@ -83,7 +83,6 @@ public class Timer {
     
     /**
      * used to restart the timer with the period of time previously given.
-     * @param periodOfTime : period of time in nano seconds
      */
     public void restart(){
         start(periodOfTime);

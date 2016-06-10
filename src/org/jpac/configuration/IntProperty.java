@@ -47,8 +47,6 @@ public class IntProperty extends Property{
      * @param key the key under which this property is stored inside the hierarchical xml configuration file.
      * @param defaultValue the value the property earns by default
      * @param comment a comment describing the purpose of the property
-     * @param classProperty if true, this property is stored under the name of the modules class, instead of its qualified name. It than can be used by all
-     * instances of this module class
      * @throws ConfigurationException thrown, if an error occurs while accessing the configuration 
      */
     public IntProperty(Object owningObject, String key, int defaultValue, String comment) throws ConfigurationException{  

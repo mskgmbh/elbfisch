@@ -854,9 +854,6 @@ public class JPac extends Thread {
         emergencyStopCausedBy  = null;
     }
 
-    /**
-     * @param emergencyStopRequested the emergencyStopRequested to set
-     */
     public void requestEmergencyStop(EmergencyStopException causedBy) {
         //set emergencyStopRequested. Will be reset by the automation controller after notification of all modules
         if (!this.emergencyStopActive){
@@ -1184,6 +1181,7 @@ public class JPac extends Thread {
     protected void prepareOpcUaService() throws Exception{
         if (opcUaServiceEnabled){
             opcUaService = new OpcUaService(opcUaServiceName, opcUaBindAddresses, opcUaServicePort, opcUaMinSupportedSampleRate);
+            opcUaService.start();
             Log.info("OPC UA service started");
         }
     }

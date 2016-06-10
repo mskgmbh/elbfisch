@@ -65,10 +65,9 @@ public class StringRxTx extends LobRxTx{
     }
 
     /**
-     * used to set the data item to a given value. <br>
-     * The data item is written to {@link #data} first.<br>
-     * The actual transfer to the plc is done by invocation of {@link #write()}: aRxTx.set(aValue).write();
-     * @param value a value
+     * used to set the data item to a given value.
+     * The data item is written to data first.
+     * The actual transfer to the plc is done by invocation of write(): aRxTx.set(aValue).write();
      * @return this. Useful in cases where the data item should be written to the plc immediately (see above).
      * @throws AddressException
      */

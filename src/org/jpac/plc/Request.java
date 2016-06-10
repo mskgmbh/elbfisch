@@ -58,8 +58,8 @@ public abstract class Request {
 
         /**
          * returns a value according to a given ordinary
-         * @param  an ordinary
-         * @throws WrongOrdinaryException, if the given ordinary does not exist
+         * @param  n ordinary
+         * @throws WrongOrdinaryException
          * @return the enum value according to the given ordinary
          */
         public static DATATYPE getValue(int n)throws WrongOrdinaryException{
@@ -191,7 +191,7 @@ public abstract class Request {
     }
 
     /**
-     * @param result the data length to set
+     * @param dataLength the data length to set
      */
     public void setDataLength(int dataLength) {
         this.address.setSize(dataLength);

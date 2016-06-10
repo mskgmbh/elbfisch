@@ -58,10 +58,9 @@ public class LobRxTx implements Value{
    /**
     * useful in situations, where the instance is part of complex data structure (STRUCT)
     * @param conn an open TCP/IP connection to the plc or other device
-    * @param db the data block (DB) to be accessed
     * @param address the address of the data item inside the plc or other device
-    * @param dataOffset the byte offset inside {@link #data}, holding the data item to be exchanged with the plc or other device
-    * @param data instance of {@link Data} used to hold the data item exchanged with the plc or other device.
+    * @param dataOffset the byte offset inside data, holding the data item to be exchanged with the plc or other device
+    * @param data instance of Data used to hold the data item exchanged with the plc or other device.
     * @throws IndexOutOfRangeException
     */
     public LobRxTx(Connection conn, Address address, int dataOffset, Data data) throws IndexOutOfRangeException{

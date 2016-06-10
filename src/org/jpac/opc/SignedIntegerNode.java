@@ -91,6 +91,5 @@ public class SignedIntegerNode extends SignalNode{
         saveSignalState();
         ((SignedIntegerValue)signalValue).set(0);
         setValid(false);
-        ((SignedInteger)signal).invalidateDeferred();
     }
 }

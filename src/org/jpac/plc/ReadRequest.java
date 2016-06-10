@@ -29,7 +29,7 @@ import org.jpac.IndexOutOfRangeException;
 import java.io.IOException;
 
 /**
- * represents a read request. Can be added to a an instance of {@link ReadMultipleData} and will contain the
+ * represents a read request. Can be added to a an instance of ReadMultipleData and will contain the
  * data supplied by the plc on return.
  */
 public abstract class ReadRequest extends Request{
@@ -40,7 +40,6 @@ public abstract class ReadRequest extends Request{
      * useful, if the Data item is supplied externally
      * @param dataType actually two data types are supported: DATATYPE.BIT for accessing BOOL type data items and DATATYPE.BYTE for all other data types
      * @param address a fully qualified address of the data item to be retrieved (@link Address}
-     * @param dataOffset
      * @param dataOffset the offset of the data item inside the local copy of the data (see parameter "data")
      * @throws ValueOutOfRangeException thrown, if the combination of the given parameters is inconsistent
      */
@@ -60,7 +59,6 @@ public abstract class ReadRequest extends Request{
      * used to read the data replied by the plc as part of an ISO data packet
      * @param conn a valid connection to the plc
      * @throws IOException
-     * @throws WrongOrdinaryException thrown, if the data returned by the plc is inconsistent
      */
     @Override
     public abstract void read(Connection conn) throws IOException;

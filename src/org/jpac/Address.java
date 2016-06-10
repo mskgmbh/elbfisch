@@ -40,10 +40,16 @@ public interface Address {
     public int  getByteIndex();
     /**@return the size of a data item [byte]*/
     public int  getSize();
-    /**set the bit index of bit value*/
+    /**set the bit index of bit valu
+     * @param bitIndex bit index 0..7
+     */
     public void setBitIndex(int bitIndex);
-    /**set the byte index of a data item value*/
+    /**set the byte index of a data item valu
+     * @param byteIndex byte index 0..n
+     */
     public void setByteIndex(int byteIndex);
-    /**set the size of a data item [byte]*/
+    /**set the size of a data item [byte]
+     * @param size size of the data item in byte
+     */
     public void setSize(int size);
 }

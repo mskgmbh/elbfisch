@@ -135,8 +135,7 @@ public class Alarm extends Signal{
     /**
      * used to set/reset the alarm. Whenever the alarm condition is set 
      * the acknowledge state of the alarm is reset.
-     * @throws SignalAccessException, if the module invoking this method is
-     *         not the containing module
+     * @throws SignalAccessException
      */
     public void set(boolean state) throws SignalAccessException{
         boolean wasValidBefore = isValid();
@@ -163,8 +162,7 @@ public class Alarm extends Signal{
     /**
      * used to raise the alarm. Equivalent to set(true). Whenever the alarm condition is set 
      * the acknowledge state of the alarm is reset.
-     * @throws SignalAccessException, if the module invoking this method is
-     *         not the containing module
+     * @throws SignalAccessException
      */
     public void raise() throws SignalAccessException{
         set(true);
@@ -172,8 +170,7 @@ public class Alarm extends Signal{
 
     /**
      * used to reset the alarm.  Equivalent to set(false). 
-     * @throws SignalAccessException, if the module invoking this method is
-     *         not the containing module
+     * @throws SignalAccessException
      */
     public void reset() throws SignalAccessException{
         set(false);

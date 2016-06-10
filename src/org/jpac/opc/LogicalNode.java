@@ -92,6 +92,5 @@ public class LogicalNode extends SignalNode{
         saveSignalState();
         ((LogicalValue)signalValue).set(false);
         setValid(false);
-        ((Logical)signal).invalidateDeferred();
     }
 }

@@ -91,6 +91,5 @@ public class DecimalNode extends SignalNode{
         saveSignalState();
         ((DecimalValue)signalValue).set(0.0);
         setValid(false);
-        ((Decimal)signal).invalidateDeferred();        
     }
 }

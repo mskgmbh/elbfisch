@@ -421,9 +421,6 @@ public abstract class Signal extends Observable implements Observer {
         return getClass().getSimpleName() + "(" + containingModule.getName() + '.' + identifier + " = " + (isValid() ? getValue() : "???") + ")";
     }
 
-    /**
-     * @return the signalValid
-     */
     public boolean isValid() {
         boolean valid = false;
         synchronized(this){
@@ -432,9 +429,6 @@ public abstract class Signal extends Observable implements Observer {
         return valid;
     }
 
-    /**
-     * @param signalValid the signalValid to set
-     */
     protected void setValid(boolean valid) {
         if (this.signalValid != valid){
             if (Log.isDebugEnabled()) Log.debug(this + ".setValid(" + valid + ")");
@@ -457,7 +451,6 @@ public abstract class Signal extends Observable implements Observer {
 
     /**
      * returns a ProcessEvent that will be fired, if the signal becomes valid
-     * @param state
      * @return see above
      */
     public ProcessEvent becomesValid(){
@@ -466,7 +459,6 @@ public abstract class Signal extends Observable implements Observer {
 
     /**
      * returns a ProcessEvent that will be fired, if the signal becomes invalid
-     * @param state
      * @return see above
      */
     public ProcessEvent becomesInvalid(){

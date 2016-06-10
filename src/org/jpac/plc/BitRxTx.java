@@ -52,7 +52,7 @@ public class BitRxTx extends RxTx{
     /**
      * used to set the bit to a given boolean value. <br>
      * The data item is written to {@link #data} first (true == 1, false == 0). <br>
-     * The actual transfer to the plc is done by invocation of {@link #writeInt()}: aBitRxTx.set(true).writeInt();
+     * The actual transfer to the plc is done by invocation of writeInt(): aBitRxTx.set(true).writeInt();
      * @param state boolean value
      * @return this. Useful in cases where the bit should be written to the plc immediately (see above).
      * @throws AddressException

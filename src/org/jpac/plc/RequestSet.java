@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import org.apache.log4j.Logger;
 
 /**
- * represents a set of requests handled be the {@link ReadMultipleData} or {@link WriteMultipleData}
+ * represents a set of requests handled be the ReadMultipleData or WriteMultipleData
  */
 public class RequestSet{
     static Logger Log = Logger.getLogger("jpac.plc");

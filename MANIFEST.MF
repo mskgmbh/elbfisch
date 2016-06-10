@@ -3,11 +3,11 @@ Ant-Version: Apache Ant 1.9.4
 Created-By: 1.8.0_25-b17 (Oracle Corporation)
 Bundle-Name: Elbfisch java automation controller
 Bundle-Version: 2.0
-Bundle-Build: 114
-Bundle-Date: 2016-04-29 17:12:38 MESZ
+Bundle-Build: 156
+Bundle-Date: 2016-06-07 16:05:54 MESZ
 Implementation-Title: Elbfisch java automation controller
 Implementation-Version: 2.0
-Implementation-Build: 114
-Implementation-Date: 2016-04-29 17:12:38 MESZ
+Implementation-Build: 156
+Implementation-Date: 2016-06-07 16:05:54 MESZ
 Implementation-URL: http://www.elbfisch.org
 

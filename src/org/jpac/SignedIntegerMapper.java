@@ -27,7 +27,6 @@ package org.jpac;
 
 /**
  * used to map a signed integer signal to another signed integer signal.
- * @author Andreas Ulbrich<ulbrich@mskgmbh.com>
  */
 public class SignedIntegerMapper{
     protected int  minSourceValue;
@@ -75,9 +74,8 @@ public class SignedIntegerMapper{
 
     /**
      * maps an int value
-     * @param  the source value
      * @return the mapped value
-     * @throws NumberOutOfRangeException thrown, if the sourceValue does not fit into the range given by min and max source value
+     * @throws NumberOutOfRangeException thrown
      */
     public int map(int sourceValue) throws NumberOutOfRangeException{
         if (sourceValue < minSourceValue || sourceValue > maxSourceValue){
@@ -89,9 +87,8 @@ public class SignedIntegerMapper{
 
     /**
      * maps a double value
-     * @param  the source value
      * @return the mapped value
-     * @throws NumberOutOfRangeException thrown, if the sourceValue does not fit into the range given by min and max source value
+     * @throws NumberOutOfRangeException
      */
     public int map(double sourceValue) throws NumberOutOfRangeException{
         int intSourceValue = (int)sourceValue;

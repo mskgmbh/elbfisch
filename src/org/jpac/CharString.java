@@ -63,7 +63,7 @@ public class CharString extends Signal{
     /**
      * used to set the char string to the given value
      * @param value: value, the char string is set to
-     * @throws org.jpac.SignalAccessException
+     * @throws org.jpac.SignalAccessException when a given module is not allowed to set the signal
      */
     public void set(String value) throws SignalAccessException{
         synchronized(this){
@@ -90,7 +90,7 @@ public class CharString extends Signal{
      * returns the value of the char string. If the calling module is the containing module the value of this signal is returned.
      * If the calling module is a foreign module the propagated signal is returned.
      * @return see above
-     * @throws org.jpac.SignalInvalidException
+     * @throws org.jpac.SignalInvalidException if the valid is not valid in the case of accessing it.
      */
     public String get() throws SignalInvalidException{
         return ((CharStringValue)getValidatedValue()).get();

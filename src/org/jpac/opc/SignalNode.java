@@ -179,7 +179,7 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
                 valid           = true;
             }
             else{
-                invalidateSignalValue();
+                invalidateSignalValue();//TODO invalidate() problem !!!!!!
             }
         }
     }   

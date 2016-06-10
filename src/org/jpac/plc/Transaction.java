@@ -65,9 +65,8 @@ public abstract class Transaction {
     /**
      * used to perform the transaction. performs a jpac await() operation for waitCycle cycles. If
      * the PLC does not answer during this period of time a TransactionTimeoutException is thrown
-     * @throws IOException 
-     * @throws TransactionTimeoutException, if the plc does not answer in time
-     * @throws ProcessException, for any other reasons (shutdown, emergency stop, etc.)
+     * @throws IOException
+     * @throws ProcessException
      */
     public abstract void transact(int waitCycles) throws IOException, ProcessException;
 }

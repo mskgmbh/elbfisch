@@ -60,7 +60,7 @@ public class WordRxTx extends RxTx{
     /**
      * used to set the data item to a given value. <br>
      * The data item is written to {@link #data} first.<br>
-     * The actual transfer to the plc is done by invocation of {@link #writeInt()}: aRxTx.set(aValue).writeInt();
+     * The actual transfer to the plc is done by invocation writeInt(): aRxTx.set(aValue).writeInt();
      * @param value a value
      * @return this. Useful in cases where the data item should be written to the plc immediately (see above).
      * @throws AddressException

@@ -106,7 +106,7 @@ public abstract class AsynchronousTask{
     
     /**
      * returns a ProcessEvent which indicates the conclusion of an asynchronous task
-     * @return 
+     * @return a ProcessEvent which indicates the conclusion of an asynchronous task
      */
     public ProcessEvent finished(){
         return finishedEvent;
@@ -124,7 +124,7 @@ public abstract class AsynchronousTask{
      * must implemented to fulfill the application specific function of this AsynchronousTask.
      * Is called on every call of start(). The invoking module can await() its conclusion by calling
      * asynchTask.finished.await().
-     * @throws ProcessException 
+     * @throws ProcessException when the user code produces it
      */
     public abstract void doIt()throws ProcessException;
     

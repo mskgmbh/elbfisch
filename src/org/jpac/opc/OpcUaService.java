@@ -69,7 +69,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class OpcUaService {
+public class OpcUaService implements Runnable{
 
 //    public static void main(String[] args) throws Exception {
 //        new OpcUaService();
@@ -85,47 +85,20 @@ public class OpcUaService {
 
     private final Logger Log = LoggerFactory.getLogger("jpac.opc");
 
-    private final OpcUaServer server;
+    private OpcUaServer       server;
     private String            serverName;
     private int               port;
     private boolean           stopRequested;
+    private Double            minSupportedSampleRate;
+    private List<String>      bindAddresses;
     
     public OpcUaService(String serverName, List<String> bindAddresses, int port, Double minSupportedSampleRate) throws Exception {
-        this.serverName    = serverName;
-        this.port          = port;
-        this.stopRequested = false;
-        
-        CertificateManager certificateManager = new DefaultCertificateManager();
-        CertificateValidator certificateValidator = new DefaultCertificateValidator(new File("./cfg/security"));
-        
-        OpcUaServerConfigLimits limits = new OpcUaServerConfigLimits()
-                                                .setMinSupportedSampleRate(minSupportedSampleRate);
-
-        OpcUaServerConfig serverConfig = OpcUaServerConfig.builder()
-                .setApplicationName(getApplicationName())
-                .setApplicationUri(getApplicationUri())
-                .setBindAddresses(bindAddresses)
-                .setBindPort(port)
-                .setBuildInfo(getBuildInfo())
-                .setCertificateManager(certificateManager)
-                .setCertificateValidator(certificateValidator)
-                .setHostname(getDefaultHostname())
-                .setProductUri(getProductUri())
-                .setSecurityPolicies(EnumSet.allOf(SecurityPolicy.class))
-                .setServerName(getServerName())
-                .setUserTokenPolicies(newArrayList(OpcUaServerConfig.USER_TOKEN_POLICY_ANONYMOUS))
-                .setLimits(limits)
-                .build();
-
-        server = new OpcUaServer(serverConfig);
-
-        server.getNamespaceManager().registerAndAdd(Namespace.NAMESPACE_URI, (namespaceIndex) -> new Namespace(this, namespaceIndex));
-        
-        Log.info("registering namespace '" + Namespace.NAMESPACE_URI + "' at index " + server.getNamespaceManager().getNamespaceTable().getIndex(Namespace.NAMESPACE_URI));
-
-        server.startup();
-
-        //shutdownFuture().get();
+        this.server                 = null;
+        this.serverName             = serverName;
+        this.bindAddresses          = bindAddresses;
+        this.port                   = port;
+        this.stopRequested          = false;
+        this.minSupportedSampleRate = minSupportedSampleRate;
     }
 
     public OpcUaServer getServer() {
@@ -179,6 +152,12 @@ public class OpcUaService {
         }
     }
     
+    public void start(){
+        Thread serviceStarter = new Thread(this);
+        serviceStarter.setName("OPC UA service starter");
+        serviceStarter.start();
+    }
+    
     public void stop(){
         stopRequested = true;
         server.shutdown();
@@ -210,5 +189,35 @@ public class OpcUaService {
         }
         while(!stopped && !done);
         return stopped;
+    }
+
+    @Override
+    public void run() {
+        CertificateManager certificateManager = new DefaultCertificateManager();
+        CertificateValidator certificateValidator = new DefaultCertificateValidator(new File("./cfg/security"));
+        
+        OpcUaServerConfigLimits limits = new OpcUaServerConfigLimits()
+                                                .setMinSupportedSampleRate(minSupportedSampleRate);
+
+        OpcUaServerConfig serverConfig = OpcUaServerConfig.builder()
+                .setApplicationName(getApplicationName())
+                .setApplicationUri(getApplicationUri())
+                .setBindAddresses(bindAddresses)
+                .setBindPort(port)
+                .setBuildInfo(getBuildInfo())
+                .setCertificateManager(certificateManager)
+                .setCertificateValidator(certificateValidator)
+                .setHostname(getDefaultHostname())
+                .setProductUri(getProductUri())
+                .setSecurityPolicies(EnumSet.allOf(SecurityPolicy.class))
+                .setServerName(getServerName())
+                .setUserTokenPolicies(newArrayList(OpcUaServerConfig.USER_TOKEN_POLICY_ANONYMOUS))
+                .setLimits(limits)
+                .build();
+
+        server = new OpcUaServer(serverConfig);
+        server.getNamespaceManager().registerAndAdd(Namespace.NAMESPACE_URI, (namespaceIndex) -> new Namespace(this, namespaceIndex));      
+        server.startup();
+        Log.info("OPC UA server up and running");        
     }
 }

@@ -90,8 +90,7 @@ public class SignedInteger extends Signal{
      * @param minValue: minimum value signalValid for this decimal
      * @param maxValue: maximum value signalValid for this decimal
      * @param defaultValue: default value of the decimal
-     * @throws NumberOutOfRangeException: if the default value is less than minValue or greater than maxValue
-     * @throws org.jpac.SignalAlreadyExistsException
+     * @throws NumberOutOfRangeException
      */
     public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue, int defaultValue) throws NumberOutOfRangeException, SignalAlreadyExistsException{
         this(containingModule, identifier, minValue, maxValue);

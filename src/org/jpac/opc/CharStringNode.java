@@ -91,6 +91,5 @@ public class CharStringNode extends SignalNode{
         saveSignalState();
         ((CharStringValue)signalValue).set("");
         setValid(false);
-        ((CharString)signal).invalidateDeferred();
     }
 }

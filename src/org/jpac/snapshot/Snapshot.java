@@ -33,11 +33,9 @@ import com.thoughtworks.xstream.io.xml.StaxDriver;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.TimeZone;
-import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 import org.apache.log4j.Logger;
@@ -56,12 +54,11 @@ public class Snapshot {
     protected SnapshotJars              jars;
     protected ArrayList<SnapshotModule> modules;
     protected String                    filename;
+    protected LocalDateTime             dateTime;
 
     public Snapshot(){
-        Date date = new Date();
-        SimpleDateFormat sdfGermany = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
-        sdfGermany.setTimeZone(TimeZone.getTimeZone("GMT+1"));
-        created      = sdfGermany.format(date);        
+        dateTime     = LocalDateTime.now();
+        created      = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS"));        
         runningOnJVM = System.getProperty("java.version");
         build        = new SnapshotBuild();
         modules      = new ArrayList<SnapshotModule>();
@@ -70,10 +67,9 @@ public class Snapshot {
     }
     
     public void dump(String path) throws FileNotFoundException, XMLStreamException{
-        Date date = new Date();
-        SimpleDateFormat sdfGermany = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-        sdfGermany.setTimeZone(TimeZone.getTimeZone("GMT+1"));
-        filename = path + "/snapshot-" + sdfGermany.format(date) + ".xml";
+        String timestamp = dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS"));        
+        
+        filename = path + "/snapshot-" + timestamp + ".xml";
         XMLStreamWriter xmlSW    = null;
         try{            
             StaxDriver staxDriver = new StaxDriver();

@@ -221,6 +221,10 @@ public abstract class AbstractModule extends Thread{
             status.resume(0);
             status.leave();
             status.enter(Status.HALTED);
+            //clean up stack trace signals
+            for(int i = 0; i < stackTraceSignals.length; i++){
+                stackTraceSignals[i].set("");
+            }
             //stop invocation of inEveryCycleDo()
             enableCyclicTasks(false);
             if (isAwakenedByProcessEvent()){

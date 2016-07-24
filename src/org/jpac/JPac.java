@@ -143,6 +143,7 @@ public class JPac extends Thread {
     private BooleanProperty propConsoleServiceEnabled;
     private IntProperty     propConsoleServicePort;
     private StringProperty  propConsoleBindAddress;
+    private BooleanProperty propGenerateSnapshotOnShutdown;
     
     private String            instanceIdentifier;
     private long              cycleTime;
@@ -167,6 +168,7 @@ public class JPac extends Thread {
     private boolean           consoleServiceEnabled;
     private int               consoleServicePort;
     private String            consoleBindAddress;
+    private boolean           generateSnapshotOnShutdown;
     
     private CountingLock    activeEventsLock;
     
@@ -274,6 +276,7 @@ public class JPac extends Thread {
             propConsoleServiceEnabled         = new BooleanProperty(this,"Console.ServiceEnabled",true,"enables the console service", true);
             propConsoleServicePort            = new IntProperty(this,"Console.ServicePort",CONSOLESERVICEDEFAULTPORT,"port over which the console service is provided", true);
             propConsoleBindAddress            = new StringProperty(this,"Console.BindAddress",DEFAULTCONSOLESERVICEBINDADDRESS,"address the console service is bound to", true);
+            propGenerateSnapshotOnShutdown    = new BooleanProperty(this,"GenerateSnapShotOnShutdown",false,"used to enable the generation of a snapshot on shutdown", true);
             
             instanceIdentifier            = InetAddress.getLocalHost().getHostName() + ":" + propRemoteSignalPort.get();
             cycleTime                     = propCycleTime.get();
@@ -300,6 +303,7 @@ public class JPac extends Thread {
             consoleServiceEnabled         = propConsoleServiceEnabled.get();
             consoleServicePort            = propConsoleServicePort.get();
             consoleBindAddress            = propConsoleBindAddress.get();
+            generateSnapshotOnShutdown    = propGenerateSnapshotOnShutdown.get();
             
             if (opcUaServiceEnabled){
                 if (propOpcUaDefaultAccessLevel.get().equals(OPCACCESSLEVELNONE)){
@@ -489,6 +493,11 @@ public class JPac extends Thread {
                 traceCycle();
             }
             while(!done);
+            if (generateSnapshotOnShutdown){
+                Snapshot snapshot = getSnapshot();
+                snapshot.dump(getDataDir());
+                Log.info("snapshot dumped to '" + snapshot.getFilename() + "'");
+            }
             //shutdown all active modules
             shutdownAwaitingModules(getAwaitedEventList());
             //shutdown RemoteSignalConnection's

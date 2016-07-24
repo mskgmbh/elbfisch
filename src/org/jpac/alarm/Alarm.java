@@ -104,7 +104,7 @@ public class Alarm extends Signal{
         this.invertOnUpdate         = false;
         this.severity               = severity;
 
-        acknowledged.set(false);
+        acknowledged.set(true);
         AlarmQueue.getInstance().register(this);
     }
 
@@ -135,6 +135,7 @@ public class Alarm extends Signal{
     /**
      * used to set/reset the alarm. Whenever the alarm condition is set 
      * the acknowledge state of the alarm is reset.
+     * @param state
      * @throws SignalAccessException
      */
     public void set(boolean state) throws SignalAccessException{
@@ -206,7 +207,7 @@ public class Alarm extends Signal{
     
     /**
      * used to acknowledge a pending alarm.
-     * @throws AlarmPendingException thrown, if the alarm is not pending and instantiated with resetOnAcknowledgement = false
+     * @throws AlarmPendingException thrown, if the alarm is pending and instantiated with resetOnAcknowledgement = false
      */
     public void acknowledge() throws AlarmPendingException{
         boolean allowed = false;
@@ -228,6 +229,9 @@ public class Alarm extends Signal{
         wrapperValue.set(state);
         if (!this.acknowledged.equals(wrapperValue)){
             this.acknowledged.copy(wrapperValue);
+            if (state){
+               AlarmQueue.getInstance().decrementOpenAlarmsCount(severity);            
+            }
             setChanged();
             if (resetOnAcknowledgement && state){
                 try{reset();}catch(SignalAccessException exc){/*cannot happen*/};

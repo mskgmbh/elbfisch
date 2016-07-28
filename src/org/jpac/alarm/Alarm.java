@@ -104,7 +104,8 @@ public class Alarm extends Signal{
         this.invertOnUpdate         = false;
         this.severity               = severity;
 
-        acknowledged.set(true);
+        this.acknowledged.set(true);
+        this.propagatedAcknowledged.set(true);
         AlarmQueue.getInstance().register(this);
     }
 

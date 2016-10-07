@@ -1,13 +1,13 @@
 Manifest-Version: 1.0
 Ant-Version: Apache Ant 1.9.4
-Created-By: 1.8.0_25-b17 (Oracle Corporation)
+Created-By: 1.8.0_101-b13 (Oracle Corporation)
 Bundle-Name: Elbfisch java automation controller
 Bundle-Version: 2.0
-Bundle-Build: 230
-Bundle-Date: 2016-07-26 20:01:51 MESZ
+Bundle-Build: 347
+Bundle-Date: 2016-10-05 19:59:54 MESZ
 Implementation-Title: Elbfisch java automation controller
 Implementation-Version: 2.0
-Implementation-Build: 230
-Implementation-Date: 2016-07-26 20:01:51 MESZ
+Implementation-Build: 347
+Implementation-Date: 2016-10-05 19:59:54 MESZ
 Implementation-URL: http://www.elbfisch.org
 

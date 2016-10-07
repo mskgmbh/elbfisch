@@ -57,7 +57,12 @@ public class IoCharString extends CharString implements IoSignal{
         this.data        = data;
         this.address     = address;
         this.ioDirection = ioDirection;
-        this.plcString   = new PlcString("",address.getSize() - 2);//TODO suitable for S7 strings, but not for others
+        if (address != null){
+            this.plcString   = new PlcString("",address.getSize() - 2);//TODO suitable for S7 strings, but not for others
+        }
+        else{
+            this.plcString   = null;
+        }
     }
     
     /**

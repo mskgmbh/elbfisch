@@ -25,6 +25,7 @@
 
 package org.jpac;
 
+import com.digitalpetri.opcua.stack.core.Stack;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -45,9 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
-import javax.xml.stream.XMLStreamException;
 import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.log4j.Logger;
 import org.jpac.configuration.BooleanProperty;
 import org.jpac.configuration.Configuration;
@@ -74,7 +73,7 @@ public class JPac extends Thread {
     private     final long      DEFAULTCYCLETIME                     = 100000000L; // 100 ms
     private     final long      DEFAULTCYCLETIMEOUTTIME              = 1000000000L;// 1 s
     private     final int       MAXSHUTDOWNTIME                      = 2000;       // 2 s
-    private     final int       OPCSHUTDOWNTIME                      = 5000;       // 2 s
+    private     final int       OPCSHUTDOWNTIME                      = 10000;      // 10 s
     private     final CycleMode DEFAULTCYCLEMODE                     = CycleMode.FreeRunning;
     private     final int       EXITCODEINITIALIZATIONERROR          = 100;
     private     final int       EXITCODEINTERNALERROR                = 101;
@@ -1195,21 +1194,14 @@ public class JPac extends Thread {
         }
     }
     
-    protected void stopOpcUaService(){
+    protected void stopOpcUaService() {
         //stop opc server, if running
         if (opcUaService != null){
             Log.info("stopping opc ua service ...");
-            opcUaService.stop();
+            opcUaService.getServer().shutdown();
+            Stack.releaseSharedResources();
             Log.info("opc ua service stopped");
-            boolean stopped = opcUaService.waitUntilStopped(OPCSHUTDOWNTIME);
-//            if (stopped){
-//                Log.info("opc ua service stopped");
-//            }
-//            else{
-//                Log.error("failed to stop opc ua service");                
-//            }
-        }
-        
+        }        
     }
     
     protected void prepareConsoleService() throws Exception{

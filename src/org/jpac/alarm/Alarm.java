@@ -104,7 +104,8 @@ public class Alarm extends Signal{
         this.invertOnUpdate         = false;
         this.severity               = severity;
 
-        acknowledged.set(false);
+        this.acknowledged.set(true);
+        this.propagatedAcknowledged.set(true);
         AlarmQueue.getInstance().register(this);
     }
 
@@ -246,6 +247,9 @@ public class Alarm extends Signal{
         wrapperValue.set(state);
         if (!this.acknowledged.equals(wrapperValue)){
             this.acknowledged.copy(wrapperValue);
+            if (state){
+               AlarmQueue.getInstance().decrementOpenAlarmsCount(severity);            
+            }
             setChanged();
             if (resetOnAcknowledgement && state){
                 try{reset();}catch(SignalAccessException exc){/*cannot happen*/};

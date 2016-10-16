@@ -104,8 +104,7 @@ public class Alarm extends Signal{
         this.invertOnUpdate         = false;
         this.severity               = severity;
 
-        this.acknowledged.set(true);
-        this.propagatedAcknowledged.set(true);
+        acknowledged.set(false);
         AlarmQueue.getInstance().register(this);
     }
 
@@ -133,11 +132,23 @@ public class Alarm extends Signal{
         this(containingModule, identifier, null, message, resetOnAcknowledgement, Severity.MESSAGE);
     }
     
+    @Override
+    protected void setValid(boolean valid) {
+        if (this.signalValid != valid){
+            boolean lastState = ((LogicalValue)getValue()).get();
+            boolean wasValid  = this.signalValid;
+            super.setValid(valid);
+            if(lastState && wasValid) {
+                if(Log.isDebugEnabled()) { Log.debug("Alarm(" + this.message + ").setValid(" + valid + "): lastState: " + lastState ); }
+                AlarmQueue.getInstance().decrementPendingAlarmsCount(severity);
+            }
+        }
+    }
     /**
      * used to set/reset the alarm. Whenever the alarm condition is set 
      * the acknowledge state of the alarm is reset.
-     * @param state
-     * @throws SignalAccessException
+     * @throws SignalAccessException, if the module invoking this method is
+     *         not the containing module
      */
     public void set(boolean state) throws SignalAccessException{
         boolean wasValidBefore = isValid();
@@ -145,18 +156,21 @@ public class Alarm extends Signal{
         if (wasValidBefore){
             lastState = ((LogicalValue)getValue()).get();
         }
-        if (Log.isDebugEnabled()) Log.debug(this + ".set(" + state + ")");
+        if (Log.isTraceEnabled()) Log.trace(this + ".set(" + state + ")");
         wrapperValue.set(state);
         setValue(wrapperValue);
         if (state){
            setAcknowlegded(false);            
         }
+               
         if (state && (!wasValidBefore || (wasValidBefore && !lastState))){
            //transition from invalid to true, or false to true
+           if(Log.isDebugEnabled()) { Log.debug("Alarm(" + this.message + ").set: state : " + state + "; wasValidBefore: " + wasValidBefore  + "; lastState: " + lastState ); }
            AlarmQueue.getInstance().incrementPendingAlarmsCount(severity);
         }
         else if (!state && wasValidBefore && lastState){
-           //transition from true to false
+           //transition from true to false or true to invalid
+           if(Log.isDebugEnabled()) { Log.debug("Alarm(" + this.message + ").set: state : " + state + "; wasValidBefore: " + wasValidBefore  + "; lastState: " + lastState ); }
            AlarmQueue.getInstance().decrementPendingAlarmsCount(severity);            
         }
     }
@@ -164,7 +178,8 @@ public class Alarm extends Signal{
     /**
      * used to raise the alarm. Equivalent to set(true). Whenever the alarm condition is set 
      * the acknowledge state of the alarm is reset.
-     * @throws SignalAccessException
+     * @throws SignalAccessException, if the module invoking this method is
+     *         not the containing module
      */
     public void raise() throws SignalAccessException{
         set(true);
@@ -172,7 +187,8 @@ public class Alarm extends Signal{
 
     /**
      * used to reset the alarm.  Equivalent to set(false). 
-     * @throws SignalAccessException
+     * @throws SignalAccessException, if the module invoking this method is
+     *         not the containing module
      */
     public void reset() throws SignalAccessException{
         set(false);
@@ -208,7 +224,7 @@ public class Alarm extends Signal{
     
     /**
      * used to acknowledge a pending alarm.
-     * @throws AlarmPendingException thrown, if the alarm is pending and instantiated with resetOnAcknowledgement = false
+     * @throws AlarmPendingException thrown, if the alarm is not pending and instantiated with resetOnAcknowledgement = false
      */
     public void acknowledge() throws AlarmPendingException{
         boolean allowed = false;
@@ -230,9 +246,6 @@ public class Alarm extends Signal{
         wrapperValue.set(state);
         if (!this.acknowledged.equals(wrapperValue)){
             this.acknowledged.copy(wrapperValue);
-            if (state){
-               AlarmQueue.getInstance().decrementOpenAlarmsCount(severity);            
-            }
             setChanged();
             if (resetOnAcknowledgement && state){
                 try{reset();}catch(SignalAccessException exc){/*cannot happen*/};

@@ -57,10 +57,6 @@ public class AlarmQueue extends Observable implements Observer{
     protected Integer                           pendingAlarmsCountForSeverityWarning;
     protected Integer                           pendingAlarmsCountForSeverityMessage;
     
-    protected Integer                           openAlarmsCountForSeverityAlarm;
-    protected Integer                           openAlarmsCountForSeverityWarning;
-    protected Integer                           openAlarmsCountForSeverityMessage;
-
     protected boolean                           alarmCountIncremented;
     protected boolean                           warningCountIncremented;
     protected boolean                           messageCountIncremented;
@@ -78,9 +74,6 @@ public class AlarmQueue extends Observable implements Observer{
         this.pendingAlarmsCountForSeverityAlarm   = 0;
         this.pendingAlarmsCountForSeverityWarning = 0;
         this.pendingAlarmsCountForSeverityMessage = 0;   
-        this.openAlarmsCountForSeverityAlarm      = 0;
-        this.openAlarmsCountForSeverityWarning    = 0;
-        this.openAlarmsCountForSeverityMessage    = 0;   
         this.alarmCountIncremented                = false;
         this.warningCountIncremented              = false;
         this.messageCountIncremented              = false;
@@ -163,21 +156,21 @@ public class AlarmQueue extends Observable implements Observer{
             case ALARM:
                 synchronized(pendingAlarmsCountForSeverityAlarm){
                     pendingAlarmsCountForSeverityAlarm++;
-                    openAlarmsCountForSeverityAlarm++;
+                    if(Log.isDebugEnabled()) { Log.debug("pendingAlarmsCountForSeverityAlarm incremented to " + pendingAlarmsCountForSeverityAlarm); }
                     alarmCountIncremented = true;
                 }
                 break;                
             case WARNING:
                 synchronized(pendingAlarmsCountForSeverityWarning){
                     pendingAlarmsCountForSeverityWarning++;
-                    openAlarmsCountForSeverityWarning++;
+                    if(Log.isDebugEnabled()) { Log.debug("pendingAlarmsCountForSeverityWarning incremented to " + pendingAlarmsCountForSeverityWarning); }
                     warningCountIncremented = true;
                 }
                 break;                
             case MESSAGE:
                 synchronized(pendingAlarmsCountForSeverityMessage){
                     pendingAlarmsCountForSeverityMessage++;
-                    openAlarmsCountForSeverityMessage++;
+                    if(Log.isDebugEnabled()) { Log.debug("pendingAlarmsCountForSeverityMessage incremented to " + pendingAlarmsCountForSeverityMessage); }
                     messageCountIncremented = true;
                 }
                 break;                
@@ -190,6 +183,7 @@ public class AlarmQueue extends Observable implements Observer{
             case ALARM:
                 synchronized(pendingAlarmsCountForSeverityAlarm){
                     pendingAlarmsCountForSeverityAlarm--;
+                    if(Log.isDebugEnabled()) { Log.debug("pendingAlarmsCountForSeverityAlarm decremented to " + pendingAlarmsCountForSeverityAlarm); }
                     if (pendingAlarmsCountForSeverityAlarm < 0){
                         pendingAlarmsCountForSeverityAlarm = 0;//force counter to '0'
                         inconsistent = true;
@@ -202,6 +196,7 @@ public class AlarmQueue extends Observable implements Observer{
             case WARNING:
                 synchronized(pendingAlarmsCountForSeverityWarning){
                     pendingAlarmsCountForSeverityWarning--;
+                    if(Log.isDebugEnabled()) { Log.debug("pendingAlarmsCountForSeverityWarning decremented to " + pendingAlarmsCountForSeverityWarning); }
                     if (pendingAlarmsCountForSeverityWarning < 0){
                         pendingAlarmsCountForSeverityWarning = 0;//force counter to '0'
                         inconsistent = true;
@@ -214,6 +209,7 @@ public class AlarmQueue extends Observable implements Observer{
             case MESSAGE:
                 synchronized(pendingAlarmsCountForSeverityMessage){
                     pendingAlarmsCountForSeverityMessage--;
+                    if(Log.isDebugEnabled()) { Log.debug("pendingAlarmsCountForSeverityMessage decremented to " + pendingAlarmsCountForSeverityMessage); }
                     if (pendingAlarmsCountForSeverityMessage < 0){
                         pendingAlarmsCountForSeverityMessage = 0;//force counter to '0'
                         inconsistent = true;
@@ -226,48 +222,6 @@ public class AlarmQueue extends Observable implements Observer{
         }
     }    
     
-    void decrementOpenAlarmsCount(Alarm.Severity severity){
-        boolean inconsistent = false;
-        switch(severity){
-            case ALARM:
-                synchronized(pendingAlarmsCountForSeverityAlarm){//sync on pendingAla...
-                    openAlarmsCountForSeverityAlarm--;
-                    if (openAlarmsCountForSeverityAlarm < 0){
-                        openAlarmsCountForSeverityAlarm = 0;//force counter to '0'
-                        inconsistent = true;
-                    }
-                }
-                if (inconsistent){
-                   Log.error("counter for open alarms of severity ALARM is inconsistent"); 
-                }
-                break;                
-            case WARNING:
-                synchronized(pendingAlarmsCountForSeverityWarning){//sync on pendingAla...
-                    openAlarmsCountForSeverityWarning--;
-                    if (openAlarmsCountForSeverityWarning < 0){
-                        openAlarmsCountForSeverityWarning = 0;//force counter to '0'
-                        inconsistent = true;
-                    }
-                }
-                if (inconsistent){
-                   Log.error("counter for open alarms of severity WARNING is inconsistent"); 
-                }
-                break;                
-            case MESSAGE:
-                synchronized(pendingAlarmsCountForSeverityMessage){//sync on pendingAla...
-                    openAlarmsCountForSeverityMessage--;
-                    if (openAlarmsCountForSeverityMessage < 0){
-                        openAlarmsCountForSeverityMessage = 0;//force counter to '0'
-                        inconsistent = true;
-                    }
-                }
-                if (inconsistent){
-                   Log.error("counter for open alarms of severity MESSAGE is inconsistent"); 
-                }
-                break;                
-        }
-    }    
-
     public boolean isAtLeastOneAlarmPending(Alarm.Severity severity){
         boolean pending = false;
         switch(severity){
@@ -282,26 +236,6 @@ public class AlarmQueue extends Observable implements Observer{
                 break;
         }
         return pending;
-    }
-
-    /**
-     * @param severity
-     * @return true, if at least one Alarm of the given severity is not acknowledged
-     */
-    public boolean isAtLeastOneAlarmOpen(Alarm.Severity severity){
-        boolean open = false;
-        switch(severity){
-            case ALARM:
-                open = openAlarmsCountForSeverityAlarm > 0;
-                break;
-            case WARNING:
-                open = openAlarmsCountForSeverityWarning > 0;
-                break;
-            case MESSAGE:
-                open = openAlarmsCountForSeverityMessage > 0;
-                break;
-        }
-        return open;
     }
 
     /**
@@ -328,33 +262,6 @@ public class AlarmQueue extends Observable implements Observer{
     public Integer getPendingAlarmsCountForSeverityMessage() {
         synchronized(pendingAlarmsCountForSeverityMessage){
            return pendingAlarmsCountForSeverityMessage;
-        }
-    }
-
-    /**
-     * @return returns the number of the alarms of severity 'Alarm' which are not acknowledged
-     */
-    public Integer getOpenAlarmsCountForSeverityAlarm() {
-        synchronized(pendingAlarmsCountForSeverityAlarm){//sync on pendingAla....
-            return openAlarmsCountForSeverityAlarm;
-        }
-    }
-
-    /**
-     * @return returns the number of the alarms of severity 'Warning' which are not acknowledged
-     */
-    public Integer getOpenAlarmsCountForSeverityWarning() {
-        synchronized(pendingAlarmsCountForSeverityWarning){//sync on pendingAla....
-            return openAlarmsCountForSeverityWarning;
-        }
-    }
-
-    /**
-     * @return returns the number of the alarms of severity 'Message' which are not acknowledged
-     */
-    public Integer getOpenAlarmsCountForSeverityMessage() {
-        synchronized(pendingAlarmsCountForSeverityMessage){//sync on pendingAla....
-           return openAlarmsCountForSeverityMessage;
         }
     }
 

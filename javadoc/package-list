@@ -2,6 +2,9 @@ jpac.test.fg
 org.jpac
 org.jpac.alarm
 org.jpac.configuration
+org.jpac.console
+org.jpac.opc
 org.jpac.plc
+org.jpac.snapshot
 org.jpac.statistics
 org.jpac.utilities

@@ -229,11 +229,37 @@ public class AlarmQueue extends Observable implements Observer{
         }
     }    
     
+    void incrementOpenAlarmsCount(Alarm.Severity severity){
+        switch(severity){
+            case ALARM:
+                synchronized(openAlarmsCountForSeverityAlarm){
+                    openAlarmsCountForSeverityAlarm++;
+                    if(Log.isDebugEnabled()) { Log.debug("openAlarmsCountForSeverityAlarm incremented to " + openAlarmsCountForSeverityAlarm); }
+                    alarmCountIncremented = true;
+                }
+                break;                
+            case WARNING:
+                synchronized(openAlarmsCountForSeverityWarning){
+                    openAlarmsCountForSeverityWarning++;
+                    if(Log.isDebugEnabled()) { Log.debug("openAlarmsCountForSeverityWarning incremented to " + openAlarmsCountForSeverityWarning); }
+                    warningCountIncremented = true;
+                }
+                break;                
+            case MESSAGE:
+                synchronized(openAlarmsCountForSeverityMessage){
+                    openAlarmsCountForSeverityMessage++;
+                    if(Log.isDebugEnabled()) { Log.debug("openAlarmsCountForSeverityMessage incremented to " + openAlarmsCountForSeverityMessage); }
+                    messageCountIncremented = true;
+                }
+                break;                
+        }
+    }
+
     void decrementOpenAlarmsCount(Alarm.Severity severity){
         boolean inconsistent = false;
         switch(severity){
             case ALARM:
-                synchronized(pendingAlarmsCountForSeverityAlarm){//sync on pendingAla...
+                synchronized(openAlarmsCountForSeverityAlarm){//sync on pendingAla...
                     openAlarmsCountForSeverityAlarm--;
                     if (openAlarmsCountForSeverityAlarm < 0){
                         openAlarmsCountForSeverityAlarm = 0;//force counter to '0'
@@ -245,7 +271,7 @@ public class AlarmQueue extends Observable implements Observer{
                 }
                 break;                
             case WARNING:
-                synchronized(pendingAlarmsCountForSeverityWarning){//sync on pendingAla...
+                synchronized(openAlarmsCountForSeverityWarning){//sync on pendingAla...
                     openAlarmsCountForSeverityWarning--;
                     if (openAlarmsCountForSeverityWarning < 0){
                         openAlarmsCountForSeverityWarning = 0;//force counter to '0'
@@ -257,7 +283,7 @@ public class AlarmQueue extends Observable implements Observer{
                 }
                 break;                
             case MESSAGE:
-                synchronized(pendingAlarmsCountForSeverityMessage){//sync on pendingAla...
+                synchronized(openAlarmsCountForSeverityMessage){//sync on pendingAla...
                     openAlarmsCountForSeverityMessage--;
                     if (openAlarmsCountForSeverityMessage < 0){
                         openAlarmsCountForSeverityMessage = 0;//force counter to '0'

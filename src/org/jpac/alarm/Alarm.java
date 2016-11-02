@@ -168,6 +168,7 @@ public class Alarm extends Signal{
            //transition from invalid to true, or false to true
            if(Log.isDebugEnabled()) { Log.debug("Alarm(" + this.message + ").set: state : " + state + "; wasValidBefore: " + wasValidBefore  + "; lastState: " + lastState ); }
            AlarmQueue.getInstance().incrementPendingAlarmsCount(severity);
+           AlarmQueue.getInstance().incrementOpenAlarmsCount(severity);
         }
         else if (!state && wasValidBefore && lastState){
            //transition from true to false or true to invalid

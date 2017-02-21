@@ -61,7 +61,7 @@ BODY {
   right: 25px;
 }
 .gitSocialInner IFRAME {
-  padding: 10px 10px 0;
+  padding: 10px 0 0;
   border: none;
 }
 .hightlight {
@@ -77,6 +77,8 @@ BODY {
 .bottomTeaser P,
 .mainContent P {
   font-family: Arial;
+
+  text-align: justify;
 }
 .mainContent .col2 P {
   margin-left: 50px;
@@ -180,5 +182,6 @@ BODY {
 }
 
 .twitter iframe {
-  padding: 15px 0 0 50px !important;
+  margin-top: 20px !important;
+  padding-left: 20px !important;
 }

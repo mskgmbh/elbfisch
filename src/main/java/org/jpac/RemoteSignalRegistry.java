@@ -35,6 +35,7 @@ import org.slf4j.Logger;
  * implemented as singleton
  * @author berndschuster
  */
+@Deprecated
 public class RemoteSignalRegistry {
     static Logger Log = LoggerFactory.getLogger("jpac.Remote");
     

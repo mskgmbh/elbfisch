@@ -35,6 +35,7 @@ import org.slf4j.Logger;
  * is called by JPac synchronized to the cycle to copy remote signals to local target signals
  * @author berndschuster
  */
+@Deprecated
 class RemoteSignalPusher{
     
     class PushRunner implements Runnable{

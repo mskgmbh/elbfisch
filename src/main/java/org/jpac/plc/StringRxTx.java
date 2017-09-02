@@ -55,7 +55,7 @@ public class StringRxTx extends LobRxTx{
      * @return this. Useful in cases where the data item should be written to the plc immediately (see above).
      * @throws AddressException
      */
-    public StringRxTx set(PlcString value) throws AddressException, StringLengthException {//TODO test
+    public StringRxTx set(PlcString value) throws AddressException, StringLengthException {
         //plc strings consist of string bytes and 2 additional maintenance bytes
         int givenDataSize = value.getMaxLength() + MAINTENANCEDATASIZE;
         if (givenDataSize != getAddress().getSize())
@@ -71,7 +71,7 @@ public class StringRxTx extends LobRxTx{
      * @return this. Useful in cases where the data item should be written to the plc immediately (see above).
      * @throws AddressException
      */
-    public PlcString get() throws AddressException, StringLengthException {//TODO test
+    public PlcString get() throws AddressException, StringLengthException {
         return getData().getSTRING(dataOffset, address.getSize());
     }
 

@@ -32,6 +32,7 @@ import java.util.List;
  * rmi skeleton of the RemoteSignalHandler
  * @author berndschuster
  */
+@Deprecated
 public interface RemoteSignalHandler extends java.rmi.Remote{
     void              connect(String jPacInstance, List<RemoteSignalOutput> remoteSignalOutput) throws RemoteException;
     void              disconnect(String jPacInstance) throws RemoteException;

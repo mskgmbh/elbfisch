@@ -94,10 +94,10 @@ public class IoSignedInteger extends SignedInteger implements IoSignal{
             inCheck = true;
             switch(address.getSize()){
                 case 1:
-                    set(data.getBYTE(address.getByteIndex()));//TODO checkIn signed integer behaviour
+                    set(data.getBYTE(address.getByteIndex()));
                     break;
                 case 2:
-                    set(data.getINT(address.getByteIndex()));//TODO checkIn signed integer behaviour   
+                    set(data.getINT(address.getByteIndex()));
                     break;
                 case 4:
                     set(data.getDINT(address.getByteIndex()));        

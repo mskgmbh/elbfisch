@@ -35,6 +35,7 @@ import org.slf4j.Logger;
  * represents a remote output signal
  * @author berndschuster
  */
+@Deprecated
 public class RemoteSignalOutput implements Observer, Serializable{
     static Logger Log = LoggerFactory.getLogger("jpac.Remote");
 
@@ -54,7 +55,7 @@ public class RemoteSignalOutput implements Observer, Serializable{
         this.remoteSignalIdentifier = remoteSignalIdentifier;
         this.jPacInstance           = JPac.getInstance().getInstanceIdentifier();
         this.connectedAsTarget      = false;
-        this.index                  = RemoteSignalRegistry.getInstance().addOutput(this);//TODO critical section concerning index        
+        this.index                  = RemoteSignalRegistry.getInstance().addOutput(this);      
         this.transport              = new RemoteSignalTransport(this.index, identifier, remoteSignalIdentifier);
     } 
 

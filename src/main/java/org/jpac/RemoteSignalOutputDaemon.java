@@ -25,7 +25,6 @@
 
 package org.jpac;
 
-import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -39,6 +38,7 @@ import org.slf4j.Logger;
  * handles the communication with a remote jPac instance. Will be automatically started, if a remote jPac instance is involved.
  * @author berndschuster
  */
+@Deprecated
 public class RemoteSignalOutputDaemon extends Thread{
     static       Logger Log                = LoggerFactory.getLogger("jpac.Remote");
     static final long   STOPTDAEMONTIMEOUT = 3000000000L;// 3 sec.

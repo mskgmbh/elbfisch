@@ -180,7 +180,7 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
                 valid           = true;
             }
             else{
-                invalidateSignalValue();//TODO invalidate() problem !!!!!!
+                invalidateSignalValue();//TODO invalidate() problem: invalid signals will cause Status "BAD" on client side
             }
         }
     }   

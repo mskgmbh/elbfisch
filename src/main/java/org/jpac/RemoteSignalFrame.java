@@ -36,6 +36,7 @@ import org.slf4j.Logger;
  * This frame is transported to the remote hosts on the whole
  * @author berndschuster
  */
+@Deprecated
 public class RemoteSignalFrame implements Serializable, Cloneable{
     static Logger Log = LoggerFactory.getLogger("jpac.Remote");
 

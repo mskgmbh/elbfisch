@@ -35,6 +35,7 @@ import org.slf4j.Logger;
  * implementation of the RemoteSignalHandler
  * @author berndschuster
  */
+@Deprecated
 public class RemoteSignalHandlerImpl extends UnicastRemoteObject implements RemoteSignalHandler{
     static Logger Log = LoggerFactory.getLogger("jpac.Remote");
     
@@ -96,7 +97,7 @@ public class RemoteSignalHandlerImpl extends UnicastRemoteObject implements Remo
     public void push(String jPacInstance, RemoteSignalFrame frame) throws RemoteException {
         try {
              if (Log.isDebugEnabled()) Log.debug("JPac instance " + jPacInstance + " pushing frame " + frame);
-             //TODO handling deactivated state !!!!
+             // open issue: handling deactivated state !!!!
              RemoteSignalPusher pusher = registry.getPusher(jPacInstance);
              if (pusher == null || pusher.isDeactivated()){
                  Log.error("no active remote signal service for JPac instance " + jPacInstance);

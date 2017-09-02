@@ -33,6 +33,7 @@ import java.util.List;
  * represents a connection to a remote Jpac instance. Will be automatically created on instantiating remote signals
  * @author berndschuster
  */
+@Deprecated
 public class RemoteSignalConnection {
     private String                         host;
     private int                            port;
@@ -66,8 +67,8 @@ public class RemoteSignalConnection {
     int addOutput(RemoteSignalOutput remoteOutputSignal){
         remoteOutputSignal.setIndex(outputIndex);
         outputSignals.add(outputIndex, remoteOutputSignal);
-        //TODO check, if output signal already registered
-        //TODO check, if connection already opened. If so,
+        //open issue check, if output signal already registered
+        //open issue check, if connection already opened. If so,
         //     register this signal subsequently
         return outputIndex++;
     }
@@ -93,7 +94,7 @@ public class RemoteSignalConnection {
             //instantiate an output daemon,
             remoteSignalOutputDaemon = new RemoteSignalOutputDaemon(this);
             remoteSignalOutputDaemon.start();
-            //TODO implement input connections
+            //implement input connections
         }
         catch(Exception exc){
             throw new RemoteSignalException(exc);

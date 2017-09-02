@@ -879,7 +879,7 @@ public class JPac extends Thread {
     public void requestEmergencyStop(EmergencyStopException causedBy) {
         //set emergencyStopRequested. Will be reset by the automation controller after notification of all modules
         if (!this.emergencyStopActive){
-            if (Log.isDebugEnabled()){Log.debug("EMERGENCY STOP REQUESTESD requestEmergencyStop: " + emergencyStopRequested);};//TODO
+            if (Log.isDebugEnabled()){Log.debug("EMERGENCY STOP REQUESTESD requestEmergencyStop: " + emergencyStopRequested);};
             //set request only once per emergency stop case
             this.emergencyStopRequested = true;
             this.emergencyStopActive    = true;
@@ -1010,7 +1010,7 @@ public class JPac extends Thread {
     }
     
     protected void acquireStatistics(long remainingCycleTime){
-        if(cycleNumber > 1){//TODO: (SN) vorlaeufig gepatched wg. Zyklus 1
+        if(cycleNumber > 1){
             //acquire some statistics concerning the cycle time
             if (remainingCycleTime > getCycleTime()){
                 remainingCycleTime = getCycleTime();

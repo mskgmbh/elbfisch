@@ -33,6 +33,7 @@ import org.slf4j.Logger;
  * used to transport signals between jPac instances
  * @author berndschuster
  */
+@Deprecated
 class RemoteSignalTransport implements Serializable, Cloneable{
     static Logger Log = LoggerFactory.getLogger("jpac.Remote");
     

@@ -52,7 +52,7 @@ public class CharStringValue implements Value, Cloneable, Serializable{
     @Override
     public void copy(Value aValue){
         if (((CharStringValue)aValue).get() != null){
-            set(new String(((CharStringValue)aValue).get()));//TODO: copy without construction of a new string ??
+            set(new String(((CharStringValue)aValue).get()));
         }
         else{
             set(null);

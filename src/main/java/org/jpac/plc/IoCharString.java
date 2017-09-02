@@ -59,7 +59,7 @@ public class IoCharString extends CharString implements IoSignal{
         this.address     = address;
         this.ioDirection = ioDirection;
         if (address != null){
-            this.plcString   = new PlcString("",address.getSize() - 2);//TODO suitable for S7 strings, but not for others
+            this.plcString   = new PlcString("",address.getSize() - 2);//suitable for S7 strings, but not for others
         }
         else{
             this.plcString   = null;
@@ -76,7 +76,7 @@ public class IoCharString extends CharString implements IoSignal{
     public void checkIn() throws SignalAccessException, AddressException {
         try{
             inCheck = true;
-            set(data.getSTRING(address.getByteIndex(),address.getSize()).toString());//TODO checkIn signed integer behaviour
+            set(data.getSTRING(address.getByteIndex(),address.getSize()).toString());
         }
         catch(StringLengthException exc){
             throw new SignalAccessException(exc.getMessage());

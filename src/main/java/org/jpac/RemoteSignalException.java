@@ -29,6 +29,7 @@ package org.jpac;
  * thrown, if a problem with a remote signal arises
  * @author berndschuster
  */
+@Deprecated
 public class RemoteSignalException extends Exception{
     public RemoteSignalException(String message){
         super(message);

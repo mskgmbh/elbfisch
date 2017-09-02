@@ -40,6 +40,7 @@ import org.slf4j.Logger;
  * serves incoming remote connections
  * @author berndschuster
  */
+@Deprecated
 public class RemoteSignalServer {
    static Logger Log = LoggerFactory.getLogger("jpac.Remote");
    private static final int    DEFAULTPORT = 10002;

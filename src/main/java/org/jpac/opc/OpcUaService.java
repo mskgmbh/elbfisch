@@ -66,6 +66,7 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.collect.Lists.newArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UShort;
 
 public class OpcUaService implements Runnable{
 

@@ -40,11 +40,6 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
 import java.util.stream.Stream;
 import javax.xml.stream.XMLStreamException;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.jpac.AbstractModule;
 import org.jpac.CharString;
 import org.jpac.Decimal;
@@ -62,6 +57,9 @@ import org.naturalcli.ICommandExecutor;
 import org.naturalcli.IParameterType;
 import org.naturalcli.NaturalCLI;
 import org.naturalcli.ParseResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 
 /**
  * Handles a server-side channel.
@@ -120,6 +118,7 @@ public class TelnetServerHandler extends SimpleChannelInboundHandler<String> {
               }		
             );    
             commandSet.add(helpCommand);
+/* removed until list of active loggers can be accessed over slf4j
             Command listLoggersCommand =
               new Command(
               "list loggers", 
@@ -131,15 +130,11 @@ public class TelnetServerHandler extends SimpleChannelInboundHandler<String> {
                 {
                   StringBuffer sb            = new StringBuffer();
                   List<String> listOfLoggers = new ArrayList<>();
-//                  Enumeration loggers = LogManager.getCurrentLoggers();
-                  LoggerContext logContext = (LoggerContext) LogManager.getContext(false);
-                  Map<String, LoggerConfig> loggers = logContext.getConfiguration().getLoggers();
-                  
-                  loggers.forEach((name, loggerConfig) -> {
-                        if (loggerConfig.getLevel() != null){
-                            listOfLoggers.add(name + "= " + loggerConfig.getLevel() + "\r\n");
-                        }
-                      });
+                  Enumeration loggers = LoggerFactory.getCurrentLoggers();
+                  while(loggers.hasMoreElements()){
+                      Logger l = (Logger)loggers.nextElement();
+                      listOfLoggers.add(l.getName() + "= " + l.getLevel() + "\r\n");
+                  }
                   Collections.sort(listOfLoggers, String.CASE_INSENSITIVE_ORDER);
                   listOfLoggers.forEach(l -> sb.append(l));
                   response = sb.toString();
@@ -171,9 +166,7 @@ public class TelnetServerHandler extends SimpleChannelInboundHandler<String> {
                 }
                 private Level getLevel(String logLevelAsString){
                     Level logLevel = null;
-                    if (logLevelAsString.toUpperCase().equals("ALL")){
-                        logLevel = Level.ALL;
-                    } else if (logLevelAsString.toUpperCase().equals("TRACE")){
+                    if (logLevelAsString.toUpperCase().equals("TRACE")){
                         logLevel = Level.TRACE;
                     } else if (logLevelAsString.toUpperCase().equals("DEBUG")){
                         logLevel = Level.DEBUG;
@@ -183,29 +176,25 @@ public class TelnetServerHandler extends SimpleChannelInboundHandler<String> {
                         logLevel = Level.WARN;
                     } else if (logLevelAsString.toUpperCase().equals("ERROR")){
                         logLevel = Level.ERROR;
-                    } else if (logLevelAsString.toUpperCase().equals("FATAL")){
-                        logLevel = Level.FATAL;
-                    } else if (logLevelAsString.toUpperCase().equals("OFF")){
-                        logLevel = Level.OFF;
                     };
                     return logLevel;
                 }
                 private String setLevel(String loggerName, Level level){
                     StringBuffer result = new StringBuffer();
-                    LoggerContext logContext = (LoggerContext) LogManager.getContext(false);
-                    Map<String, LoggerConfig> loggers = logContext.getConfiguration().getLoggers();
-                    loggers.forEach((name, loggerConfig) ->{
-                                if (matches(name,loggerName)){
-                                    loggerConfig.setLevel(level);
-                                    result.append(ANSI_GREEN + "level of logger " + name + " set to " + level + ANSI_RESET + "\r\n");
-                                }
-                            });
+                    Enumeration loggers = LogManager.getCurrentLoggers();
+                    while(loggers.hasMoreElements()){
+                      Logger l = (Logger)loggers.nextElement();
+                      if (matches(l.getName(),loggerName)){
+                          l.setLevel(level);
+                          result.append(ANSI_GREEN + "level of logger " + l.getName() + " set to " + level + ANSI_RESET + "\r\n");
+                      }
+                    }
                     return result.toString();
                 }
               }		
             );    
             commandSet.add(setLevelForLoggerCommand);
-
+*/            
             Command generateHistogramCommand =
               new Command(
               "generate histogram", 

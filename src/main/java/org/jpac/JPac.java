@@ -738,6 +738,8 @@ public class JPac extends Thread {
             for(Signal s: signals){
                 //handle requested (dis)connections of signals
                 s.handleConnections();
+                //apply intrinsic function
+                s.applyIntrinsicFunction();
                 //propagate signal alterations
                 s.propagate();
             }

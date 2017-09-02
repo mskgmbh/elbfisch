@@ -60,48 +60,41 @@ public class Configuration extends XMLConfiguration{
     
     private Configuration() throws ConfigurationException, UnsupportedEncodingException{
         super();
-        URL configFileUrl = this.getClass().getClassLoader().getResource("org.jpac.Configuration.xml");
-        if (configFileUrl != null){
-            File configFile  = new File(URLDecoder.decode(configFileUrl.getFile(), "UTF-8"));
-            backupConfigFile = new File(configFile.getAbsolutePath() + ".bak");
-            setFile(configFile);
-            try{
-                load();
-                loadedSuccessFully = true;
-                //configuration loaded successfully
-                //store a backup version, if it has been modified since last session
-                if (configFile.lastModified() > backupConfigFile.lastModified()){
-                    save(backupConfigFile);
-                    backupedSuccessFully = true;
-                }
-            }
-            catch(ConfigurationException exc){
-                if (!loadedSuccessFully){
-                    Log.error("error occured while loading the configuration: ", exc);
-                    //configuration file cannot be read
-                    //try the backup file
-                    if (backupConfigFile.exists()){
-                        load(backupConfigFile);//throw exception up, if this operation fails
-                        //and store it as the actual configuration
-                        save();//throw exception up, if this operation fails
-                        Log.error("backup configuration loaded instead and saved as actual configuration.");
-                    }
-                }
-                else if (!backupedSuccessFully){
-                    Log.error("error occured while backing up the configuration: ", exc);
-                    try{
-                        backupConfigFile.delete();//try to remove backup configuration
-                        save(backupConfigFile);//and retry backing up the current configuration
-                    }
-                    catch(Exception ex){
-                        Log.error("error occured while backing up the configuration (2nd trial): ", exc);
-                    }
-                }
+        File configFile  = new File("./cfg/org.jpac.Configuration.xml");
+        backupConfigFile = new File(configFile.getAbsolutePath() + ".bak");
+        setFile(configFile);
+        try{
+            load();
+            loadedSuccessFully = true;
+            //configuration loaded successfully
+            //store a backup version, if it has been modified since last session
+            if (configFile.lastModified() > backupConfigFile.lastModified()){
+                save(backupConfigFile);
+                backupedSuccessFully = true;
             }
         }
-        else{
-            //no configuration file found in class path. Set default
-            setFile(new File("./cfg/org.jpac.Configuration.xml"));
+        catch(ConfigurationException exc){
+            if (!loadedSuccessFully){
+                Log.error("error occured while loading the configuration: " + exc.getMessage());
+                //configuration file cannot be read
+                //try the backup file
+                if (backupConfigFile.exists()){
+                    load(backupConfigFile);//throw exception up, if this operation fails
+                    //and store it as the actual configuration
+                    save(configFile);//throw exception up, if this operation fails
+                    Log.error("backup configuration loaded instead and saved as actual configuration.");
+                }
+            }
+            else if (!backupedSuccessFully){
+                Log.error("error occured while backing up the configuration: " + exc.getMessage());
+                try{
+                    backupConfigFile.delete();//try to remove backup configuration
+                    save(backupConfigFile);//and retry backing up the current configuration
+                }
+                catch(Exception ex){
+                    Log.error("error occured while backing up the configuration (2nd trial): " + exc.getMessage());
+                }
+            }
         }
     }
     

@@ -25,6 +25,9 @@
 
 package org.jpac;
 
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
+
 /**
  * represents a signed integer signal
  */
@@ -36,7 +39,7 @@ public class SignedInteger extends Signal{
     protected SignedIntegerMapper newMapper;
     protected String              unit;
     private   SignedIntegerValue  wrapperValue;
-    
+
     /**
      * constructs a signed integer signal with intrinsic range check
      * @param containingModule: module this signal is contained in
@@ -50,6 +53,7 @@ public class SignedInteger extends Signal{
         this.minValue           = minValue;
         this.maxValue           = maxValue;
         this.rangeChecked       = true;//activate range check
+        this.intrinsicFunction  = null;
         this.mapper             = null;
         this.unit               = null;
         this.value              = new SignedIntegerValue();
@@ -57,6 +61,21 @@ public class SignedInteger extends Signal{
         this.wrapperValue       = new SignedIntegerValue();
     }
     
+    /**
+     * constructs a signed integer signal with intrinsic range check
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param minValue: minimum value signalValid for this signed integer
+     * @param maxValue: maximum value signalValid for this signed integer
+     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to calculate the actual value
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue, Supplier<Integer> intrinsicFunction) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, minValue, maxValue);
+        this.rangeChecked      = true;//activate range check
+        this.intrinsicFunction = intrinsicFunction;
+    }
+
     /**
      * constructs a signed integer signal with intrinsic range check.
      * range check is disabled.
@@ -66,9 +85,24 @@ public class SignedInteger extends Signal{
      */
     public SignedInteger(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         this(containingModule, identifier, 0, 0);
-        this.rangeChecked = false;
+        this.rangeChecked      = false;
+        this.intrinsicFunction = null;
     }    
     
+    /**
+     * constructs a signed integer signal with intrinsic range check.
+     * range check is disabled.
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to calculate the actual value
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public SignedInteger(AbstractModule containingModule, String identifier, Supplier<Integer> intrinsicFunction) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, 0, 0);
+        this.rangeChecked      = false;
+        this.intrinsicFunction = intrinsicFunction;
+    }    
+
     /**
      * constructs a signed integer signal with a given default value and without range check.
      * @param containingModule: module this signal is contained in
@@ -78,6 +112,8 @@ public class SignedInteger extends Signal{
      */
     public SignedInteger(AbstractModule containingModule, String identifier, int defaultValue) throws SignalAlreadyExistsException{
         this(containingModule, identifier);
+        this.rangeChecked      = false;
+        this.intrinsicFunction = null;
         this.initializing = true;//prevent signal access assertion
         try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/}catch(NumberOutOfRangeException exc){/*cannot happen*/};
         this.initializing = false;
@@ -394,6 +430,13 @@ public class SignedInteger extends Signal{
         catch(Exception exc){
             Log.error("Error: ", exc);
             throw new SignalAccessException(exc.getMessage());
+        }
+    }
+
+    @Override
+    protected void applyTypedIntrinsicFunction() throws Exception {
+        if (intrinsicFunction != null){
+           set((Integer)intrinsicFunction.get()); 
         }
     }
 }

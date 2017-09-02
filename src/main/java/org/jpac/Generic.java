@@ -24,6 +24,8 @@
  */
 package org.jpac;
 
+import java.util.function.Supplier;
+
 /**
  * class template for generic objects used as signals, where ValueImpl is a class 
  * implementing the org.jpac.Value interface
@@ -31,7 +33,7 @@ package org.jpac;
  * 
  */
 public class Generic<ValueImpl> extends Signal{    
-    
+
     /**
      * constructs a Generic signal
      * @param containingModule: module, this signal is contained in
@@ -40,8 +42,21 @@ public class Generic<ValueImpl> extends Signal{
      */    
     public Generic(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         super(containingModule, identifier);
-        value           = null;
-        propagatedValue = null; 
+        intrinsicFunction = null;
+        value             = null;
+        propagatedValue   = null; 
+    }
+
+    /**
+     * constructs a Generic signal
+     * @param containingModule: module, this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to calculate the actual value
+     * @throws org.jpac.SignalAlreadyExistsException
+     */    
+    public Generic(AbstractModule containingModule, String identifier, Supplier<ValueImpl> intrinsicFunction) throws SignalAlreadyExistsException{
+        super(containingModule, identifier);
+        this.intrinsicFunction = intrinsicFunction;
     }
 
     /**
@@ -118,6 +133,13 @@ public class Generic<ValueImpl> extends Signal{
         }
         else if (propagatedValue != null && value != null){
             propagatedValue.copy(value);
+        }
+    }
+
+    @Override
+    protected void applyTypedIntrinsicFunction() throws Exception {
+        if (intrinsicFunction != null){
+           set((ValueImpl)intrinsicFunction.get()); 
         }
     }
 }

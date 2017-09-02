@@ -25,6 +25,8 @@
 
 package org.jpac;
 
+import java.util.function.Supplier;
+
 /**
  * represents a char string signal
  */
@@ -40,11 +42,24 @@ public class CharString extends Signal{
      */
     public CharString(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         super(containingModule, identifier);
+        this.intrinsicFunction  = null;
         this.value              = new CharStringValue();
         this.propagatedValue    = new CharStringValue(); 
         this.wrapperValue       = new CharStringValue();
     }
     
+    /**
+     * constructs a char string signal
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to calculate the actual value
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public CharString(AbstractModule containingModule, String identifier, Supplier<String> intrinsicFunction) throws SignalAlreadyExistsException{
+        this(containingModule, identifier);
+        this.intrinsicFunction  = intrinsicFunction;
+    }
+
     /**
      * constructs a char string signal
      * @param containingModule: module this signal is contained in
@@ -145,6 +160,13 @@ public class CharString extends Signal{
         catch(Exception exc){
             Log.error("Error: ", exc);
             throw new SignalAccessException(exc.getMessage());
+        }
+    }
+
+    @Override
+    protected void applyTypedIntrinsicFunction() throws Exception {
+        if (intrinsicFunction != null){
+           set((String)intrinsicFunction.get()); 
         }
     }
 }

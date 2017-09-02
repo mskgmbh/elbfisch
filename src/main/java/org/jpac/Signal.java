@@ -32,6 +32,8 @@ import java.util.Observer;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -56,31 +58,34 @@ public abstract class Signal extends Observable implements Observer {
     private   Set<Signal>                observingSignals;
     private   Set<RemoteSignalOutput>    observingRemoteSignalOutputs;
     private   Queue<ConnectionTask>      connectionTasks;
+    protected Supplier                   intrinsicFunction;
     
     protected Value                      value;
     protected Value                      propagatedValue;
     
     protected boolean                    initializing;
     protected boolean                    justConnectedAsSource;
+    protected boolean                    intrinsicFunctionExceptionLogged;
     
     public Signal(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         super();
-        this.identifier                      = identifier;
-        this.lastChangeCycleNumber           = 0L;
-        this.propagatedLastChangeCycleNumber = 0L;
-        this.lastChangeNanoTime              = 0L;
-        this.jPac                            = JPac.getInstance();
-        this.signalValid                     = false;//signal is initially invalid
-        this.propagatedSignalValid           = false;//signal is initially invalid
-        this.connectedAsTarget               = false;
-        this.containingModule                = containingModule;
-        this.observingSignals                = Collections.synchronizedSet(new HashSet<Signal>());
-        this.observingRemoteSignalOutputs    = Collections.synchronizedSet(new HashSet<RemoteSignalOutput>());
-        this.connectionTasks                 = new ArrayBlockingQueue<ConnectionTask>(100);
-        this.value                           = null;
-        this.propagatedValue                 = null; 
-        this.initializing                    = false;
-        this.justConnectedAsSource           = false;
+        this.identifier                       = identifier;
+        this.lastChangeCycleNumber            = 0L;
+        this.propagatedLastChangeCycleNumber  = 0L;
+        this.lastChangeNanoTime               = 0L;
+        this.jPac                             = JPac.getInstance();
+        this.signalValid                      = false;//signal is initially invalid
+        this.propagatedSignalValid            = false;//signal is initially invalid
+        this.connectedAsTarget                = false;
+        this.containingModule                 = containingModule;
+        this.observingSignals                 = Collections.synchronizedSet(new HashSet<Signal>());
+        this.observingRemoteSignalOutputs     = Collections.synchronizedSet(new HashSet<RemoteSignalOutput>());
+        this.connectionTasks                  = new ArrayBlockingQueue<ConnectionTask>(100);
+        this.value                            = null;
+        this.propagatedValue                  = null; 
+        this.initializing                     = false;
+        this.justConnectedAsSource            = false;
+        this.intrinsicFunctionExceptionLogged = false;
         SignalRegistry.getInstance().add(this);
     }
     
@@ -149,6 +154,9 @@ public abstract class Signal extends Observable implements Observer {
             if (targetSignal.isConnectedAsTarget()){
                 throw new SignalAlreadyConnectedException(targetSignal);
             }
+            if (targetSignal.getIntrinsicFunction() != null){
+                throw new SignalAccessException("cannot connect to signal with initrinsic function set: " + targetSignal);
+            }
             try{
                 connectionTasks.add(new ConnectionTask(ConnTask.CONNECT, targetSignal));
             }
@@ -186,6 +194,9 @@ public abstract class Signal extends Observable implements Observer {
         if (Log.isDebugEnabled()) Log.debug(this + ".deferredConnect(" + targetSignal + ")");
         if (targetSignal.isConnectedAsTarget()){
             throw new SignalAlreadyConnectedException(targetSignal);
+        }
+        if (targetSignal.getIntrinsicFunction() != null){
+            throw new SignalAccessException("cannot connect to signal with initrinsic function set: " + targetSignal);
         }
         addObserver(targetSignal);
         targetSignal.setConnectedAsTarget(true);
@@ -352,6 +363,9 @@ public abstract class Signal extends Observable implements Observer {
      * @return the value, if valid
      */
     protected Value getValidatedValue() throws SignalInvalidException {
+        if (!accessedByForeignModule() && intrinsicFunction != null){
+            applyIntrinsicFunction();//reflect actual state of function to containing module immediately
+        }
         if (!isValid()){
             throw new SignalInvalidException(this.toString());
         }
@@ -566,10 +580,27 @@ public abstract class Signal extends Observable implements Observer {
     protected void setJustConnectedAsSource(boolean justConnectedAsSource) {
         this.justConnectedAsSource = justConnectedAsSource;
     }
+    
+    protected Supplier getIntrinsicFunction(){
+        return this.intrinsicFunction;
+    }
+    
+    protected void applyIntrinsicFunction(){
+        try{
+            applyTypedIntrinsicFunction();
+            intrinsicFunctionExceptionLogged = false;
+        }
+        catch(Exception exc){
+            if (Log.isDebugEnabled() && !intrinsicFunctionExceptionLogged) Log.debug("Error: " + toString() + ": evaluation of initrinsic function failed because of " + exc.toString());
+            intrinsicFunctionExceptionLogged = true;
+            invalidate();
+        }
+    }
 
     abstract protected boolean isCompatibleSignal(Signal signal);
     abstract protected void updateValue(Object o, Object arg) throws SignalAccessException;
     abstract protected void propagateSignalInternally() throws SignalInvalidException;    
+    abstract protected void applyTypedIntrinsicFunction() throws Exception;
 
     private class ConnectionTask{
         private ConnTask task;

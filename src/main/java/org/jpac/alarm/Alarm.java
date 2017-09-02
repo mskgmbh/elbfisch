@@ -25,12 +25,15 @@
 
 package org.jpac.alarm;
 
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.jpac.AbstractModule;
 import org.jpac.JPac;
 import org.jpac.Logical;
 import org.jpac.LogicalValue;
+import org.jpac.ProcessException;
 import org.jpac.Signal;
 import org.jpac.SignalAccessException;
 import org.jpac.SignalAlreadyExistsException;
@@ -46,7 +49,7 @@ import org.jpac.SignalInvalidException;
  * @author berndschuster
  */
 public class Alarm extends Signal{
-    
+
     public enum Severity{ALARM('A'),WARNING('W'),MESSAGE('M');
         private final char id;
         private Severity(char id){
@@ -104,15 +107,30 @@ public class Alarm extends Signal{
         this.resetOnAcknowledgement = resetOnAcknowledgement;
         this.invertOnUpdate         = false;
         this.severity               = severity;
+        this.intrinsicFunction      = null;
 
         this.acknowledged.set(true);
         this.propagatedAcknowledged.set(true);
         AlarmQueue.getInstance().register(this);
     }
 
+    /**
+     * constructs an alarm
+     * @param containingModule: module which instantiated the alarm
+     * @param identifier: unique identifier of the alarm
+     * @param number: a unique number of the alarm (optional, default = null)
+     * @param message: a message, that can be displayed over a GUI
+     * @param resetOnAcknowledgement: if true, the alarm will be automatically reset on acknowledgement by the user 
+     * @param severity: severity of the alarm: ALARM, WARNING, MESSAGE (optional, default = Severity.MESSAGE)
+     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to evaluate an alarm condition
+     */
+    public Alarm(AbstractModule containingModule, String identifier, Integer number, String message, boolean resetOnAcknowledgement, Severity severity, Supplier<Boolean> intrinsicFunction) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, number, message, resetOnAcknowledgement, severity);
+        this.intrinsicFunction = intrinsicFunction;
+    }
 
     /**
-     * constructs an alarm with default severity MESSAGE
+     * constructs an alarm
      * @param containingModule: module which instantiated the alarm
      * @param identifier: identifier of the signal
      * @param message: a message, that can be displayed over a GUI
@@ -256,7 +274,7 @@ public class Alarm extends Signal{
             if (resetOnAcknowledgement && state){
                 try{reset();}catch(SignalAccessException exc){/*cannot happen*/};
             }
-        }
+        }        
     }
     
     protected AcknowledgedRunner getAcknowledgedRunner(){
@@ -289,7 +307,14 @@ public class Alarm extends Signal{
         ((LogicalValue)getPropagatedValue()).copy((LogicalValue)getValue());
         propagatedAcknowledged.copy(acknowledged);
     }
-    
+
+    @Override
+    protected void applyTypedIntrinsicFunction() throws ProcessException {
+        if (intrinsicFunction != null){
+            set((Boolean)intrinsicFunction.get());
+        }
+    }
+        
     /**
      * @return process event indicatimg, that an alarm has gone 
      */

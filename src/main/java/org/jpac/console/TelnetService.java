@@ -36,9 +36,7 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import io.netty.util.internal.logging.Log4JLoggerFactory;
-import java.security.cert.CertificateException;
-import javax.net.ssl.SSLException;
+import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,37 +50,40 @@ public final class TelnetService {
     private EventLoopGroup   workerGroup;
     
     public TelnetService(boolean useSSL, String bindAddress, int port) throws InterruptedException{
-            new Thread(() ->{
-                SslContext    sslCtx;
-                ChannelFuture channelFuture;        
-                try{
-                    if (useSSL) {
-                        SelfSignedCertificate ssc = new SelfSignedCertificate();
-                        sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
-                    } else {
-                        sslCtx = null;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    SslContext    sslCtx;
+                    ChannelFuture channelFuture;
+                    try{
+                        if (useSSL) {
+                            SelfSignedCertificate ssc = new SelfSignedCertificate();
+                            sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
+                        } else {
+                            sslCtx = null;
+                        }
+                        
+                        bossGroup = new NioEventLoopGroup(1);
+                        workerGroup = new NioEventLoopGroup();
+                        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
+                        try {
+                            ServerBootstrap b = new ServerBootstrap();
+                            b.group(bossGroup, workerGroup)
+                                    .channel(NioServerSocketChannel.class)
+                                    .handler(new LoggingHandler(LogLevel.INFO))
+                                    .childHandler(new TelnetServerInitializer(sslCtx));
+                            channelFuture = b.bind(bindAddress, port).sync();
+                            channelFuture.channel().closeFuture().sync();
+                        }
+                        catch(InterruptedException exc)
+                        {
+                            bossGroup.shutdownGracefully();
+                            workerGroup.shutdownGracefully();
+                        }
                     }
-
-                    bossGroup = new NioEventLoopGroup(1);
-                    workerGroup = new NioEventLoopGroup();
-                    InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory());
-                    try {
-                        ServerBootstrap b = new ServerBootstrap();
-                        b.group(bossGroup, workerGroup)
-                         .channel(NioServerSocketChannel.class)
-                         .handler(new LoggingHandler(LogLevel.INFO))
-                         .childHandler(new TelnetServerInitializer(sslCtx));
-                        channelFuture = b.bind(bindAddress, port).sync();
-                        channelFuture.channel().closeFuture().sync();
+                    catch(Exception exc){
+                        Log.error("Failed to start console service:", exc);
                     }
-                    catch(InterruptedException exc)
-                    {
-                        bossGroup.shutdownGracefully();
-                        workerGroup.shutdownGracefully();
-                    }
-                }
-                catch(Exception exc){
-                    Log.error("Failed to start console service:", exc);
                 }
             }).start();
     }

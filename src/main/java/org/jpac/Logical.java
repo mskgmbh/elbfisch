@@ -25,6 +25,7 @@
 
 package org.jpac;
 
+import java.util.function.Supplier;
 import org.jpac.alarm.Alarm;
 
 /**
@@ -32,8 +33,8 @@ import org.jpac.alarm.Alarm;
  */
 
 public class Logical extends Signal{
-    private LogicalValue wrapperValue;
-    private boolean      invertOnUpdate;
+    private LogicalValue    wrapperValue;
+    private boolean         invertOnUpdate;
 
     /**
      * constructs a logical signal
@@ -49,6 +50,18 @@ public class Logical extends Signal{
         invertOnUpdate  = false;
     }
     
+   /**
+     * constructs a logical signal
+     * @param containingModule: module, this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to calculate the actual value
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public Logical(AbstractModule containingModule, String identifier, Supplier<Boolean> intrinsicFunction) throws SignalAlreadyExistsException{
+        this(containingModule, identifier);
+        this.intrinsicFunction = intrinsicFunction;
+    }
+
     /**
      * constructs a logical signal
      * @param containingModule: module, this signal is contained in
@@ -235,5 +248,12 @@ public class Logical extends Signal{
     
     protected void setInvertOnUpdate(boolean invert){
         this.invertOnUpdate = invert;
+    }
+
+    @Override
+    protected void applyTypedIntrinsicFunction() throws Exception {
+        if (intrinsicFunction != null){
+            set((Boolean)intrinsicFunction.get());
+        }
     }
 }

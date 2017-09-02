@@ -45,19 +45,38 @@ package org.jpac.opc;
 import java.util.List;
 
 import org.eclipse.milo.opcua.sdk.core.Reference;
-import org.eclipse.milo.opcua.sdk.server.api.DataItem;
-import org.eclipse.milo.opcua.sdk.server.api.MonitoredItem;
 import org.eclipse.milo.opcua.sdk.server.nodes.UaObjectNode;
 import org.eclipse.milo.opcua.sdk.server.nodes.UaVariableNode;
 import org.eclipse.milo.opcua.sdk.server.util.SubscriptionModel;
 import org.eclipse.milo.opcua.stack.core.Identifiers;
+import org.eclipse.milo.opcua.stack.core.StatusCodes;
+import org.eclipse.milo.opcua.stack.core.UaException;
+import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.eclipse.milo.opcua.stack.core.types.builtin.LocalizedText;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 import org.eclipse.milo.opcua.stack.core.types.builtin.QualifiedName;
+import org.eclipse.milo.opcua.stack.core.types.builtin.StatusCode;
+import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UInteger;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UShort;
+import org.eclipse.milo.opcua.stack.core.types.enumerated.TimestampsToReturn;
+import org.eclipse.milo.opcua.stack.core.types.structured.ReadValueId;
+import org.eclipse.milo.opcua.stack.core.types.structured.WriteValue;
+import static com.google.common.collect.Lists.newArrayListWithCapacity;
+import java.util.Optional;
 import java.util.StringTokenizer;
+import java.util.concurrent.CompletableFuture;
+import org.eclipse.milo.opcua.sdk.core.AccessLevel;
 import org.eclipse.milo.opcua.sdk.server.OpcUaServer;
-import org.eclipse.milo.opcua.sdk.server.namespaces.OpcUaNamespace;
+import org.eclipse.milo.opcua.sdk.server.api.AccessContext;
+import org.eclipse.milo.opcua.sdk.server.api.DataItem;
+import org.eclipse.milo.opcua.sdk.server.api.EventItem;
+import org.eclipse.milo.opcua.sdk.server.api.MethodInvocationHandler;
+import org.eclipse.milo.opcua.sdk.server.api.MonitoredItem;
+import org.eclipse.milo.opcua.sdk.server.nodes.AttributeContext;
+import org.eclipse.milo.opcua.sdk.server.nodes.ServerNode;
+import org.eclipse.milo.opcua.sdk.server.nodes.UaMethodNode;
+import org.eclipse.milo.opcua.stack.core.types.builtin.ExpandedNodeId;
+import org.eclipse.milo.opcua.stack.core.types.enumerated.NodeClass;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.jpac.CharString;
@@ -68,25 +87,19 @@ import org.jpac.SignalRegistry;
 import org.jpac.SignedInteger;
 import org.jpac.alarm.Alarm;
 
-public class Namespace extends OpcUaNamespace{
+public class Namespace implements org.eclipse.milo.opcua.sdk.server.api.Namespace {
     static  Logger Log = LoggerFactory.getLogger("jpac.opc");
 
-    public static final String NAMESPACE_URI   = "urn:mskgmbh:elbfisch-opc-ua-server:elbfisch-namespace";
-    public static final int    NAMESPACE_INDEX = 2;
-
-//    private final Map<NodeId, UaNode> nodes = Maps.newConcurrentMap();
-
+    public static final String NAMESPACE_URI = "urn:mskgmbh:elbfisch-opc-ua-server:elbfisch-namespace";
 
     private final UaObjectNode        rootFolder;
     private final SubscriptionModel   subscriptionModel;
 
     private final UShort              namespaceIndex;
     private       int                 idIndex;
-    private       OpcUaServer         server;
+    private final OpcUaServer         server;
 
-    //public Namespace(OpcUaServer server) {
-    public Namespace(OpcUaServer server, UShort namespaceIndex) {  
-        super(server);
+    public Namespace(OpcUaServer server, UShort namespaceIndex) {
         this.server         = server;
         this.namespaceIndex = namespaceIndex;
         this.idIndex        = 0;
@@ -98,7 +111,8 @@ public class Namespace extends OpcUaNamespace{
                 .setTypeDefinition(Identifiers.FolderType)
                 .build();
 
-        server.getNodeMap().addNode(rootFolder);//nodes.put(rootFolder.getNodeId(), rootFolder);
+        server.getNodeMap().put(rootFolder.getNodeId(), rootFolder);
+
         server.getUaNamespace().getObjectsFolder().addReference(new Reference(
                 Identifiers.ObjectsFolder,
                 Identifiers.Organizes,
@@ -109,7 +123,7 @@ public class Namespace extends OpcUaNamespace{
         registerNodes();
         subscriptionModel = new SubscriptionModel(server, this);
     }
-        
+    
     private void registerNodes(){
         try{
             SignalRegistry signals = SignalRegistry.getInstance();
@@ -184,7 +198,7 @@ public class Namespace extends OpcUaNamespace{
                                     .setDisplayName(LocalizedText.english(partialIdentifier))
                                     .setTypeDefinition(Identifiers.FolderType)
                                     .build(); 
-        server.getNodeMap().addNode(objectFolder);//nodes.put(objectFolder.getNodeId(), objectFolder);
+        server.getNodeMap().put(objectFolder.getNodeId(), objectFolder);
         folder.addReference(new Reference(
                     folder.getNodeId(),
                     Identifiers.Organizes,
@@ -208,7 +222,7 @@ public class Namespace extends OpcUaNamespace{
         } else if (signalNode.getSignal() instanceof Alarm){
             node = new AlarmNode(this, signalNode);           
         } 
-        server.getNodeMap().addNode(node);//nodes.put(node.getNodeId(), node);
+        server.getNodeMap().put(node.getNodeId(), node);
         folder.addReference(new Reference(
                 folder.getNodeId(),
                 Identifiers.Organizes,
@@ -222,14 +236,88 @@ public class Namespace extends OpcUaNamespace{
     
     @Override
     public UShort getNamespaceIndex() {
-        return this.namespaceIndex;
-    }    
+        return namespaceIndex;
+    }
 
     @Override
     public String getNamespaceUri() {
         return NAMESPACE_URI;
     }
+    
+    @Override
+    public CompletableFuture<List<Reference>> browse(AccessContext context, NodeId nodeId) {
+        ServerNode node = server.getNodeMap().get(nodeId);
 
+        if (node != null) {
+            return CompletableFuture.completedFuture(node.getReferences());
+        } else {
+            CompletableFuture<List<Reference>> f = new CompletableFuture<>();
+            f.completeExceptionally(new UaException(StatusCodes.Bad_NodeIdUnknown));
+            return f;
+        }
+    }    
+
+    @Override
+    public void read(ReadContext context, Double maxAge,
+                     TimestampsToReturn timestamps,
+                     List<ReadValueId> readValueIds) {
+
+        List<DataValue> results = newArrayListWithCapacity(readValueIds.size());
+
+        for (ReadValueId id : readValueIds) {
+            DataValue value;
+            ServerNode node = server.getNodeMap().get(id.getNodeId());
+            if (node != null) {
+                if (AccessLevel.fromMask(((SignalNode)node).getAccessLevel()).contains(AccessLevel.CurrentRead)){
+                    value = node.readAttribute(new AttributeContext(context), id.getAttributeId(), timestamps, id.getIndexRange());
+                }
+                else{
+                    value = new DataValue(new StatusCode(StatusCodes.Bad_NotReadable));                    
+                }
+            }
+            else{
+                value = new DataValue(new StatusCode(StatusCodes.Bad_NodeIdUnknown));
+            }
+            results.add(value);
+        }
+        context.complete(results);
+    }
+
+    @Override
+    public void write(WriteContext context, List<WriteValue> writeValues) {
+        StatusCode result = null;
+        ServerNode node   = null;
+
+        List<StatusCode> results = newArrayListWithCapacity(writeValues.size());
+
+        for (WriteValue writeValue : writeValues) {
+            NodeId nodeId = writeValue.getNodeId();
+            if (nodeId != null){
+                node = server.getNodeMap().getNode(nodeId).get();
+                if (AccessLevel.fromMask(((SignalNode)node).getAccessLevel()).contains(AccessLevel.CurrentWrite)){
+                    UInteger  attributeId = writeValue.getAttributeId();
+                    DataValue value       = writeValue.getValue();
+                    String    indexRange  = writeValue.getIndexRange();
+                    try{
+                        node.writeAttribute(new AttributeContext(context), attributeId, value, indexRange);
+                        result = StatusCode.GOOD;
+                    }
+                    catch (UaException e) {
+                        result = e.getStatusCode();
+                    }                    
+                }
+                else{
+                    result = new StatusCode(StatusCodes.Bad_NotWritable);                
+                }
+            }
+            else {
+                result = new StatusCode(StatusCodes.Bad_NodeIdUnknown);
+            }
+            results.add(result);
+        }
+        context.complete(results);
+    }
+    
     @Override
     public void onDataItemsCreated(List<DataItem> dataItems) {
         subscriptionModel.onDataItemsCreated(dataItems);
@@ -248,8 +336,65 @@ public class Namespace extends OpcUaNamespace{
     @Override
     public void onMonitoringModeChanged(List<MonitoredItem> monitoredItems) {
         subscriptionModel.onMonitoringModeChanged(monitoredItems);
-    } 
+    }
 
+    @Override
+    public void onEventItemsCreated(List<EventItem> eventItems) {
+        eventItems.stream()
+            .filter(MonitoredItem::isSamplingEnabled)
+            .forEach(item -> server.getEventBus().register(item));
+    }
+
+    @Override
+    public void onEventItemsModified(List<EventItem> eventItems) {
+        for (EventItem item : eventItems) {
+            if (item.isSamplingEnabled()) {
+                server.getEventBus().register(item);
+            } else {
+                server.getEventBus().unregister(item);
+            }
+        }
+    }
+
+    @Override
+    public void onEventItemsDeleted(List<EventItem> eventItems) {
+        eventItems.forEach(item -> server.getEventBus().unregister(item));
+    }
+
+    public void addReference(NodeId sourceNodeId,
+                             NodeId referenceTypeId,
+                             boolean forward,
+                             ExpandedNodeId targetNodeId,
+                             NodeClass targetNodeClass) throws UaException {
+
+        ServerNode node = server.getNodeMap().get(sourceNodeId);
+
+        if (node != null) {
+            Reference reference = new Reference(
+                sourceNodeId,
+                referenceTypeId,
+                targetNodeId,
+                targetNodeClass,
+                forward);
+
+            node.addReference(reference);
+        } else {
+            throw new UaException(StatusCodes.Bad_NodeIdUnknown);
+        }
+    }
+
+    @Override
+    public Optional<MethodInvocationHandler> getInvocationHandler(NodeId methodId) {
+        return Optional.ofNullable(server.getNodeMap().get(methodId))
+            .filter(n -> n instanceof UaMethodNode)
+            .map(n -> {
+                UaMethodNode m = (UaMethodNode) n;
+                return m.getInvocationHandler()
+                    .orElse(new MethodInvocationHandler.NotImplementedHandler());
+            });
+    }
+    
+    
     public OpcUaServer getServer(){
         return this.server;
     }

@@ -28,11 +28,11 @@ package org.jpac;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
-import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -52,10 +52,10 @@ public class RemoteSignalServer {
       System.setSecurityManager( new RMISecurityManager() );       
       port = serverPort;
       String hostname = InetAddress.getLocalHost().getHostName();
-      LocateRegistry.createRegistry(port);
+      Registry rmiRegistry = LocateRegistry.createRegistry(port);
       RemoteSignalHandler remoteSignalHandler = new RemoteSignalHandlerImpl();
-      String urlString = "//" + hostname + ":" + port + "/" + SERVICENAME;
-      Naming.rebind( urlString, remoteSignalHandler);
+      String urlString = "rmi://" + hostname + ":" + port + "/" + SERVICENAME;
+      rmiRegistry.rebind( SERVICENAME, remoteSignalHandler);      
       if (Log.isInfoEnabled()) Log.info( "Remote signal service started as " + urlString);
       }
       catch(Exception exc){

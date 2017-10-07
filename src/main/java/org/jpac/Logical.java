@@ -100,6 +100,16 @@ public class Logical extends Signal{
     }
 
     /**
+     * returns the value of the logical. If the calling module is the containing module the value of this signal is returned.
+     * If the calling module is a foreign module the propagated signal is returned.
+     * @return see above
+     * @throws org.jpac.SignalInvalidException
+     */
+    public boolean get() throws SignalInvalidException{
+        return ((LogicalValue)getValidatedValue()).get();
+    }    
+    
+    /**
      * returns true, if the given "state" is equal to the logicals state. If the calling module is the containing module
      * the state of the signal is returned. If the calling module is a foreign module the propagated (synchronized) signal is returned.
      * @param state: expected state
@@ -108,6 +118,14 @@ public class Logical extends Signal{
      */
     public boolean is(boolean state) throws SignalInvalidException{
         return ((LogicalValue)getValidatedValue()).is(state);
+    }
+    
+    /**
+     * used to set the intrinsic function of this signal.
+     * @param intrinsicFunction 
+     */
+    public void setIntrinsicFunction(Supplier<Boolean> intrinsicFunction){
+        setIntrinsicFct(intrinsicFunction);
     }
     
     /**

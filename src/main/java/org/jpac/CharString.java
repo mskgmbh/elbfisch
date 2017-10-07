@@ -108,6 +108,14 @@ public class CharString extends Signal{
     public String get() throws SignalInvalidException{
         return ((CharStringValue)getValidatedValue()).get();
     }
+    
+    /**
+     * used to set the intrinsic function of this signal.
+     * @param intrinsicFunction 
+     */
+    public void setIntrinsicFunction(Supplier<String> intrinsicFunction){
+        setIntrinsicFct(intrinsicFunction);
+    }
 
     /**
      * returns a process event (CharStringChanges), which is fired, if the char string changes

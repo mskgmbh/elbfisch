@@ -106,6 +106,14 @@ public class Generic<ValueImpl> extends Signal{
     public ValueImpl get() throws SignalInvalidException{
         return (ValueImpl)getValidatedValue();
     }
+    
+     /**
+     * used to set the intrinsic function of this signal.
+     * @param intrinsicFunction 
+     */
+    public void setIntrinsicFunction(Supplier<ValueImpl> intrinsicFunction){
+        setIntrinsicFct(intrinsicFunction);
+    }
 
     @Override
     protected void updateValue(Object o, Object arg) throws SignalAccessException {

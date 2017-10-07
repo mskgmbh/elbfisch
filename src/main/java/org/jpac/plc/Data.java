@@ -427,11 +427,11 @@ public class Data {
     }
     
     /**
-     * used to copy the bytes and the endianess of data. Afterwards this.isModified() will be true for the first call.
+     * used to copy the bytes and the endianess of data.
      * @param data 
      */
     public void copy(Data data){
-        this.setBytes(data.bytes);
+        System.arraycopy(data.bytes, 0, this.getBytes(), 0, this.getBytes().length);
         this.endianness = data.endianness;
     };
     

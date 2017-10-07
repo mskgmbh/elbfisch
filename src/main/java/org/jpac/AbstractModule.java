@@ -138,7 +138,7 @@ public abstract class AbstractModule extends Thread{
     
     private  int                  debugIndex;
     
-    private  Histogram           histogramm;
+    private  Histogram            histogramm;
     private  boolean              requestingEmergencyStop;
     private  boolean              inEveryCycleDoActive;
     
@@ -186,7 +186,7 @@ public abstract class AbstractModule extends Thread{
         //let the application class initialize its modules and signals
         setPriority(MAX_PRIORITY - 1);
         histogramm  = new Histogram(getQualifiedName(), getJPac().getCycleTime());
-
+        
         stackTraceSignals  = new CharString[10];
         for(int i = 0; i < stackTraceSignals.length; i++){
             try{stackTraceSignals[i] = new CharString(this,":StackTrace[" + i + "]");}catch(SignalAlreadyExistsException exc){/*cannot happen*/}
@@ -226,6 +226,8 @@ public abstract class AbstractModule extends Thread{
             for(int i = 0; i < stackTraceSignals.length; i++){
                 stackTraceSignals[i].set("");
             }
+            //invalidate all signals contained by this module
+            SignalRegistry.getInstance().getSignals().stream().filter((s) -> s.getContainingModule() == this).forEach((s) -> s.invalidate());
             //stop invocation of inEveryCycleDo()
             enableCyclicTasks(false);
             if (isAwakenedByProcessEvent()){
@@ -248,23 +250,12 @@ public abstract class AbstractModule extends Thread{
      * @param exitCode exit code returned to the system (OS)
      * @throws ProcessException thrown, if an elbfisch specific condition arises
      */
-    public void shutdown(final int exitCode) throws ProcessException{
-        boolean shutdownInitiated = false;
-        if (Log.isInfoEnabled()) Log.debug("shutdown requested by module " + this);
-        JPac.getInstance().invokeShutdown(exitCode);
-        if (Thread.currentThread() instanceof AbstractModule){
-            //wait, until the automation controller signals its shutdown
-            ImpossibleEvent infinity = new ImpossibleEvent();
-            do{
-                try{
-                    infinity.await();
-                }
-                catch(ProcessException exc){
-                    shutdownInitiated = exc instanceof ShutdownRequestException;
-                }
-            }
-            while(!shutdownInitiated);
-        }
+    protected void shutdown(final int exitCode) throws ShutdownRequestException{
+        JPac.getInstance().shutdownDeferred(exitCode);
+        //wait, until the automation controller invokes the shutdown sequence
+        //which causes a ShutdownRequestException to be thrown
+        ImpossibleEvent infinity = new ImpossibleEvent();
+        infinity.await();
     }
 
     /**

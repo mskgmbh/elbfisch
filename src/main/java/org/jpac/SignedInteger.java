@@ -171,6 +171,14 @@ public class SignedInteger extends Signal{
     public int get() throws SignalInvalidException{
         return ((SignedIntegerValue)getValidatedValue()).get();
     }
+    
+    /**
+     * used to set the intrinsic function of this signal.
+     * @param intrinsicFunction 
+     */
+    public void setIntrinsicFunction(Supplier<Integer> intrinsicFunction){
+        setIntrinsicFct(intrinsicFunction);
+    }
 
     /**
      * returns a process event (SignedIntegerExceeds), which is fired, if the signed integer exceeds the given threshold

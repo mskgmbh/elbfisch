@@ -171,6 +171,14 @@ public class Decimal extends Signal{
     public double get() throws SignalInvalidException{
         return ((DecimalValue)getValidatedValue()).get();
     }
+    
+    /**
+     * used to set the intrinsic function of this signal.
+     * @param intrinsicFunction 
+     */
+    public void setIntrinsicFunction(Supplier<Double> intrinsicFunction){
+        setIntrinsicFct(intrinsicFunction);
+    }
 
     /**
      * returns a process event (DecimalExceeds), which is fired, if the decimal exceeds the given threshold

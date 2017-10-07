@@ -25,6 +25,7 @@
 
 package org.jpac;
 
+import java.lang.Thread.State;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Observable;
@@ -32,7 +33,6 @@ import java.util.Observer;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -66,6 +66,7 @@ public abstract class Signal extends Observable implements Observer {
     protected boolean                    initializing;
     protected boolean                    justConnectedAsSource;
     protected boolean                    intrinsicFunctionExceptionLogged;
+    protected boolean                    inApplyIntrinsicFunction;
     
     public Signal(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         super();
@@ -86,6 +87,7 @@ public abstract class Signal extends Observable implements Observer {
         this.initializing                     = false;
         this.justConnectedAsSource            = false;
         this.intrinsicFunctionExceptionLogged = false;
+        this.inApplyIntrinsicFunction         = false;
         SignalRegistry.getInstance().add(this);
     }
     
@@ -358,12 +360,21 @@ public abstract class Signal extends Observable implements Observer {
             return accessedByForeignModule() ? propagatedValue : value;
         }
     }
+    
+    /**
+     * used to set the intrinsic function of this signal.
+     * @param intrinsicFunction 
+     */
+    protected void setIntrinsicFct(Supplier intrinsicFunction){
+        assertSignalAccess();
+        this.intrinsicFunction = intrinsicFunction;
+    }
 
     /**
      * @return the value, if valid
      */
     protected Value getValidatedValue() throws SignalInvalidException {
-        if (!accessedByForeignModule() && intrinsicFunction != null){
+        if (!accessedByForeignModule() && intrinsicFunction != null && !inApplyIntrinsicFunction){
             applyIntrinsicFunction();//reflect actual state of function to containing module immediately
         }
         if (!isValid()){
@@ -376,30 +387,38 @@ public abstract class Signal extends Observable implements Observer {
      * @param value the value to set
      */
     protected void setValue(Value value) throws SignalAccessException {
-        if (!initializing){
-            //if not called to set the default value inside the constructor
-            //check signal access policy
-            assertSignalAccess();
+        if (containingModule.getState() != State.TERMINATED){
+            //containing module is alive. Handle this signal
+            if (!initializing){
+                //if not called to set the default value inside the constructor
+                //check signal access policy
+                assertSignalAccess();
+                assertIntrinsicFunctionAccess();
+            }
+            if (this.value != null && value != null && !this.value.equals(value)){
+               if (Log.isDebugEnabled()) Log.debug(this + ".set(" + value + ")");
+               this.value.copy(value);
+               setChanged();
+            } else if (this.value == null && value != null){
+                if (Log.isDebugEnabled()) Log.debug(this + ".set(" + value + ")");
+                try{
+                    this.value = value.clone();
+                }
+                catch(CloneNotSupportedException exc){
+                    throw new SignalAccessException(exc.getMessage());
+                }
+               setChanged();
+            } else if (this.value != null && value == null){
+               if (Log.isDebugEnabled()) Log.debug(this + ".set(" + value + ")");
+               this.value = null;
+               setChanged();
+            };
+            setValid(true);
+        } else{
+            //dead modules cannot have valid signals
+            setValid(false);
         }
-        if (this.value != null && value != null && !this.value.equals(value)){
-           if (Log.isDebugEnabled()) Log.debug(this + ".set(" + value + ")");
-           this.value.copy(value);
-           setChanged();
-        } else if (this.value == null && value != null){
-            if (Log.isDebugEnabled()) Log.debug(this + ".set(" + value + ")");
-            try{
-                this.value = value.clone();
-            }
-            catch(CloneNotSupportedException exc){
-                throw new SignalAccessException(exc.getMessage());
-            }
-           setChanged();
-        } else if (this.value != null && value == null){
-           if (Log.isDebugEnabled()) Log.debug(this + ".set(" + value + ")");
-           this.value = null;
-           setChanged();
-        };
-        setValid(true);
+        
     }
 
     protected void setValueDeferred(Value value){
@@ -457,9 +476,15 @@ public abstract class Signal extends Observable implements Observer {
             propagatedSignalValid = valid;
     }
     
+    /**
+     * used to invalidate a signal in cases in which a module cannot guarantee the signals integrity
+     * If set the intrinsic function is removed, too
+     * @throws SignalAccessException 
+     */
     public void invalidate() throws SignalAccessException{
         synchronized(this){
             assertSignalAccess();
+            intrinsicFunction = null;
             setValid(false);
         }
     }
@@ -539,6 +564,14 @@ public abstract class Signal extends Observable implements Observer {
         }
     }
     
+    protected void assertIntrinsicFunctionAccess() throws SignalAccessException{
+        //if intrinsic function defined signal cannot be set() 
+        if (!inApplyIntrinsicFunction && intrinsicFunction != null){
+            throw new SignalAccessException("signal " + this + " cannot be set() because its controlled by an intrinsic function");
+        }
+    }
+    
+    
     @Override
     public void update(Observable o, Object arg){
         synchronized(this){
@@ -587,13 +620,17 @@ public abstract class Signal extends Observable implements Observer {
     
     protected void applyIntrinsicFunction(){
         try{
+            inApplyIntrinsicFunction = true;
             applyTypedIntrinsicFunction();
             intrinsicFunctionExceptionLogged = false;
         }
         catch(Exception exc){
             if (Log.isDebugEnabled() && !intrinsicFunctionExceptionLogged) Log.debug("Error: " + toString() + ": evaluation of initrinsic function failed because of " + exc.toString());
-            intrinsicFunctionExceptionLogged = true;
+            intrinsicFunctionExceptionLogged = true;//log exceptions only once
             invalidate();
+        }
+        finally{
+            inApplyIntrinsicFunction = false;
         }
     }
 

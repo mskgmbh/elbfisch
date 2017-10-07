@@ -69,11 +69,10 @@ public class JPac extends Thread {
     private     final long      DEFAULTCYCLETIME                     = 100000000L; // 100 ms
     private     final long      DEFAULTCYCLETIMEOUTTIME              = 1000000000L;// 1 s
     private     final int       MAXSHUTDOWNTIME                      = 2000;       // 2 s
-    private     final int       OPCSHUTDOWNTIME                      = 10000;      // 10 s
-    private     final CycleMode DEFAULTCYCLEMODE                     = CycleMode.FreeRunning;
+    private     final int       EXITCODENORMALSHUTDOWN               = 0;
     private     final int       EXITCODEINITIALIZATIONERROR          = 100;
     private     final int       EXITCODEINTERNALERROR                = 101;
-    private     final long      DEFAULTCYCLICTASKSHUTDOWNTIMEOUTTIME = 5000000000L; //5 s
+    private     final long      DEFAULTSHUTDOWNTIMEOUTTIME           = 5000000000L; //5 s
     private     final String    OPCACCESSLEVELNONE                   = "NONE";
     private     final String    OPCACCESSLEVELREADONLY               = "READ_ONLY";
     private     final String    OPCACCESSLEVELREADWRITE              = "READ_WRITE";
@@ -96,6 +95,7 @@ public class JPac extends Thread {
     private     long                   minRemainingCycleTime;
     private     long                   maxRemainingCycleTime;
     private     long                   expectedCycleEndTime;
+    private     long                   shutdownRequestTime;
     private     long                   cycleStartTime;
     private     long                   expansionTime;
     private     long                   numberOfCyclesExceeded;
@@ -111,7 +111,7 @@ public class JPac extends Thread {
     private     Semaphore              startCycle;
     private     Semaphore              cycleEnded;
     
-    private     boolean                running;
+    private     boolean                shutdownPending;
     
     private     final List<Runnable>   synchronizedTasks;
     private     final List<CyclicTask> cyclicTasks;
@@ -119,7 +119,6 @@ public class JPac extends Thread {
     private LongProperty    propCycleTime;
     private LongProperty    propCycleTimeoutTime;
     private StringProperty  propCycleMode;
-    private BooleanProperty propRunningInsideAnIde;
     private BooleanProperty propRunningStandalone;
     private BooleanProperty propEnableTrace;
     private BooleanProperty propPauseOnBreakPoint;
@@ -128,13 +127,12 @@ public class JPac extends Thread {
     private IntProperty     propRemoteSignalPort;
     private StringProperty  propHistogramFile;
     private LongProperty    propCyclicTaskShutdownTimeoutTime;
+    private LongProperty    propMaxShutdownTime;
     private BooleanProperty propOpcUaServiceEnabled;
     private IntProperty     propOpcUaServicePort;
     private StringProperty  propOpcUaServiceName;
     private DoubleProperty  propOpcUaMinSupportedSampleInterval;
     private StringProperty  propOpcUaDefaultAccessLevel;
-    private StringProperty  propOpcUaDefaultBindAddress;
-    private Property        propOpcUaBindAddresses;
     private BooleanProperty propConsoleServiceEnabled;
     private IntProperty     propConsoleServicePort;
     private StringProperty  propConsoleBindAddress;
@@ -144,16 +142,15 @@ public class JPac extends Thread {
     private long              cycleTime;
     private long              cycleTimeoutTime;
     private CycleMode         cycleMode;
-    private boolean           runningInsideAnIde;
     private boolean           runningStandalone;
     private boolean           enableTrace;
     private boolean           pauseOnBreakPoint;
     private int               traceTimeMinutes;
     private boolean           remoteSignalsEnabled;
     private int               remoteSignalPort;
-    private boolean           storeHistogramsOnShutdown;
     private String            histogramFile;
     private long              cyclicTaskShutdownTimeoutTime;
+    private long              maxShutdownTime;
     private boolean           opcUaServiceEnabled;
     private int               opcUaServicePort;
     private String            opcUaServiceName;
@@ -165,17 +162,15 @@ public class JPac extends Thread {
     private String            consoleBindAddress;
     private boolean           generateSnapshotOnShutdown;
     
-    private CountingLock    activeEventsLock;
+    private CountingLock      activeEventsLock;
     
-    private Synchronisation startCycling;
-    private Synchronisation stopCycling;
-    private Synchronisation shutdownRequest;
+    private Synchronisation   startCycling;
+    private Synchronisation   shutdownRequest;
     
-    private boolean         shutdownByModule;
-    private boolean         shutdownByMySelf;
-    private int             exitCode;
+    private boolean           immediateShutdownRequested;
+    private int               exitCode;
         
-    private ProcessEvent    awaitedEventOfLastModule;
+    private ProcessEvent      awaitedEventOfLastModule;
     
     private TraceQueue      traceQueue;
     
@@ -232,13 +227,11 @@ public class JPac extends Thread {
         cycleEnded                  = new Semaphore(1);
         
         startCycling                = new Synchronisation();
-        stopCycling                 = new Synchronisation();
         shutdownRequest             = new Synchronisation();
         
-        shutdownByModule            = false;
-        shutdownByMySelf            = false;        
+        immediateShutdownRequested  = false;        
         
-        running                     = false;
+        shutdownPending             = false;
                 
         activeEventsLock            = new CountingLock();
         awaitedEventOfLastModule    = null;
@@ -259,8 +252,7 @@ public class JPac extends Thread {
         try{
             propCycleTime                       = new LongProperty(this,"CycleTime",DEFAULTCYCLETIME,"[ns]",true);
             propCycleTimeoutTime                = new LongProperty(this,"CycleTimeoutTime",DEFAULTCYCLETIMEOUTTIME,"[ns]",true);
-            propCycleMode                       = new StringProperty(this,"CycleMode",CycleMode.FreeRunning.toString(),"[OneCycle | Bound | LazyBound | FreeRunning]",true);
-            propRunningInsideAnIde              = new BooleanProperty(this,"RunningInsideAnIde",false,"will pop up a small window to close the application",true);
+            propCycleMode                       = new StringProperty(this,"CycleMode",CycleMode.LazyBound.toString(),"[OneCycle | Bound | LazyBound | FreeRunning]",true);
             propRunningStandalone               = new BooleanProperty(this,"RunningStandalone",true,"must be true, if Elbfisch is run standalone",true);
             propEnableTrace                     = new BooleanProperty(this,"EnableTrace",false,"enables tracing of the module activity",true);
             propTraceTimeMinutes                = new IntProperty(this,"TraceTimeMinutes",0,"used to estimate the length of the trace buffer [min]",true);
@@ -268,13 +260,13 @@ public class JPac extends Thread {
             propRemoteSignalsEnabled            = new BooleanProperty(this,"RemoteSignalsEnabled", false, "enable connections to/from remote JPac instances", true);
             propRemoteSignalPort                = new IntProperty(this,"RemoteSignalPort",10002,"server port for remote signal access",true);
             propHistogramFile                   = new StringProperty(this,"HistogramFile","./data/histogram.csv","file in which the histograms are stored", true);
-            propCyclicTaskShutdownTimeoutTime   = new LongProperty(this,"CyclicTaskShutdownTimeoutTime",DEFAULTCYCLICTASKSHUTDOWNTIMEOUTTIME,"Timeout for all cyclic tasks to stop on shutdown [ns]",true);
+            propCyclicTaskShutdownTimeoutTime   = new LongProperty(this,"CyclicTaskShutdownTimeoutTime",DEFAULTSHUTDOWNTIMEOUTTIME,"Timeout for all cyclic tasks to stop on shutdown [ns]",true);
+            propMaxShutdownTime                 = new LongProperty(this,"MaxShutdownTime",DEFAULTSHUTDOWNTIMEOUTTIME,"period of time in which all modules must have been terminated in case of a shutdown [ns]",true);
             propOpcUaServiceEnabled             = new BooleanProperty(this,"OpcUa.ServiceEnabled",false,"enables the opc ua service", true);
             propOpcUaServicePort                = new IntProperty(this,"OpcUa.ServicePort",OpcUaService.DEFAULTPORT,"port over which the opc ua service is provided", true);
             propOpcUaServiceName                = new StringProperty(this,"OpcUa.ServiceName",OpcUaService.DEFAULTSERVERNAME,"name of the server instance", true);
             propOpcUaMinSupportedSampleInterval = new DoubleProperty(this,"OpcUa.MinSupportedSampleInterval",OpcUaService.MINIMUMSUPPORTEDSAMPLEINTERVAL,"minimum supported sample interval [ms]", true);
             propOpcUaDefaultAccessLevel         = new StringProperty(this,"OpcUa.DefaultAccessLevel","NONE","access levels can be NONE,READ_ONLY,READ_WRITE", true);
-            propOpcUaDefaultBindAddress         = new StringProperty(this,"OpcUa.BindAddresses.BindAddress","0.0.0.0","bind address", true);
             propConsoleServiceEnabled           = new BooleanProperty(this,"Console.ServiceEnabled",false,"enables the console service", true);
             propConsoleServicePort              = new IntProperty(this,"Console.ServicePort",CONSOLESERVICEDEFAULTPORT,"port over which the console service is provided", true);
             propConsoleBindAddress              = new StringProperty(this,"Console.BindAddress",DEFAULTCONSOLESERVICEBINDADDRESS,"address the console service is bound to", true);
@@ -284,7 +276,6 @@ public class JPac extends Thread {
             cycleTime                       = propCycleTime.get();
             cycleTimeoutTime                = propCycleTimeoutTime.get();
             cycleMode                       = CycleMode.valueOf(propCycleMode.get());
-            runningInsideAnIde              = propRunningInsideAnIde.get();
             runningStandalone               = propRunningStandalone.get();
             enableTrace                     = propEnableTrace.get();
             traceTimeMinutes                = propTraceTimeMinutes.get();
@@ -293,7 +284,8 @@ public class JPac extends Thread {
             remoteSignalPort                = propRemoteSignalPort.get();
             histogramFile                   = propHistogramFile.get();
             cyclicTaskShutdownTimeoutTime   = propCyclicTaskShutdownTimeoutTime.get();
-
+            maxShutdownTime                 = propMaxShutdownTime.get();
+            
             opcUaServiceEnabled             = propOpcUaServiceEnabled.get();
             opcUaServicePort                = propOpcUaServicePort.get();
             opcUaServiceName                = propOpcUaServiceName.get();
@@ -398,17 +390,16 @@ public class JPac extends Thread {
             catch(Exception exc){
                 //if an error occured during preparation of the system, shutdown immediately
                 Log.error("Error: ", exc);
-                invokeShutdownByMySelf(EXITCODEINITIALIZATIONERROR);
+                invokeImmediateShutdown(EXITCODEINITIALIZATIONERROR);
             }
             catch(Error exc){
                 //if an error occured during preparation of the system, shutdown immediately
                 Log.error("Error: ", exc);
-                invokeShutdownByMySelf(EXITCODEINITIALIZATIONERROR);
+                invokeImmediateShutdown(EXITCODEINITIALIZATIONERROR);
             }
             
             if (Log.isInfoEnabled()) Log.info("running in " + cycleMode + " mode ...");
             setStatus(Status.running);
-            running = true;
             if (getCycleMode() == CycleMode.OneCycle){
                 prepareOneCycleMode();
             }
@@ -470,23 +461,32 @@ public class JPac extends Thread {
                 }
                 catch (Exception ex){
                     Log.error("Error",ex);
-                    invokeShutdownByMySelf(EXITCODEINTERNALERROR);
+                    invokeImmediateShutdown(EXITCODEINTERNALERROR);
                 }
                 catch (Error ex){
                     Log.error("Error",ex);
-                    invokeShutdownByMySelf(EXITCODEINTERNALERROR);
+                    invokeImmediateShutdown(EXITCODEINTERNALERROR);
                 }
-                //check, if the application is to be shutdown
-                if (isShutdownRequested()){
+                //check, if the application is to be shutdown immediately
+                if (isImmediateShutdownRequested()){
+                    if (generateSnapshotOnShutdown){
+                        generateSnapshot();
+                    }
                     done = true;
-                    //check, if cycling is to be stopped
-                } else if (isStopCyclingRequested()){
-                    if (Log.isInfoEnabled()) Log.info("stop cycling ...");
-                    //acknowledge request (see stopCycling())
-                    acknowledgeStopRequest();
-                    done = true;                
+                    //shutdown all active modules
+                    shutdownModulesImmediately(getAwaitedEventList());
                 }
-
+                //check, if the application is to be shutdown normally
+                if (isNormalShutdownRequested()){
+                    if (!shutdownPending){
+                        shutdownPending = true;
+                        if (generateSnapshotOnShutdown){
+                            generateSnapshot();
+                        }
+                        shutdownModules(getAwaitedEventList());
+                    }
+                    done = allModulesShutdown() || shutdownTimeExceeded();
+                }
                 if (getCycleMode() == CycleMode.OneCycle){
                     signalEndOfCycle();
                 }            
@@ -494,18 +494,9 @@ public class JPac extends Thread {
                 traceCycle();
             }
             while(!done);
-            if (generateSnapshotOnShutdown){
-                try{
-                    Snapshot snapshot = getSnapshot();
-                    snapshot.dump(getDataDir());
-                    Log.info("snapshot dumped to '" + snapshot.getFilename() + "'");
-                }
-                catch(Exception exc){
-                    Log.error("Error: ", exc);
-                }
+            if (!allModulesShutdown()){
+                getModules().values().stream().forEach((m)-> {if(m.getState() != State.TERMINATED) Log.error("failed to shutdown module '{}' in time.", m.getQualifiedName());});
             }
-            //shutdown all active modules
-            shutdownAwaitingModules(getAwaitedEventList());
             //shutdown RemoteSignalConnection's
             closeRemoteConnections();
             //stop opc ua service, if running
@@ -671,7 +662,7 @@ public class JPac extends Thread {
 
     }
 
-    private void shutdownAwaitingModules(Set<Fireable> fireableList) throws InconsistencyException{
+    private void shutdownModulesImmediately(Set<Fireable> fireableList) throws InconsistencyException{
         try{
             //invoke all waiting modules and let them handle their ShutdownException
             for (Fireable f: fireableList) {
@@ -711,6 +702,46 @@ public class JPac extends Thread {
             //clear list of fired ProcessEvents (simulation or productive) for next usage
             getFiredEventList().clear();
         }
+    }
+    
+    private void shutdownModules(Set<Fireable> fireableList) throws InconsistencyException{
+        try{
+            //invoke all waiting modules and let them handle their ShutdownException
+            for (Fireable f: fireableList) {
+                if (f instanceof ProcessEvent){
+                    //retrieve all pending process events
+                    getFiredEventList().add(f);
+                }
+            }
+            if (Log.isInfoEnabled()) Log.info("requesting shutdown of modules");
+            //awaken waiting modules with a ShutdownException
+            //which is automatically thrown by means of the ProcessEvent,
+            //if this.shutdownRequested = true
+            for (Fireable f: getFiredEventList()) {
+                AbstractModule module = f.getObservingModule();
+                ((ProcessEvent)f).setShutdownRequested(true);
+                f.notifyObservingModule();
+            }
+        }
+        finally{
+            //clear list of fired ProcessEvents (simulation or productive) for next usage
+            getFiredEventList().clear();
+        }
+    }
+    
+    private void generateSnapshot(){
+        try{
+            Snapshot snapshot = getSnapshot();
+            snapshot.dump(getDataDir());
+            Log.info("snapshot dumped to '" + snapshot.getFilename() + "'");
+        }
+        catch(Exception exc){
+            Log.error("Error: ", exc);
+        }
+    }
+    
+    private boolean allModulesShutdown(){
+        return getModules().values().stream().allMatch((m) -> m.getState() == State.TERMINATED);
     }
     
     /**
@@ -800,6 +831,10 @@ public class JPac extends Thread {
     protected Set<Fireable> getFiredEventList() {
         return firedEventList;
     }
+    
+    protected boolean shutdownTimeExceeded(){
+        return (System.nanoTime() - shutdownRequestTime) > maxShutdownTime;
+    }
 
     /**
      * @return the cycleNumber
@@ -814,54 +849,48 @@ public class JPac extends Thread {
     public long getCycleTime() {
         return cycleTime;
     }
-
-    public void shutdown() {
-        shutdownRequest.request();
-        instance = null; //discard actual instance
+    /**
+     * invoked a shutdown of the elbfisch application.
+     * If called by a module shutdown() returns immediately. Otherwise it blocks, until the shutdown is acknowledged by jPac
+     * @param exitCode 
+     */
+    
+    protected void shutdown(int exitCode, boolean waitForAcknowledgement) {
+        if (Log.isInfoEnabled()) Log.info("shutdown requested. Informing jPac ...");
+        this.shutdownRequestTime = System.nanoTime();
+        this.exitCode            = exitCode;
+        shutdownRequest.request(waitForAcknowledgement);
     }
 
-    public void invokeShutdown(int exitCode) {
-        shutdownByModule = true;
-        this.exitCode    = exitCode; 
+    public void shutdownDeferred(int exitCode) {
+        shutdown(exitCode, false);
     }
 
-    public void invokeShutdownByMySelf(int exitCode) {
-        shutdownByMySelf = true;
-        this.exitCode    = exitCode; 
+    public void invokeImmediateShutdown(int exitCode) {
+        immediateShutdownRequested = true;
+        shutdownRequestTime        = System.nanoTime();
+        exitCode                   = exitCode; 
     }
 
     public void startCycling() {
         if (Log.isInfoEnabled()) Log.info("startCycling requested");
-        startCycling.request();
+        startCycling.request(true);
         if (Log.isInfoEnabled()) Log.info("startCycling() acknowledged");
     }
     
-    public void stopCycling(){
-        if (Log.isInfoEnabled()){Log.info("stopCycling requested");};
-        stopCycling.request();
-        if (Log.isInfoEnabled()){Log.info("stopCycling acknowledged");};
-    }
-    
-    protected boolean isStopCyclingRequested(){
-        return stopCycling.isRequested();
+    public boolean isNormalShutdownRequested() {
+        return shutdownRequest.isRequested();
     }
 
-    protected void acknowledgeStopRequest(){
-        stopCycling.acknowledge();
-    }
-    
-    /**
-     * @return the shutdownRequested
-     */
-    public boolean isShutdownRequested() {
-        return shutdownRequest.isRequested() || shutdownByMySelf || shutdownByModule;
+    public boolean isImmediateShutdownRequested() {
+        return immediateShutdownRequested;
     }
 
     protected void acknowledgeShutdownRequest(){
         if (shutdownRequest.isRequested()){
             shutdownRequest.acknowledge();
         }
-        shutdownByMySelf = false;
+        immediateShutdownRequested = false;
     }
 
     /**
@@ -1333,7 +1362,7 @@ public class JPac extends Thread {
     public void stopBeforeStartUp(){
         if (Log.isInfoEnabled()) Log.info("aborting jPac before startup");
         this.stopBeforeStartup = true;
-        startCycling.request();
+        startCycling.request(true);
     }
     
     public Opc.AccessLevel getOpcUaDefaultAccesslevel(){
@@ -1361,7 +1390,7 @@ public class JPac extends Thread {
         for(times100ms = 0; times100ms < 100 && !readyToShutdown; times100ms++){
             try {Thread.sleep(100);}catch(InterruptedException ex) {}
         }
-        if (times100ms == 100){
+        if (times100ms >= 100){
             //automation controller did not finish in time
             Log.error("jPac stopped abnormaly !");
         }            
@@ -1372,7 +1401,6 @@ public class JPac extends Thread {
      * HINT: Do not use it from inside an Elbfisch module. Use Module.shutdown(<exit code>) instead.
      */
     public void shutdownGraceFully() {
-        if (Log.isInfoEnabled()) Log.info("shutdown requested. Informing jPac ...");
         switch (status){
             case initializing:
             case ready:
@@ -1382,18 +1410,14 @@ public class JPac extends Thread {
                 break;
             case running:
                 if (!readyToShutdown){
-                    shutdownRequest.request();
+                    shutdown(EXITCODENORMALSHUTDOWN, true);
                     waitUntilShutdownComplete();                    
-                }
-                else{
-                    if (Log.isInfoEnabled()) Log.info("automation controller already shutdown");
                 }
                 break;
             case halted:
                 //nothing to do
                 break;
         }
-        if (Log.isInfoEnabled()) Log.info("shutdown complete");
     }
         
     class ShutdownHook extends Thread{
@@ -1505,17 +1529,19 @@ public class JPac extends Thread {
             }
         }
 
-        protected void request(){
+        protected void request(boolean waitForAcknowledgement){
             synchronized(syncPointRequest){
                acknowledged = false;
                requested    = true;
                syncPointRequest.notify();
             }
-            synchronized(syncPointAcknowledgement){
-                while(!acknowledged){
-                    try{syncPointAcknowledgement.wait();}catch(InterruptedException exc){};
+            if (waitForAcknowledgement){
+                synchronized(syncPointAcknowledgement){
+                    while(!acknowledged){
+                        try{syncPointAcknowledgement.wait();}catch(InterruptedException exc){};
+                    }
+                   acknowledged = false;
                 }
-               acknowledged = false;
             }
         }
         

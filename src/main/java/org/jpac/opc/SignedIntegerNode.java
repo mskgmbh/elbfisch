@@ -62,7 +62,7 @@ public class SignedIntegerNode extends SignalNode{
     protected Value getSignalValue() {
         if (signalValue == null){
             signalValue = new SignedIntegerValue();
-            setValid(false);
+            signalValue.setValid(false);
         }
         return signalValue;
     }
@@ -72,8 +72,8 @@ public class SignedIntegerNode extends SignalNode{
         saveSignalState();
         int value = (int)dataValue.getValue().getValue();
         ((SignedIntegerValue)signalValue).set(value);
-        setValid(dataValue.getStatusCode().isGood());
-        if (isValid()){
+        signalValue.setValid(dataValue.getStatusCode().isGood());
+        if (signalValue.isValid()){
             ((SignedInteger)signal).setDeferred(value);
         }
         else{
@@ -90,6 +90,6 @@ public class SignedIntegerNode extends SignalNode{
     protected void invalidateSignalValue() {
         saveSignalState();
         ((SignedIntegerValue)signalValue).set(0);
-        setValid(false);
+        signalValue.setValid(false);
     }
 }

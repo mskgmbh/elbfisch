@@ -62,7 +62,6 @@ public class DecimalNode extends SignalNode{
     protected Value getSignalValue() {
         if (signalValue == null){
             signalValue = new DecimalValue();
-            setValid(false);
         }
         return signalValue;
     }
@@ -72,8 +71,8 @@ public class DecimalNode extends SignalNode{
         saveSignalState();
         double value = (double)dataValue.getValue().getValue();
         ((DecimalValue)signalValue).set(value);
-        setValid(dataValue.getStatusCode().isGood());
-        if (isValid()){
+        signalValue.setValid(dataValue.getStatusCode().isGood());
+        if (signalValue.isValid()){
             ((Decimal)signal).setDeferred(value);
         }
         else{
@@ -90,6 +89,6 @@ public class DecimalNode extends SignalNode{
     protected void invalidateSignalValue() {
         saveSignalState();
         ((DecimalValue)signalValue).set(0.0);
-        setValid(false);
+        signalValue.setValid(false);
     }
 }

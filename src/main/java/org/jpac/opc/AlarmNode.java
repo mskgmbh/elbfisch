@@ -62,7 +62,6 @@ public class AlarmNode extends SignalNode{
     protected Value getSignalValue() {
         if (signalValue == null){
             signalValue = new LogicalValue();
-            setValid(false);
         }
         return signalValue;
     }
@@ -71,7 +70,7 @@ public class AlarmNode extends SignalNode{
     protected void setSignalValue(DataValue dataValue) {
         saveSignalState();
         ((LogicalValue)signalValue).set((boolean)dataValue.getValue().getValue());
-        setValid(dataValue.getStatusCode().isGood());
+        signalValue.setValid(dataValue.getStatusCode().isGood());
     }
 
     @Override
@@ -83,6 +82,6 @@ public class AlarmNode extends SignalNode{
     protected void invalidateSignalValue() {
         saveSignalState();
         ((LogicalValue)signalValue).set(false);
-        setValid(false);
+        signalValue.setValid(false);
     }
 }

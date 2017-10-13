@@ -77,16 +77,12 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
     protected final Boolean   lock;
     protected       Value     signalValue;
     protected       Value     lastSignalValue;
-    protected       boolean   valid;    
-    protected       boolean   lastValid;
     
     public SignalNode(Namespace nameSpace, TreeItem signalNode) {
         super(nameSpace.getServer().getNodeMap(), new NodeId(nameSpace.getNamespaceIndex(), signalNode.getSignal().getQualifiedIdentifier()), new QualifiedName(nameSpace.getNamespaceIndex(), signalNode.getSignal().getIdentifier()), LocalizedText.english(signalNode.getSignal().getIdentifier()));
         this.lock            = false;
         this.signal          = signalNode.getSignal();
         this.signalValue     = getSignalValue();
-        this.valid           = false;
-        this.lastValid       = this.valid;        
 
         try{this.lastSignalValue = signalValue.clone();}catch(CloneNotSupportedException exc){/*cannot happen*/}
         
@@ -175,9 +171,7 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
         synchronized(lock){
             if(isValid){
                 lastSignalValue.copy(getSignalValue());
-                lastValid       = valid;
                 getSignalValue().copy(sourceSignal.getValue());
-                valid           = true;
             }
             else{
                 invalidateSignalValue();//TODO invalidate() problem: invalid signals will cause Status "BAD" on client side
@@ -207,7 +201,7 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
     public DataValue getValue() {
         DataValue theDataValue;
         synchronized(lock){
-            dataValue = new DataValue(new Variant(getSignalValue().getValue()), valid ? StatusCode.GOOD : StatusCode.BAD);
+            dataValue = new DataValue(new Variant(getSignalValue().getValue()), signalValue.isValid() ? StatusCode.GOOD : StatusCode.BAD);
             saveSignalState();   
             theDataValue = dataValue;
         }
@@ -222,21 +216,12 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
             else{
                 this.lastSignalValue.copy(signalValue);
             }
-            this.lastValid = valid;
             }
         catch(CloneNotSupportedException exc){
             Log.error("Error: ", exc);
         }
     }
-    
-    protected void setValid(boolean valid){
-        this.valid = valid;
-    }
-    
-    protected boolean isValid(){
-        return this.valid;
-    }
-    
+            
     abstract protected Value     getSignalValue();
     abstract protected void      setSignalValue(DataValue value);
     abstract protected NodeId    getSignalDataType();

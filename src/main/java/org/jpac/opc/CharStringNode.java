@@ -62,7 +62,7 @@ public class CharStringNode extends SignalNode{
     protected Value getSignalValue() {
         if (signalValue == null){
             signalValue = new CharStringValue();
-            setValid(false);
+            signalValue.setValid(false);
         }
         return signalValue;
     }
@@ -72,8 +72,8 @@ public class CharStringNode extends SignalNode{
         saveSignalState();
         String value = (String)dataValue.getValue().getValue();
         ((CharStringValue)signalValue).set(value);
-        setValid(dataValue.getStatusCode().isGood());
-        if (isValid()){
+        signalValue.setValid(dataValue.getStatusCode().isGood());
+        if (signalValue.isValid()){
             ((CharString)signal).setDeferred(value);
         }
         else{
@@ -90,6 +90,6 @@ public class CharStringNode extends SignalNode{
     protected void invalidateSignalValue() {
         saveSignalState();
         ((CharStringValue)signalValue).set("");
-        setValid(false);
+        signalValue.setValid(false);
     }
 }

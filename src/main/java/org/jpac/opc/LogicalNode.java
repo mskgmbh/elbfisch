@@ -63,7 +63,7 @@ public class LogicalNode extends SignalNode{
     protected Value getSignalValue() {
         if (signalValue == null){
             signalValue = new LogicalValue();
-            setValid(false);
+            signalValue.setValid(false);
         }
         return signalValue;
     }
@@ -73,8 +73,8 @@ public class LogicalNode extends SignalNode{
         saveSignalState();
         boolean value = (boolean)dataValue.getValue().getValue();
         ((LogicalValue)signalValue).set(value);
-        setValid(dataValue.getStatusCode().isGood());
-        if (isValid()){
+        signalValue.setValid(dataValue.getStatusCode().isGood());
+        if (signalValue.isValid()){
             ((Logical)signal).setDeferred(value);
         }
         else{
@@ -91,6 +91,6 @@ public class LogicalNode extends SignalNode{
     protected void invalidateSignalValue() {
         saveSignalState();
         ((LogicalValue)signalValue).set(false);
-        setValid(false);
+        signalValue.setValid(false);
     }
 }

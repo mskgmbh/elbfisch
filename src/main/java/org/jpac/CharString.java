@@ -83,6 +83,7 @@ public class CharString extends Signal{
     public void set(String value) throws SignalAccessException{
         synchronized(this){
             wrapperValue.set(value);
+            wrapperValue.setValid(true);            
             setValue(wrapperValue);
         }
     }
@@ -95,6 +96,7 @@ public class CharString extends Signal{
     public void setDeferred(String value){
         CharStringValue localWrapperValue = new CharStringValue();
         localWrapperValue.set(value);
+        localWrapperValue.setValid(true);
         setValueDeferred(localWrapperValue);
     }
     

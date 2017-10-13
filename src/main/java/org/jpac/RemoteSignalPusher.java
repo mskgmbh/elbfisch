@@ -49,6 +49,7 @@ class RemoteSignalPusher{
                         signal.setValid(rst.isValid());
                         if (rst.isValid()){
                             signal.setValue(rst.getValue());
+                            signal.setValid(true);
                         }
                     }
                     catch(SignalAccessException exc){

@@ -25,6 +25,7 @@
 
 package org.jpac;
 
+import io.netty.buffer.ByteBuf;
 import java.io.Serializable;
 
 /**
@@ -32,7 +33,8 @@ import java.io.Serializable;
  * @author berndschuster
  */
 public class DecimalValue implements Value, Cloneable, Serializable{
-    protected double value = 0.0;
+    protected double  value = 0.0;
+    protected boolean valid = false;
     
     public void set(double value){
         this.value = value;
@@ -48,13 +50,19 @@ public class DecimalValue implements Value, Cloneable, Serializable{
     }
     
     @Override
+    public void setValue(Object value){
+        set((double) value);
+    }
+    
+    @Override
     public void copy(Value aValue){
         set(((DecimalValue)aValue).get());
+        this.valid = aValue.isValid();        
     }
 
     @Override
     public boolean equals(Value aValue) {
-        return aValue instanceof DecimalValue && Math.abs(this.value - ((DecimalValue)aValue).get()) < 0.00000000000000001;
+        return aValue instanceof DecimalValue && Math.abs(this.value - ((DecimalValue)aValue).get()) < 0.00000000000000001 && this.valid == aValue.isValid();
     }
     
     public boolean equals(double aValue) {
@@ -70,4 +78,27 @@ public class DecimalValue implements Value, Cloneable, Serializable{
     public Value clone() throws CloneNotSupportedException {
         return (DecimalValue) super.clone();
     }
+    
+    @Override
+    public void setValid(boolean valid) {
+        this.valid = valid;
+    }
+
+    @Override
+    public boolean isValid() {
+        return this.valid;
+    }
+    
+    @Override
+    public void encode(ByteBuf byteBuf){
+        byteBuf.writeByte(valid ? 1 : 0);
+        byteBuf.writeDouble(get());
+    }
+
+    @Override
+    public void decode(ByteBuf byteBuf){
+        valid = byteBuf.readByte() == 0 ? false : true;
+        set(byteBuf.readDouble());
+    }
+    
 }

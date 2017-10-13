@@ -87,10 +87,21 @@ public class SignalRegistry {
     }
     
     public Signal getSignal(String identifier) throws SignalNotRegisteredException{
+        return signals.get(getIndex(identifier));
+    }
+
+    public Signal getSignal(int index) throws SignalNotRegisteredException{
+        if (index < 0 || index >= signals.size()){
+            throw new SignalNotRegisteredException("signal with index " + index);
+        }        
+        return signals.get(index);
+    }
+
+    public int getIndex(String identifier) throws SignalNotRegisteredException{
         Integer index = signalIndices.get(identifier);
         if (index == null){
             throw new SignalNotRegisteredException(identifier);
         }        
-        return signals.get(signalIndices.get(identifier));
+        return index;
     }
 }

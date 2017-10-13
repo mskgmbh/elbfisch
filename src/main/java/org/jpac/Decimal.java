@@ -146,6 +146,7 @@ public class Decimal extends Signal{
         synchronized(this){
             assertRange(value);
             wrapperValue.set(value);
+            wrapperValue.setValid(true);
             setValue(wrapperValue);
         }
     }
@@ -158,6 +159,7 @@ public class Decimal extends Signal{
     public void setDeferred(double value){
         DecimalValue localWrapperValue = new DecimalValue();
         localWrapperValue.set(value);
+        localWrapperValue.setValid(true);
         setValueDeferred(localWrapperValue);
     }
     

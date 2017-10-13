@@ -25,7 +25,6 @@
 
 package org.jpac.alarm;
 
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -154,9 +153,9 @@ public class Alarm extends Signal{
     
     @Override
     protected void setValid(boolean valid) {
-        if (this.signalValid != valid){
+        if (value.isValid() != valid){
             boolean lastState = ((LogicalValue)getValue()).get();
-            boolean wasValid  = this.signalValid;
+            boolean wasValid  = value.isValid();
             super.setValid(valid);
             if(lastState && wasValid) {
                 if(Log.isDebugEnabled()) { Log.debug("Alarm(" + this.message + ").setValid(" + valid + "): lastState: " + lastState ); }
@@ -178,6 +177,7 @@ public class Alarm extends Signal{
         }
         if (Log.isTraceEnabled()) Log.trace(this + ".set(" + state + ")");
         wrapperValue.set(state);
+        wrapperValue.setValid(true);
         setValue(wrapperValue);
         if (state){
            setAcknowlegded(false);            

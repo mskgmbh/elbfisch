@@ -25,6 +25,7 @@
 
 package org.jpac.plc;
 
+import io.netty.buffer.ByteBuf;
 import java.io.IOException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -327,6 +328,31 @@ public class LobRxTx implements Value{
     @Override
     public Object getValue(){
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setValue(Object value) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void setValid(boolean valid) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean isValid() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void encode(ByteBuf byteBuf) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void decode(ByteBuf byteBuf) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

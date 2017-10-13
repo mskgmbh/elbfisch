@@ -80,7 +80,7 @@ public class Generic<ValueImpl> extends Signal{
     
     /**
      * used to set the Generic to the given value
-     * @param value: value, the signed integer is set to
+     * @param value: value, the signal is set to
      * @throws org.jpac.SignalAccessException
      */
     public void set(ValueImpl value) throws SignalAccessException{

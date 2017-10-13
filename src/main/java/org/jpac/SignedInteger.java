@@ -146,6 +146,7 @@ public class SignedInteger extends Signal{
         synchronized(this){
             assertRange(value);
             wrapperValue.set(value);
+            wrapperValue.setValid(true);            
             setValue(wrapperValue);
         }
     }
@@ -158,6 +159,7 @@ public class SignedInteger extends Signal{
     public void setDeferred(int value){
         SignedIntegerValue localWrapperValue = new SignedIntegerValue();
         localWrapperValue.set(value);
+        localWrapperValue.setValid(true);
         setValueDeferred(localWrapperValue);
     }
     

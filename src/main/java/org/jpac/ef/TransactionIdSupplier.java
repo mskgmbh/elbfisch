@@ -1,6 +1,6 @@
 /**
- * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : Value.java
+ * PROJECT   : Elbfisch - java process automation controller (jPac) 
+ * MODULE    : TransactionIdSupplier.java (versatile input output subsystem)
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -23,22 +23,15 @@
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jpac;
-
-import io.netty.buffer.ByteBuf;
+package org.jpac.ef;
 
 /**
- * represents a value of a signal
+ *
  * @author berndschuster
  */
-public interface Value {
-    public void    copy(Value aValue);
-    public boolean equals(Value aValue);
-    public Value   clone() throws CloneNotSupportedException;
-    public Object  getValue();    
-    public void    setValue(Object aValue);    
-    public void    setValid(boolean valid);
-    public boolean isValid();
-    public void    encode(ByteBuf byteBuf);
-    public void    decode(ByteBuf byteBuf); 
+public class TransactionIdSupplier {
+    static int transactionId = 0;
+    public static int getTransactionId(){
+        return transactionId++;
+    }
 }

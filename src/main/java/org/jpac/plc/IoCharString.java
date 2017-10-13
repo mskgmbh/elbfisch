@@ -115,7 +115,7 @@ public class IoCharString extends CharString implements IoSignal{
         
     @Override
     public void propagate() throws SignalInvalidException{
-        if (hasChanged() && signalValid && !changedByCheck){
+        if (hasChanged() && value.isValid() && !changedByCheck){
             //this signal has been altered inside the Elbfisch application  (not by the external device).
             //Mark it as to be put out to the external device
             toBePutOut = true;

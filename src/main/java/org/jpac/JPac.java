@@ -50,10 +50,11 @@ import org.jpac.configuration.Configuration;
 import org.jpac.configuration.DoubleProperty;
 import org.jpac.configuration.IntProperty;
 import org.jpac.configuration.LongProperty;
-import org.jpac.configuration.Property;
 import org.jpac.configuration.StringProperty;
 import org.jpac.console.TelnetService;
+import org.jpac.ef.EfService;
 import org.jpac.opc.Opc;
+import org.jpac.opc.Opc.AccessLevel;
 import org.jpac.opc.OpcUaService;
 import org.jpac.snapshot.Snapshot;
 import org.jpac.statistics.Histogram;
@@ -111,7 +112,7 @@ public class JPac extends Thread {
     private     Semaphore              startCycle;
     private     Semaphore              cycleEnded;
     
-    private     boolean                shutdownPending;
+    private     boolean                normalShutdownPending;
     
     private     final List<Runnable>   synchronizedTasks;
     private     final List<CyclicTask> cyclicTasks;
@@ -133,6 +134,10 @@ public class JPac extends Thread {
     private StringProperty  propOpcUaServiceName;
     private DoubleProperty  propOpcUaMinSupportedSampleInterval;
     private StringProperty  propOpcUaDefaultAccessLevel;
+    private BooleanProperty propEfServiceEnabled;
+    private StringProperty  propEfBindAddress;
+    private IntProperty     propEfServicePort;
+    private StringProperty  propEfDefaultAccessLevel;
     private BooleanProperty propConsoleServiceEnabled;
     private IntProperty     propConsoleServicePort;
     private StringProperty  propConsoleBindAddress;
@@ -157,6 +162,10 @@ public class JPac extends Thread {
     private double            opcUaMinSupportedSampleInterval;
     private Opc.AccessLevel   opcUaDefaultAccessLevel;
     private List<String>      opcUaBindAddresses;
+    private boolean           efServiceEnabled;
+    private int               efServicePort;
+    private Opc.AccessLevel   efDefaultAccessLevel;
+    private String            efBindAddress;
     private boolean           consoleServiceEnabled;
     private int               consoleServicePort;
     private String            consoleBindAddress;
@@ -191,6 +200,7 @@ public class JPac extends Thread {
     private String          projectName;
     
     private OpcUaService    opcUaService;   
+    private EfService       efService;
     private TelnetService   consoleService;
     
     //    private ArrayList<AbstractModule> moduleList;
@@ -231,7 +241,7 @@ public class JPac extends Thread {
         
         immediateShutdownRequested  = false;        
         
-        shutdownPending             = false;
+        normalShutdownPending             = false;
                 
         activeEventsLock            = new CountingLock();
         awaitedEventOfLastModule    = null;
@@ -248,7 +258,7 @@ public class JPac extends Thread {
         
         incrementCounter            = 0;
         decrementCounter            = 0;        
-        
+                
         try{
             propCycleTime                       = new LongProperty(this,"CycleTime",DEFAULTCYCLETIME,"[ns]",true);
             propCycleTimeoutTime                = new LongProperty(this,"CycleTimeoutTime",DEFAULTCYCLETIMEOUTTIME,"[ns]",true);
@@ -267,6 +277,10 @@ public class JPac extends Thread {
             propOpcUaServiceName                = new StringProperty(this,"OpcUa.ServiceName",OpcUaService.DEFAULTSERVERNAME,"name of the server instance", true);
             propOpcUaMinSupportedSampleInterval = new DoubleProperty(this,"OpcUa.MinSupportedSampleInterval",OpcUaService.MINIMUMSUPPORTEDSAMPLEINTERVAL,"minimum supported sample interval [ms]", true);
             propOpcUaDefaultAccessLevel         = new StringProperty(this,"OpcUa.DefaultAccessLevel","NONE","access levels can be NONE,READ_ONLY,READ_WRITE", true);
+            propEfServiceEnabled                = new BooleanProperty(this,"Ef.ServiceEnabled",false,"enables the elbfisch service", true);
+            propEfBindAddress                   = new StringProperty(this,"Ef.BindAddress","localhost","address this service is bound to", true);
+            propEfServicePort                   = new IntProperty(this,"Ef.ServicePort",EfService.DEFAULTPORT,"port over which the elbfisch service is provided", true);
+            propEfDefaultAccessLevel            = new StringProperty(this,"Ef.DefaultAccessLevel","NONE","access levels can be NONE,READ_ONLY,READ_WRITE", true);
             propConsoleServiceEnabled           = new BooleanProperty(this,"Console.ServiceEnabled",false,"enables the console service", true);
             propConsoleServicePort              = new IntProperty(this,"Console.ServicePort",CONSOLESERVICEDEFAULTPORT,"port over which the console service is provided", true);
             propConsoleBindAddress              = new StringProperty(this,"Console.BindAddress",DEFAULTCONSOLESERVICEBINDADDRESS,"address the console service is bound to", true);
@@ -290,9 +304,12 @@ public class JPac extends Thread {
             opcUaServicePort                = propOpcUaServicePort.get();
             opcUaServiceName                = propOpcUaServiceName.get();
             opcUaMinSupportedSampleInterval = propOpcUaMinSupportedSampleInterval.get();
-            opcUaBindAddresses              = new ArrayList<>();
-            Configuration configuration     = Configuration.getInstance();
-            opcUaBindAddresses              = configuration.getList("org..jpac..JPac.OpcUa.BindAddresses.BindAddress");
+            opcUaDefaultAccessLevel         = AccessLevel.valueOf(propOpcUaDefaultAccessLevel.get());
+            opcUaBindAddresses              = Configuration.getInstance().getList("org..jpac..JPac.Ef.BindAddresses.BindAddress");
+            
+            efServiceEnabled                = propEfServiceEnabled.get();
+            efServicePort                   = propEfServicePort.get();
+            efBindAddress                   = propEfBindAddress.get();
             
             consoleServiceEnabled           = propConsoleServiceEnabled.get();
             consoleServicePort              = propConsoleServicePort.get();
@@ -308,6 +325,17 @@ public class JPac extends Thread {
                     opcUaDefaultAccessLevel = Opc.AccessLevel.READ_WRITE;
                 } else {
                     opcUaDefaultAccessLevel = Opc.AccessLevel.NONE;                    
+                }
+            }
+            if (efServiceEnabled){//TODO define a AccessLevel policy for all protocols.
+                if (propEfDefaultAccessLevel.get().equals(OPCACCESSLEVELNONE)){
+                    efDefaultAccessLevel = Opc.AccessLevel.NONE;
+                } else if (propOpcUaDefaultAccessLevel.get().equals(OPCACCESSLEVELREADONLY)){
+                    efDefaultAccessLevel = Opc.AccessLevel.READ_ONLY;
+                } else if (propOpcUaDefaultAccessLevel.get().equals(OPCACCESSLEVELREADWRITE)){
+                    efDefaultAccessLevel = Opc.AccessLevel.READ_WRITE;
+                } else {
+                    efDefaultAccessLevel = Opc.AccessLevel.NONE;                    
                 }
             }
             try{
@@ -383,6 +411,7 @@ public class JPac extends Thread {
                 prepareTrace();
                 prepareHistogramms();
                 prepareOpcUaService();
+                prepareEfService();
                 prepareConsoleService();
                 prepareRemoteConnections(); 
                 prepareCyclicTasks();
@@ -424,8 +453,7 @@ public class JPac extends Thread {
                     handleDeferredTasks();
                     //now fire events awaited by application modules
                     tracePoint = 1300;
-                    handleFireables(getAwaitedEventList());
-                    
+                    handleFireables(getAwaitedEventList());       
                     //acquire system histogram information
                     modulesLoadStartTime = System.nanoTime();
                     systemHistogram.update(modulesLoadStartTime - systemLoadStartTime);
@@ -467,26 +495,17 @@ public class JPac extends Thread {
                     Log.error("Error",ex);
                     invokeImmediateShutdown(EXITCODEINTERNALERROR);
                 }
+                //check, if the application is to be shutdown normally
+                done = normalShutdownPending && (allModulesShutdown() || shutdownTimeExceeded());
                 //check, if the application is to be shutdown immediately
                 if (isImmediateShutdownRequested()){
                     if (generateSnapshotOnShutdown){
                         generateSnapshot();
                     }
-                    done = true;
+                    done = true;// force shutdown
                     //shutdown all active modules
                     shutdownModulesImmediately(getAwaitedEventList());
-                }
-                //check, if the application is to be shutdown normally
-                if (isNormalShutdownRequested()){
-                    if (!shutdownPending){
-                        shutdownPending = true;
-                        if (generateSnapshotOnShutdown){
-                            generateSnapshot();
-                        }
-                        shutdownModules(getAwaitedEventList());
-                    }
-                    done = allModulesShutdown() || shutdownTimeExceeded();
-                }
+                }                
                 if (getCycleMode() == CycleMode.OneCycle){
                     signalEndOfCycle();
                 }            
@@ -501,7 +520,9 @@ public class JPac extends Thread {
             closeRemoteConnections();
             //stop opc ua service, if running
             stopOpcUaService();
-            //stop opc ua service, if running
+            //stop elbdfisch communication service, if running
+            stopEfService();
+            //stop console service, if running
             stopConsoleService();
             //clean up context of registered cyclic tasks
             stopCyclicTasks();
@@ -530,7 +551,8 @@ public class JPac extends Thread {
     };
 
     private void handleFireables(Set<Fireable> fireableList) throws SomeEventsNotProcessedException, InconsistencyException{
-        boolean fired = false;
+        boolean fired                        = false;
+        boolean shutdownRequestedInThisCycle = false;
         //check, if some of the currently registered Fireables can be fired in this cycle
         for (Fireable f: fireableList) {
             try{//the fireable is fired, if
@@ -538,10 +560,12 @@ public class JPac extends Thread {
                 //or if it is a ProcessEvent and an emergency stop is pending and the ProcessEvent is not awaited by a module, which threw
                 //an emergency stop exception during the last cycle,
                 //or if it is a ProcessEvent and it timed out during this cycle
+                //or shutdown is requested.
                 boolean fFired    = f.evaluateFiredCondition();
                 boolean fTimedOut = (f instanceof ProcessEvent) && ((ProcessEvent)f).evaluateTimedOutCondition();
                 fired = fFired ||
-                        (f instanceof ProcessEvent && (emergencyStopIsToBeThrown && !((ProcessEvent)f).getObservingModule().isRequestingEmergencyStop()) ||
+                        (f instanceof ProcessEvent && (isNormalShutdownRequested() && !normalShutdownPending                                              ||
+                                                       emergencyStopIsToBeThrown   && !((ProcessEvent)f).getObservingModule().isRequestingEmergencyStop())||
                                                        fTimedOut                                                                                       );
             }
             catch(ProcessException exc){
@@ -551,7 +575,13 @@ public class JPac extends Thread {
             }
             if (fired){
                 //add Fireable to the list of fired events
-                if (f instanceof ProcessEvent && emergencyStopIsToBeThrown){
+                if (f instanceof ProcessEvent && isNormalShutdownRequested() && !normalShutdownPending){
+                    //if an shutdown request is pending,
+                    //let the awaiting module know about it
+                    ((ProcessEvent)f).setShutdownRequested(true);
+                    normalShutdownPending        = true;//send shutdown request only once
+                    shutdownRequestedInThisCycle = true;
+                } else if (f instanceof ProcessEvent && emergencyStopIsToBeThrown){
                     //if an emergency stop request is pending,
                     //let the awaiting module know about it
                     ((ProcessEvent)f).setEmergencyStopOccured(true);
@@ -567,7 +597,10 @@ public class JPac extends Thread {
         //remove fireables from awaited event list
         for (Fireable f: getFiredEventList()) {
              fireableList.remove(f);
-        }        
+        }
+        if (shutdownRequestedInThisCycle && generateSnapshotOnShutdown){
+            generateSnapshot();
+        }
     }
     
     private void handleInEveryCycleDos(){
@@ -1254,6 +1287,23 @@ public class JPac extends Thread {
         }        
     }
     
+    protected void prepareEfService() throws Exception{
+        if (efServiceEnabled){
+            efService = new EfService(false, efBindAddress, efServicePort);
+            efService.start();
+            Log.info("Elbfisch communication service started");
+        }
+    }
+    
+    protected void stopEfService() {
+        //stop opc server, if running
+        if (efService != null){
+            Log.info("stopping Elbfisch communication service ...");
+            efService.stop();
+            Log.info("Elbfisch communication service stopped");
+        }        
+    }
+
     protected void prepareConsoleService() throws Exception{
         if (consoleServiceEnabled){
             consoleService = new TelnetService(false, consoleBindAddress, consoleServicePort);

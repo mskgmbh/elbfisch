@@ -25,6 +25,7 @@
 
 package org.jpac;
 
+import io.netty.buffer.ByteBuf;
 import java.io.Serializable;
 
 /**
@@ -32,8 +33,9 @@ import java.io.Serializable;
  * @author berndschuster
  */
 public class LogicalValue implements Value, Cloneable, Serializable{
-    boolean value = false;
-
+    protected boolean value = false;
+    protected boolean valid = false;
+    
     public void set(boolean value){
        this.value = value;  
     }
@@ -41,7 +43,12 @@ public class LogicalValue implements Value, Cloneable, Serializable{
     public boolean get(){
         return this.value;
     }
-    
+ 
+    @Override
+    public void setValue(Object aValue){
+        set((boolean) aValue);
+    }
+
     @Override
     public Object getValue(){
         return get();
@@ -51,12 +58,15 @@ public class LogicalValue implements Value, Cloneable, Serializable{
         return this.value == state;
     }
     
+    @Override
     public void copy(Value aValue) {
         this.value = ((LogicalValue)aValue).get();
+        this.valid = ((LogicalValue)aValue).isValid();
     }
 
+    @Override
     public boolean equals(Value aValue) {
-        return aValue instanceof LogicalValue && this.value == ((LogicalValue)aValue).get();
+        return aValue instanceof LogicalValue && this.value == ((LogicalValue)aValue).get() && this.valid == aValue.isValid();
     }
     
     @Override
@@ -67,5 +77,27 @@ public class LogicalValue implements Value, Cloneable, Serializable{
     @Override
     public Value clone() throws CloneNotSupportedException {
         return (LogicalValue) super.clone();
+    }
+
+    @Override
+    public void setValid(boolean valid) {
+        this.valid = valid;
+    }
+
+    @Override
+    public boolean isValid() {
+        return this.valid;
+    }
+
+    @Override
+    public void encode(ByteBuf byteBuf){
+        byteBuf.writeByte(valid ? 1 : 0);
+        byteBuf.writeBoolean(get());
+    }
+
+    @Override
+    public void decode(ByteBuf byteBuf){
+        valid = byteBuf.readByte() == 0 ? false : true;
+        set(byteBuf.readBoolean());
     }
 }

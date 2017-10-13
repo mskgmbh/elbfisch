@@ -1,6 +1,6 @@
 /**
- * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : Value.java
+ * PROJECT   : Elbfisch - java process automation controller (jPac) 
+ * MODULE    : Ping.java (versatile input output subsystem)
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -23,22 +23,44 @@
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jpac;
+package org.jpac.ef;
 
 import io.netty.buffer.ByteBuf;
 
 /**
- * represents a value of a signal
+ *
  * @author berndschuster
  */
-public interface Value {
-    public void    copy(Value aValue);
-    public boolean equals(Value aValue);
-    public Value   clone() throws CloneNotSupportedException;
-    public Object  getValue();    
-    public void    setValue(Object aValue);    
-    public void    setValid(boolean valid);
-    public boolean isValid();
-    public void    encode(ByteBuf byteBuf);
-    public void    decode(ByteBuf byteBuf); 
+public class Ping extends Command{
+
+    public Ping(){
+        super(MessageId.CmdPing);
+    }
+    //client
+    @Override
+    public void encode(ByteBuf byteBuf){
+        super.encode(byteBuf);
+        byteBuf.writeInt(MessageId.CmdPing.getValue());
+    }
+    
+    //server
+    @Override
+    public void decode(ByteBuf byteBuf){
+        super.decode(byteBuf);
+        //no further data to decode
+    }
+    
+    //server
+    @Override
+    public Acknowledgement handleRequest(CommandHandler commandHandler) {
+       return getAcknowledgement();
+    }
+
+    @Override
+    public Acknowledgement getAcknowledgement() {
+        if (acknowledgement == null){
+            acknowledgement = new PingAcknowledgement();
+        }
+        return acknowledgement;
+    }
 }

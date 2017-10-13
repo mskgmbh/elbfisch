@@ -84,6 +84,7 @@ public class Logical extends Signal{
     public void set(boolean state) throws SignalAccessException{
         synchronized(this){
             wrapperValue.set(state);
+            wrapperValue.setValid(true);
             setValue(wrapperValue);
         }
     }
@@ -96,6 +97,7 @@ public class Logical extends Signal{
     public void setDeferred(boolean state){
         LogicalValue localWrapperValue = new LogicalValue();
         localWrapperValue.set(state);
+        localWrapperValue.setValid(true);
         setValueDeferred(localWrapperValue);
     }
 

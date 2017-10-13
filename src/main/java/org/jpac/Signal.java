@@ -34,6 +34,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.function.Supplier;
+import javax.annotation.Nonnull;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -51,8 +52,6 @@ public abstract class Signal extends Observable implements Observer {
     protected long                       propagatedLastChangeCycleNumber;    
     protected long                       lastChangeNanoTime;
     protected JPac                       jPac;
-    protected boolean                    signalValid;
-    protected boolean                    propagatedSignalValid;
     private   boolean                    connectedAsTarget;
     protected AbstractModule             containingModule;
     private   Set<Signal>                observingSignals;
@@ -75,8 +74,6 @@ public abstract class Signal extends Observable implements Observer {
         this.propagatedLastChangeCycleNumber  = 0L;
         this.lastChangeNanoTime               = 0L;
         this.jPac                             = JPac.getInstance();
-        this.signalValid                      = false;//signal is initially invalid
-        this.propagatedSignalValid            = false;//signal is initially invalid
         this.connectedAsTarget                = false;
         this.containingModule                 = containingModule;
         this.observingSignals                 = Collections.synchronizedSet(new HashSet<Signal>());
@@ -104,9 +101,9 @@ public abstract class Signal extends Observable implements Observer {
         //propagate changes occured during the last cycle
         //avoid propagation of changes occured during the actual propagation phase
         if (hasChanged()){
-            setPropagatedSignalValid(signalValid);//propagate valid state of the signal
+            setPropagatedSignalValid(value.isValid());//propagate valid state of the signal
             propagatedLastChangeCycleNumber = JPac.getInstance().getCycleNumber();
-            if (signalValid){
+            if (value.isValid()){
                 //if signal valid, then propagate its value, too
                 if (Log.isDebugEnabled()) Log.debug ("propagate signal " + this);
                 propagateSignalInternally();
@@ -386,7 +383,7 @@ public abstract class Signal extends Observable implements Observer {
     /**
      * @param value the value to set
      */
-    protected void setValue(Value value) throws SignalAccessException {
+    public void setValue(@Nonnull Value value) throws SignalAccessException {
         if (containingModule.getState() != State.TERMINATED){
             //containing module is alive. Handle this signal
             if (!initializing){
@@ -408,12 +405,7 @@ public abstract class Signal extends Observable implements Observer {
                     throw new SignalAccessException(exc.getMessage());
                 }
                setChanged();
-            } else if (this.value != null && value == null){
-               if (Log.isDebugEnabled()) Log.debug(this + ".set(" + value + ")");
-               this.value = null;
-               setChanged();
             };
-            setValid(true);
         } else{
             //dead modules cannot have valid signals
             setValid(false);
@@ -458,22 +450,22 @@ public abstract class Signal extends Observable implements Observer {
     public boolean isValid() {
         boolean valid = false;
         synchronized(this){
-            valid = accessedByForeignModule() || accessedByJPac() ? propagatedSignalValid : signalValid;
+            valid = accessedByForeignModule() || accessedByJPac() ? propagatedValue != null && propagatedValue.isValid() : value != null && value.isValid();
         }
         return valid;
     }
 
     protected void setValid(boolean valid) {
-        if (this.signalValid != valid){
+        if (value.isValid() != valid){
             if (Log.isDebugEnabled()) Log.debug(this + ".setValid(" + valid + ")");
-            this.signalValid = valid;
+            value.setValid(valid);
             setChanged();
         }
     }
     
     protected void setPropagatedSignalValid(boolean valid){
-            if (Log.isDebugEnabled() && (propagatedSignalValid != valid)) Log.debug ("propagate change of valid state for signal " + this + " : " + valid);
-            propagatedSignalValid = valid;
+        if (Log.isDebugEnabled() && (propagatedValue.isValid() != valid)) Log.debug ("propagate change of valid state for signal " + this + " : " + valid);
+        propagatedValue.setValid(valid);
     }
     
     /**
@@ -578,7 +570,7 @@ public abstract class Signal extends Observable implements Observer {
             try{
                 //take over the valid state of the source signal ...
                 setValid(((Signal)o).isValid());
-                if (signalValid){
+                if (value.isValid()){
                     //...  and its value, if valid ...
                     updateValue(o, arg);
                 }

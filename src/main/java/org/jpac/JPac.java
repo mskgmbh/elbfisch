@@ -305,7 +305,7 @@ public class JPac extends Thread {
             opcUaServiceName                = propOpcUaServiceName.get();
             opcUaMinSupportedSampleInterval = propOpcUaMinSupportedSampleInterval.get();
             opcUaDefaultAccessLevel         = AccessLevel.valueOf(propOpcUaDefaultAccessLevel.get());
-            opcUaBindAddresses              = Configuration.getInstance().getList("org..jpac..JPac.Ef.BindAddresses.BindAddress");
+            opcUaBindAddresses              = Configuration.getInstance().getList("org..jpac..JPac.OpcUa.BindAddresses.BindAddress");
             
             efServiceEnabled                = propEfServiceEnabled.get();
             efServicePort                   = propEfServicePort.get();

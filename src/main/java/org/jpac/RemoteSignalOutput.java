@@ -37,7 +37,8 @@ import org.slf4j.Logger;
  */
 @Deprecated
 public class RemoteSignalOutput implements Observer, Serializable{
-    static Logger Log = LoggerFactory.getLogger("jpac.Remote");
+    static final long   serialVersionUID = -7729942942678069016L;
+    static       Logger Log              = LoggerFactory.getLogger("jpac.Remote");
 
     private RemoteSignalTransport transport;
     private int                   index;

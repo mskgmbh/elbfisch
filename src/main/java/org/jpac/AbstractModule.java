@@ -227,7 +227,7 @@ public abstract class AbstractModule extends Thread{
                 stackTraceSignals[i].set("");
             }
             //invalidate all signals contained by this module
-            SignalRegistry.getInstance().getSignals().stream().filter((s) -> s.getContainingModule() == this).forEach((s) -> s.invalidate());
+            SignalRegistry.getInstance().getSignals().stream().filter((s) -> s.getContainingModule() == this).forEach((s) -> {if (!s.isConnectedAsTarget()) s.invalidate();});
             //stop invocation of inEveryCycleDo()
             enableCyclicTasks(false);
             if (isAwakenedByProcessEvent()){

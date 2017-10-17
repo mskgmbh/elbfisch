@@ -29,7 +29,6 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.rmi.NotBoundException;
-import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -49,7 +48,9 @@ public class RemoteSignalServer {
     
    public static void start(int serverPort) throws RemoteException {
       try{
-      System.setSecurityManager( new RMISecurityManager() );       
+      if (System.getSecurityManager() == null){
+          System.setSecurityManager(new SecurityManager());       
+      }
       port = serverPort;
       String hostname = InetAddress.getLocalHost().getHostName();
       Registry rmiRegistry = LocateRegistry.createRegistry(port);

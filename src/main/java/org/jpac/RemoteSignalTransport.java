@@ -35,16 +35,17 @@ import org.slf4j.Logger;
  */
 @Deprecated
 class RemoteSignalTransport implements Serializable, Cloneable{
-    static Logger Log = LoggerFactory.getLogger("jpac.Remote");
+    static final long   serialVersionUID = 3319312743117641240L;
+    static       Logger Log              = LoggerFactory.getLogger("jpac.Remote");
     
 //    public enum State {UNDEFINED, ADDED, PRESENT, REMOVED};
 //    
-    private String  targetSignal;
-    private String  sourceSignal;
-    private int     index;
-    private boolean valid;
-    private Value   value;
-    private int     signature;
+    private String      targetSignal;
+    private String      sourceSignal;
+    private int         index;
+    private boolean     valid;
+    private Value       value;
+    private int         signature;
 //    private State   state;
     
     RemoteSignalTransport(int index, String sourceSignal, String targetSignal){
@@ -105,7 +106,7 @@ class RemoteSignalTransport implements Serializable, Cloneable{
     Value getValue() {
         return value;
     }
-
+    
     /**
      * @param value the value to clone
      */
@@ -115,9 +116,8 @@ class RemoteSignalTransport implements Serializable, Cloneable{
             if (this.value == null){
                //if value not set, yet, initialize it on first call
                this.value = value.clone();
-            }
+            }  
             else{
-               //reuse present instance to avoid data garbage 
                this.value.copy(value);
             }
         }

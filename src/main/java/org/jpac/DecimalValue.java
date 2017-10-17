@@ -33,8 +33,10 @@ import java.io.Serializable;
  * @author berndschuster
  */
 public class DecimalValue implements Value, Cloneable, Serializable{
-    protected double  value = 0.0;
-    protected boolean valid = false;
+    static final long serialVersionUID = 8219593225465688031L;
+    
+    protected           double  value = 0.0;
+    protected transient boolean valid = false;
     
     public void set(double value){
         this.value = value;

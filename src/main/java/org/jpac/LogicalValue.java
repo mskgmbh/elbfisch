@@ -33,8 +33,10 @@ import java.io.Serializable;
  * @author berndschuster
  */
 public class LogicalValue implements Value, Cloneable, Serializable{
-    protected boolean value = false;
-    protected boolean valid = false;
+    static final long serialVersionUID = -1258642332401824933L;
+    
+    protected           boolean value = false;
+    protected transient boolean valid = false;
     
     public void set(boolean value){
        this.value = value;  

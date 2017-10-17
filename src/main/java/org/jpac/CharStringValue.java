@@ -35,8 +35,9 @@ import java.nio.charset.StandardCharsets;
  * represents a Decimal value
  */
 public class CharStringValue implements Value, Cloneable, Serializable{
-    protected String  value = new String();
-    protected boolean valid = false;
+    
+    protected String            value = new String();
+    protected transient boolean valid = false;
 
     
     public void set(String value){

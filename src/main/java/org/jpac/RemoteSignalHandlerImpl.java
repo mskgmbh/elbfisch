@@ -37,7 +37,8 @@ import org.slf4j.Logger;
  */
 @Deprecated
 public class RemoteSignalHandlerImpl extends UnicastRemoteObject implements RemoteSignalHandler{
-    static Logger Log = LoggerFactory.getLogger("jpac.Remote");
+    static final long   serialVersionUID = 7852436947978851644L; 
+    static       Logger Log              = LoggerFactory.getLogger("jpac.Remote");
     
     static private RemoteSignalRegistry registry;
     

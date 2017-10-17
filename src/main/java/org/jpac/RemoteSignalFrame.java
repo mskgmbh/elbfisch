@@ -38,7 +38,8 @@ import org.slf4j.Logger;
  */
 @Deprecated
 public class RemoteSignalFrame implements Serializable, Cloneable{
-    static Logger Log = LoggerFactory.getLogger("jpac.Remote");
+    static final long   serialVersionUID = -7106449683494608337L;
+    static       Logger Log              = LoggerFactory.getLogger("jpac.Remote");
 
     private long                        cycleNumber;
     private List<RemoteSignalTransport> transports;

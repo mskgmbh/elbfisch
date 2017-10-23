@@ -33,10 +33,10 @@ import java.io.Serializable;
  * @author berndschuster
  */
 public class LogicalValue implements Value, Cloneable, Serializable{
-    static final long serialVersionUID = -1258642332401824933L;
+    static final long serialVersionUID = -1258642332401824933L;//to be compatible to legacy RemoteSignals
     
     protected           boolean value = false;
-    protected transient boolean valid = false;
+    protected transient boolean valid = false;//transient to be compatible to legacy RemoteSignals
     
     public void set(boolean value){
        this.value = value;  

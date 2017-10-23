@@ -33,10 +33,10 @@ import java.io.Serializable;
  * @author berndschuster
  */
 public class DecimalValue implements Value, Cloneable, Serializable{
-    static final long serialVersionUID = 8219593225465688031L;
+    static final long serialVersionUID = 8219593225465688031L;//to be compatible to legacy RemoteSignals
     
     protected           double  value = 0.0;
-    protected transient boolean valid = false;
+    protected transient boolean valid = false;//transient to be compatible to legacy RemoteSignals
     
     public void set(double value){
         this.value = value;
@@ -67,10 +67,6 @@ public class DecimalValue implements Value, Cloneable, Serializable{
         return aValue instanceof DecimalValue && Math.abs(this.value - ((DecimalValue)aValue).get()) < 0.00000000000000001 && this.valid == aValue.isValid();
     }
     
-    public boolean equals(double aValue) {
-        return Math.abs(this.value - aValue) < 0.00000000000000001;
-    }
-
     @Override
     public String toString(){
         return Double.toString(value);

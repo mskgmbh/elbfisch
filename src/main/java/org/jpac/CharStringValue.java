@@ -37,7 +37,7 @@ import java.nio.charset.StandardCharsets;
 public class CharStringValue implements Value, Cloneable, Serializable{
     
     protected String            value = new String();
-    protected transient boolean valid = false;
+    protected transient boolean valid = false;//transient to be compatible to legacy RemoteSignals
 
     
     public void set(String value){
@@ -61,25 +61,20 @@ public class CharStringValue implements Value, Cloneable, Serializable{
     @Override
     public void copy(Value aValue){
         if (((CharStringValue)aValue).get() != null){
-            set(new String(((CharStringValue)aValue).get()));
+            set(new String(((CharStringValue)aValue).get()));         
         }
         else{
             set(null);
         }
+        this.valid = aValue.isValid();        
     }
 
     @Override
     public boolean equals(Value aValue) {
-        return aValue instanceof CharStringValue && this.value == null && ((CharStringValue)aValue).get() == null            || 
-               aValue instanceof CharStringValue && this.value != null && this.value.equals(((CharStringValue)aValue).get()) ||
-               aValue instanceof CharStringValue && this.valid == aValue.isValid() ;
+        return (aValue instanceof CharStringValue && this.value == null && ((CharStringValue)aValue).get() == null || 
+                aValue instanceof CharStringValue && this.value != null && this.value.equals(((CharStringValue)aValue).get())) && this.valid == aValue.isValid() ;
     }
     
-    public boolean equals(String aValue) {
-        return this.value == null && aValue == null || 
-               this.value != null && this.value.equals(aValue);
-    }
-
     @Override
     public String toString(){
         return value;

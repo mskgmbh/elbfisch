@@ -34,10 +34,10 @@ import java.io.Serializable;
  * represents a Decimal value
  */
 public class SignedIntegerValue implements Value, Cloneable, Serializable{
-    static final long serialVersionUID = -1131118539659815694L;
+    static final long serialVersionUID = -1131118539659815694L;//to be compatible to legacy RemoteSignals
     
     protected int               value = 0;
-    protected transient boolean valid = false;
+    protected transient boolean valid = false;//transient to be compatible to legacy RemoteSignals
     
     public void set(int value){
         this.value = value;

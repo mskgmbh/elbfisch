@@ -37,7 +37,7 @@ public class SignalAlreadyExistsException extends ProcessException{
     }
 
     @Override
-    public String getLocalizedMessage(){
-        return "Currently registered Signal: " + signal.getIdentifier();
+    public String getMessage(){
+        return "Currently registered Signal: " + signal.getQualifiedIdentifier();
     }
 }

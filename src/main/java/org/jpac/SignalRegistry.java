@@ -64,7 +64,7 @@ public class SignalRegistry {
     public void add(Signal signal) throws SignalAlreadyExistsException{
         String identifier = signal.getContainingModule().getQualifiedName() + '.' + signal.getIdentifier();
         if (signalIndices.get(identifier) != null){
-            throw new SignalAlreadyExistsException(signal);
+            throw new SignalAlreadyExistsException(getSignal(identifier));
         }
         signals.add(lastIndex, signal);
         signalIndices.put(identifier, lastIndex);

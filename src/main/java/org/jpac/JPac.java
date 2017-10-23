@@ -563,8 +563,10 @@ public class JPac extends Thread {
                 //or shutdown is requested.
                 boolean fFired    = f.evaluateFiredCondition();
                 boolean fTimedOut = (f instanceof ProcessEvent) && ((ProcessEvent)f).evaluateTimedOutCondition();
+                
+                shutdownRequestedInThisCycle = isNormalShutdownRequested() && !normalShutdownPending;
                 fired = fFired ||
-                        (f instanceof ProcessEvent && (isNormalShutdownRequested() && !normalShutdownPending                                              ||
+                        (f instanceof ProcessEvent && (shutdownRequestedInThisCycle                                                                       ||
                                                        emergencyStopIsToBeThrown   && !((ProcessEvent)f).getObservingModule().isRequestingEmergencyStop())||
                                                        fTimedOut                                                                                       );
             }
@@ -575,12 +577,10 @@ public class JPac extends Thread {
             }
             if (fired){
                 //add Fireable to the list of fired events
-                if (f instanceof ProcessEvent && isNormalShutdownRequested() && !normalShutdownPending){
+                if (f instanceof ProcessEvent && shutdownRequestedInThisCycle){
                     //if an shutdown request is pending,
                     //let the awaiting module know about it
                     ((ProcessEvent)f).setShutdownRequested(true);
-                    normalShutdownPending        = true;//send shutdown request only once
-                    shutdownRequestedInThisCycle = true;
                 } else if (f instanceof ProcessEvent && emergencyStopIsToBeThrown){
                     //if an emergency stop request is pending,
                     //let the awaiting module know about it
@@ -598,8 +598,13 @@ public class JPac extends Thread {
         for (Fireable f: getFiredEventList()) {
              fireableList.remove(f);
         }
-        if (shutdownRequestedInThisCycle && generateSnapshotOnShutdown){
-            generateSnapshot();
+        
+        if (shutdownRequestedInThisCycle){
+            normalShutdownPending        = true;//send shutdown request only once
+            shutdownRequestedInThisCycle = false;
+            if (generateSnapshotOnShutdown){
+                generateSnapshot();
+            }
         }
     }
     

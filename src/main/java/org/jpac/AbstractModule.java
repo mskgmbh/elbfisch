@@ -58,7 +58,9 @@ public abstract class AbstractModule extends Thread{
 
         public void leave(){
             synchronized(this){
-                stack.pop();
+                if (!stack.isEmpty()){
+                    stack.pop();
+                }
             }
         }
 
@@ -72,7 +74,7 @@ public abstract class AbstractModule extends Thread{
 
         public void reset(){
             synchronized(this){
-                stack.remove(0);
+                resume(0);
             }
         }
 
@@ -219,8 +221,7 @@ public abstract class AbstractModule extends Thread{
             Log.error("Error: ",ex);
         }            
         finally{
-            status.resume(0);
-            status.leave();
+            status.reset();
             status.enter(Status.HALTED);
             //clean up stack trace signals
             for(int i = 0; i < stackTraceSignals.length; i++){
@@ -235,7 +236,7 @@ public abstract class AbstractModule extends Thread{
                 //has come to an end
                 setAwakenedByProcessEvent(false);
                 try{
-                    getJPac().decrementAwakenedModulesCount(null);
+                    getJPac().decrementAwakenedModulesCount(getAwaitedProcessEvent());
                 } 
                 catch(InconsistencyException exc){
                     Log.error("Error: ", exc);

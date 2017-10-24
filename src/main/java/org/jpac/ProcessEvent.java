@@ -235,7 +235,7 @@ public abstract class ProcessEvent extends Fireable{
                 throw new ProcessException(getProcessException());
             }
         }
-        module.setAwaitedEvent(null);
+        //module.setAwaitedEvent(null);
         //check for incoming interlock conditions to be handled by the observing module
         module.preCheckInterlocks();
         tracePoint = 0;

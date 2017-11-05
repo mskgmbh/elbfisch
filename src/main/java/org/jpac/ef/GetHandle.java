@@ -79,7 +79,7 @@ public class GetHandle extends Command{
         Log.debug("handleRequest(): " + this);
         try{
             Signal signal = SignalRegistry.getInstance().getSignal(signalIdentifier);
-            int    index  = SignalRegistry.getInstance().getIndex(signalIdentifier);
+            int    index  = signal.hashCode();
             acknowledgement = new GetHandleAcknowledgement(signalIdentifier, index, BasicSignalType.fromSignal(signal));
             acknowledgement.setResult(Result.NoFault);
         }

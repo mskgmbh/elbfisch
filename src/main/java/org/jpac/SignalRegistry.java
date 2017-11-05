@@ -25,9 +25,6 @@
 
 package org.jpac;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -37,15 +34,11 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class SignalRegistry {
     private static SignalRegistry              instance;
-    private List<Signal>                       signals;
-    private ConcurrentHashMap<String,Integer>  signalIndices;
-    private int                                lastIndex;
+    private ConcurrentHashMap<Integer, Signal> signals;
     
     protected SignalRegistry(){
         instance      = null;
-        signals       = Collections.synchronizedList(new ArrayList<Signal>());
-        signalIndices = new ConcurrentHashMap<String, Integer>();
-        lastIndex     = 0;
+        signals       = new ConcurrentHashMap<Integer, Signal>();
     }
     /**
      * @return the instance of the signal registry
@@ -62,13 +55,11 @@ public class SignalRegistry {
      * @param signal
      */
     public void add(Signal signal) throws SignalAlreadyExistsException{
-        String identifier = signal.getContainingModule().getQualifiedName() + '.' + signal.getIdentifier();
-        if (signalIndices.get(identifier) != null){
+        String identifier = signal.getQualifiedIdentifier();
+        if (signals.get(identifier) != null){
             throw new SignalAlreadyExistsException(getSignal(identifier));
         }
-        signals.add(lastIndex, signal);
-        signalIndices.put(identifier, lastIndex);
-        lastIndex++;
+        signals.put(identifier.hashCode(), signal);
     }
 
     public void remove(Signal signal) throws SignalNotRegisteredException{
@@ -76,32 +67,29 @@ public class SignalRegistry {
            signals.remove(signal);
         }
         else{
-            throw new SignalNotRegisteredException(signal.toString());
+            throw new SignalNotRegisteredException(signal.getQualifiedIdentifier());
         }
     }
     /*
      * @return the ArrayList of registered signals
      */
-    public List<Signal> getSignals(){
+    public ConcurrentHashMap<Integer, Signal> getSignals(){
         return signals;
     }
     
-    public Signal getSignal(String identifier) throws SignalNotRegisteredException{
-        return signals.get(getIndex(identifier));
+    public Signal getSignal(String qualifiedIdentifier) throws SignalNotRegisteredException{
+        Signal signal = signals.get(qualifiedIdentifier.hashCode());
+        if (signal == null){
+            throw new SignalNotRegisteredException(qualifiedIdentifier);
+        }
+        return signal; 
     }
 
-    public Signal getSignal(int index) throws SignalNotRegisteredException{
-        if (index < 0 || index >= signals.size()){
-            throw new SignalNotRegisteredException("signal with index " + index);
+    public Signal getSignal(int hashCode) throws SignalNotRegisteredException{
+        Signal signal = signals.get(hashCode);
+        if (signal == null){
+            throw new SignalNotRegisteredException("signal with hashcode " + hashCode);
         }        
-        return signals.get(index);
-    }
-
-    public int getIndex(String identifier) throws SignalNotRegisteredException{
-        Integer index = signalIndices.get(identifier);
-        if (index == null){
-            throw new SignalNotRegisteredException(identifier);
-        }        
-        return index;
+        return signals.get(hashCode);
     }
 }

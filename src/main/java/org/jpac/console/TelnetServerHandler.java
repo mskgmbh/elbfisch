@@ -22,7 +22,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -30,23 +29,16 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
-import java.util.stream.Stream;
-import javax.xml.stream.XMLStreamException;
 import org.jpac.AbstractModule;
 import org.jpac.CharString;
 import org.jpac.Decimal;
 import org.jpac.JPac;
 import org.jpac.Logical;
 import org.jpac.Signal;
-import org.jpac.SignalNotRegisteredException;
 import org.jpac.SignalRegistry;
 import org.jpac.SignedInteger;
 import org.jpac.snapshot.Snapshot;
@@ -57,9 +49,6 @@ import org.naturalcli.ICommandExecutor;
 import org.naturalcli.IParameterType;
 import org.naturalcli.NaturalCLI;
 import org.naturalcli.ParseResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
 
 /**
  * Handles a server-side channel.
@@ -259,7 +248,7 @@ public class TelnetServerHandler extends SimpleChannelInboundHandler<String> {
                         result.append(ANSI_RED + "search string ending with '*' not allowed in this context" + ANSI_RESET  + "\r\n");
                     }
                     else{
-                        SignalRegistry.getInstance().getSignals().stream()
+                        SignalRegistry.getInstance().getSignals().values().stream()
                             .filter(s -> matches(s.getQualifiedIdentifier(), searchString))
                             .forEach(s -> {result.append(setValue(s, valueAsString) + "\r\n");});
                         if (result.length() == 0){
@@ -282,7 +271,7 @@ public class TelnetServerHandler extends SimpleChannelInboundHandler<String> {
                     StringBuffer listOfSignalIdentifiers = new StringBuffer();
                     String searchString                  = (String)pr.getParameterValue(0);
                     listOfSignalIdentifiers.append(ANSI_GREEN);
-                    SignalRegistry.getInstance().getSignals().stream()
+                    SignalRegistry.getInstance().getSignals().values().stream()
                             .filter(s -> matches(s.getQualifiedIdentifier(), searchString))
                             .sorted((s1,s2) -> s1.getQualifiedIdentifier().compareTo(s2.getQualifiedIdentifier()))
                             .forEach(s -> listOfSignalIdentifiers.append(s + "\r\n"));

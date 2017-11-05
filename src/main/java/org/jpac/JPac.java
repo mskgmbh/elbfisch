@@ -802,9 +802,9 @@ public class JPac extends Thread {
             }            
         }
                 
-        List<Signal> signals = SignalRegistry.getInstance().getSignals();
+        ConcurrentHashMap<Integer, Signal> signals = SignalRegistry.getInstance().getSignals();
         synchronized(signals){
-            for(Signal s: signals){
+            for(Signal s: signals.values()){
                 //handle requested (dis)connections of signals
                 s.handleConnections();
                 //apply intrinsic function

@@ -44,7 +44,7 @@ public class SnapshotModule {
         this.qualifiedName = module.getQualifiedName();
         this.signals       = new ArrayList<SnapshotSignal>();
         
-        SignalRegistry.getInstance().getSignals().stream()
+        SignalRegistry.getInstance().getSignals().values().stream()
             .filter(s -> s.getContainingModule().equals(module))
             .sorted((s1,s2) -> s1.getIdentifier().compareTo(s1.getIdentifier()))
             .forEach(s -> {if (!isUnusedStackTrace(s)) signals.add(new SnapshotSignal(s));});

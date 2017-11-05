@@ -57,7 +57,7 @@ public class Browse extends Command{
     //server
     @Override
     public Acknowledgement handleRequest(CommandHandler commandHandler) {
-        listOfGetHandleAcks = SignalRegistry.getInstance().getSignals().stream().
+        listOfGetHandleAcks = SignalRegistry.getInstance().getSignals().values().stream().
                 map(s -> new GetHandleAcknowledgement(s.getQualifiedIdentifier(), s.hashCode(), BasicSignalType.fromSignal(s))).
                 collect(Collectors.toList());
         acknowledgement = new BrowseAcknowledgement(listOfGetHandleAcks);

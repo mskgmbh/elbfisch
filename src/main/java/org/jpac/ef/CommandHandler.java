@@ -71,8 +71,8 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
         this.listOfSignalTransports = new ArrayList<>();
         
         //prepare list of input signals adding SignalTransports for all signals for reuse during rapid data exchange 
-        SignalRegistry.getInstance().getSignals().forEach((sig)->{
-            int handle = SignalRegistry.getInstance().getIndex(sig.getQualifiedIdentifier());
+        SignalRegistry.getInstance().getSignals().values().forEach((sig)->{
+            int handle = SignalRegistry.getInstance().getSignal(sig.getQualifiedIdentifier()).hashCode();
             try{this.listOfInputValues.put(handle, new SignalTransport(handle, sig.getValue().clone()));}catch(CloneNotSupportedException exc){/*cannot happen*/}
         });
         handlesOfChangedInputSignals = new int[SignalRegistry.getInstance().getSignals().size() + 1];

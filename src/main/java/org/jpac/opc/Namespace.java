@@ -131,7 +131,7 @@ public class Namespace implements org.eclipse.milo.opcua.sdk.server.api.Namespac
                 //at least one signal present
                 TreeItem rootNode = new TreeItem(retrieveRootNodeIdentifier(signals.getSignals().get(0)), null);
                 //construct the tree hierarchy of signals of this Elbfisch instance 
-                for (Signal signal: signals.getSignals()){
+                for (Signal signal: signals.getSignals().values()){
                     if (signal instanceof Logical || signal instanceof SignedInteger || signal instanceof Decimal || signal instanceof CharString || signal instanceof Alarm){//TODO other signal types will be added later
                         StringTokenizer partialIdentifiers  = new StringTokenizer(signal.getQualifiedIdentifier(),".");
                         TreeItem  currentNode = rootNode;

@@ -619,7 +619,7 @@ public abstract class Signal extends Observable implements Observer {
         catch(Exception exc){
             if (Log.isDebugEnabled() && !intrinsicFunctionExceptionLogged) Log.debug("Error: " + toString() + ": evaluation of initrinsic function failed because of " + exc.toString());
             intrinsicFunctionExceptionLogged = true;//log exceptions only once
-            invalidate();
+            setValid(false);
         }
         finally{
             inApplyIntrinsicFunction = false;

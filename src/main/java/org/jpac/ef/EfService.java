@@ -104,7 +104,7 @@ public class EfService implements Runnable{
 
     public void start(){
         Thread serviceStarter = new Thread(this);
-        serviceStarter.setName("Elbfisch communication service starter");
+        serviceStarter.setName("Ef Service");
         serviceStarter.start();
     }    
 

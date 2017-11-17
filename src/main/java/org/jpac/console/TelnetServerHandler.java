@@ -29,7 +29,9 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
@@ -49,6 +51,8 @@ import org.naturalcli.ICommandExecutor;
 import org.naturalcli.IParameterType;
 import org.naturalcli.NaturalCLI;
 import org.naturalcli.ParseResult;
+import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 
 /**
  * Handles a server-side channel.
@@ -130,8 +134,7 @@ public class TelnetServerHandler extends SimpleChannelInboundHandler<String> {
                  }
               }		
             );    
-            commandSet.add(listLoggersCommand);
-            
+            commandSet.add(listLoggersCommand);            
             Command setLevelForLoggerCommand =
               new Command(
               "set level <level:string> for logger <search-string:string>", 
@@ -171,6 +174,7 @@ public class TelnetServerHandler extends SimpleChannelInboundHandler<String> {
                 private String setLevel(String loggerName, Level level){
                     StringBuffer result = new StringBuffer();
                     Enumeration loggers = LogManager.getCurrentLoggers();
+                    LoggerFactory.getLogger(loggerName).setLevel(level);
                     while(loggers.hasMoreElements()){
                       Logger l = (Logger)loggers.nextElement();
                       if (matches(l.getName(),loggerName)){

@@ -12,10 +12,9 @@
 
 package org.jpac.snapshot;
 
-import java.io.File;
-import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -26,9 +25,11 @@ public class SnapshotJars {
     ArrayList<String> libDir;
     public SnapshotJars(){
         libDir = new ArrayList<>();
-        File f = new File("./lib");
-        ArrayList<File> jarFiles = new ArrayList<File>(Arrays.asList(f.listFiles()));        
-        jarFiles.forEach(file -> libDir.add(file.getName()));
+        ClassLoader cl = ClassLoader.getSystemClassLoader();
+        URL[] urls = ((URLClassLoader)cl).getURLs();
+        for(URL url: urls){
+            libDir.add(url.getFile());
+        }
         Collections.sort(libDir);
     }
 }

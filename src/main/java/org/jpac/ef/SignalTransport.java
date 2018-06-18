@@ -26,33 +26,77 @@
 package org.jpac.ef;
 
 import io.netty.buffer.ByteBuf;
+import java.util.Observable;
+import org.jpac.CharStringValue;
+import org.jpac.DecimalValue;
+import org.jpac.LogicalValue;
+import org.jpac.Signal;
+import org.jpac.SignalObserver;
+import org.jpac.SignedIntegerValue;
 import org.jpac.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author berndschuster
  */
-public class SignalTransport {    
-    protected int       handle;
-    protected Value     value;
-    protected boolean   changed;
+public class SignalTransport implements SignalObserver{    
+    protected Logger            Log = LoggerFactory.getLogger("jpac.ef");
+    protected Integer           handle;
+    protected Value             value;
+    protected boolean           changed;
+    protected BasicSignalType   signalType;
+    transient protected boolean connected;
     
-    public SignalTransport(){
+    public SignalTransport(Signal signal){
+        try{
+            if (signal != null){
+                this.handle     = signal.getQualifiedIdentifier().hashCode();
+                this.value      = signal.getValue().clone();
+                this.changed    = false;
+                this.signalType = BasicSignalType.fromSignal(signal);
+                this.connected  = false;
+            }
+        }
+        catch(Exception exc){
+            Log.error("Error: ", exc);
+        }
     }
     
-    public SignalTransport(int handle, Value value){
-        this();
-        this.handle = handle;
-        this.value  = value;
+    protected Value getValueFromSignalType(BasicSignalType sigType){
+        Value value;
+        switch(sigType){
+            case Logical:
+                value = new LogicalValue();
+                break;
+            case SignedInteger:
+                value = new SignedIntegerValue();
+                break;
+            case Decimal:
+                value = new DecimalValue();
+                break;
+            case CharString:
+                value = new CharStringValue();
+                break;
+            default:
+                value = null;
+                break;
+        }
+        return value;
     }
     
     public void encode(ByteBuf byteBuf){
         byteBuf.writeInt(handle);
+        signalType.encode(byteBuf);
         value.encode(byteBuf);
+        setChanged(false);
     }
     
     public void decode(ByteBuf byteBuf){
-        handle = byteBuf.readInt();
+        handle     = byteBuf.readInt();
+        signalType = BasicSignalType.decode(byteBuf);
+        value      = getValueFromSignalType(signalType);
         value.decode(byteBuf);
     }
 
@@ -81,7 +125,29 @@ public class SignalTransport {
     }
 
     @Override
+    public void setConnectedAsTarget(boolean connected) {
+        this.connected = connected;
+    }
+
+    @Override
+    public boolean isConnectedAsTarget() {
+        return this.connected;
+    }
+
+    @Override
+    public void update(Observable o, Object arg) {
+        Signal sourceSignal = (Signal)o;
+        if (value == null){
+            try{value = sourceSignal.getValue().clone();}catch(CloneNotSupportedException exc){/*cannot happen*/};
+        }
+        else{
+            value.copy(sourceSignal.getValue());
+        }
+        setChanged(true);
+    }
+
+    @Override
     public String toString(){
-        return super.toString() + "('" + handle + "', " + value + ")";
+        return getClass() + "('" + handle + "', " + signalType + ", " + value + ")";
     }    
 }

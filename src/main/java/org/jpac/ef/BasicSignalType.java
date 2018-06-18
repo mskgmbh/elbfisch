@@ -25,7 +25,6 @@
 package org.jpac.ef;
 
 import io.netty.buffer.ByteBuf;
-import java.io.IOException;
 import org.jpac.CharString;
 import org.jpac.Decimal;
 import org.jpac.Logical;
@@ -37,34 +36,38 @@ import org.jpac.SignedInteger;
  * @author berndschuster
  */
 public enum BasicSignalType {
-    Logical       ("org.jpac.Logical".hashCode()),
-    SignedInteger ("org.jpac.SignedInteger".hashCode()),
-    Decimal       ("org.jpac.Decimal".hashCode()),
-    CharString    ("org.jpac.CharString".hashCode()),
+    Logical       (1),
+    SignedInteger (2),
+    Decimal       (3),
+    CharString    (4),
     Unknown       (-1);
     
     int type;
     
     BasicSignalType(int type){
-        this.type = type;
-    }
-        
-    public void encode(ByteBuf byteBuf){
-        byteBuf.writeInt(type);
+        this.type = type <= 4 && type >= -1 ? type : -1;
     }
 
     public boolean equals(BasicSignalType type){
         return this.type == type.type;
     }    
 
-    public static int size(){
-        return 4;
+    public int toInt(){
+        return this.type;
+    }
+    
+    public void encode(ByteBuf byteBuf){
+        byteBuf.writeByte(type);
+    }
+    
+    public static BasicSignalType decode(ByteBuf byteBuf){
+        return BasicSignalType.fromInt(byteBuf.readByte());
     }
 
-    public static BasicSignalType fromInt(int result){
+   public static BasicSignalType fromInt(int intVal){
         BasicSignalType  retValue = BasicSignalType.Unknown;
         for (BasicSignalType res: BasicSignalType.values()){
-            if (res.type == result){
+            if (res.type == intVal){
                 retValue = res;
             }
         }

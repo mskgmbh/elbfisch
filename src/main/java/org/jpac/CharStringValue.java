@@ -98,16 +98,16 @@ public class CharStringValue implements Value, Cloneable, Serializable{
     @Override
     public void encode(ByteBuf byteBuf){
         byteBuf.writeByte(valid ? 1 : 0);
-        byteBuf.writeInt(get().length());
-        byteBuf.writeBytes(get().getBytes(StandardCharsets.UTF_8));
+        byteBuf.writeInt(get().getBytes(StandardCharsets.UTF_16).length);
+        byteBuf.writeBytes(get().getBytes(StandardCharsets.UTF_16));
     }
 
     @Override
     public void decode(ByteBuf byteBuf){
         valid = byteBuf.readByte() == 0 ? false : true;
         int length   = byteBuf.readInt();
-        byte[] bytes = new byte[2 * length];
+        byte[] bytes = new byte[length];
         byteBuf.readBytes(bytes);
-        set(new String(bytes, StandardCharsets.UTF_8));
+        set(new String(bytes, StandardCharsets.UTF_16));
     }    
 }

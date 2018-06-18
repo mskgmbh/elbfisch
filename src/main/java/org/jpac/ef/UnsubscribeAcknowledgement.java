@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac) 
- * MODULE    : MessageId.java (versatile input output subsystem)
+ * MODULE    : UnsubscribeAcknowledgement.java (versatile input output subsystem)
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -22,68 +22,53 @@
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.jpac.ef;
 
 import io.netty.buffer.ByteBuf;
+import java.util.List;
 
 /**
  *
  * @author berndschuster
  */
-public enum MessageId {
-    CmdUndefined    ( 99),
-    CmdPing         ( 01),
-    CmdGetHandles   ( 02),
-    CmdGetHandle    ( 03),
-    CmdTransceive   ( 04),
-    CmdBrowse       ( 05),
-    CmdSubscribe    ( 06),
-    CmdUnsubscribe  ( 07),
-    AckUndefined    (-99),
-    AckPing         (-01),
-    AckGetHandles   (-02),
-    AckGetHandle    (-03),
-    AckTransceive   (-04),
-    AckBrowse       (-05),
-    AckSubscribe    (-06),
-    AckUnsubscribe  (-07);
-
-    private short id;
-
-    MessageId(int id){
-        this.id = (short)id;
+public class UnsubscribeAcknowledgement extends Acknowledgement{
+    protected List<Integer> listOfResults;
+    
+    public UnsubscribeAcknowledgement(){
+        super(MessageId.AckSubscribe);
+        listOfResults = null;
     }
 
-    public boolean equals(MessageId ci){
-        return this.id == ci.id;
-    }    
-
-    public static int size(){
-        return 2;
+    public UnsubscribeAcknowledgement(List<Integer> listOfResults){
+        this();
+        this.listOfResults = listOfResults;
     }
     
+    public List<Integer> getListOfResults(){
+        return this.listOfResults;
+    }
+        
+    //server side
+    @Override
     public void encode(ByteBuf byteBuf){
-        byteBuf.writeShort(id);
+        super.encode(byteBuf);
+        byteBuf.writeInt(listOfResults.size());
+        listOfResults.forEach((r) -> byteBuf.writeInt(r));
     }
 
+    //client side
+    @Override
     public void decode(ByteBuf byteBuf){
-        id = byteBuf.readShort();
-    }
-    
-    public static MessageId fromInt(int id){
-        boolean found = false;
-        int     idx   = 0;
-        MessageId[] ids = MessageId.values();
-        for(int i = 0; i < ids.length && !found; i++){
-            found = ids[i].id == id;
-            if (found){
-                idx = i;
-            }
+        super.decode(byteBuf);
+        int length = byteBuf.readInt();
+        for(int i = 0; i < length; i++){
+            listOfResults.add(byteBuf.readInt());
         }
-        return ids[idx];
     }
     
-    public int getValue(){
-        return id;
-    }
+ @Override
+    public String toString(){
+        return super.toString() + (listOfResults != null ? ", " +  listOfResults.size() : "") + ")";
+    }    
 }

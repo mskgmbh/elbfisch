@@ -35,7 +35,7 @@ import org.jpac.SignalRegistry;
  * @author berndschuster
  */
 public class Browse extends Command{
-    List<GetHandleAcknowledgement> listOfGetHandleAcks;
+    List<SignalInfo> listOfSignalInfos;
     
     //server
     public Browse(){
@@ -57,10 +57,10 @@ public class Browse extends Command{
     //server
     @Override
     public Acknowledgement handleRequest(CommandHandler commandHandler) {
-        listOfGetHandleAcks = SignalRegistry.getInstance().getSignals().values().stream().
-                map(s -> new GetHandleAcknowledgement(s.getQualifiedIdentifier(), s.hashCode(), BasicSignalType.fromSignal(s))).
+        listOfSignalInfos = SignalRegistry.getInstance().getSignals().values().stream().
+                map(s -> new SignalInfo(s.getQualifiedIdentifier(), BasicSignalType.fromSignal(s))).
                 collect(Collectors.toList());
-        acknowledgement = new BrowseAcknowledgement(listOfGetHandleAcks);
+        acknowledgement = new BrowseAcknowledgement(listOfSignalInfos);
         return acknowledgement;
     }
 
@@ -74,6 +74,6 @@ public class Browse extends Command{
     
     @Override
     public String toString(){
-        return super.toString() + "(" + (listOfGetHandleAcks != null ? listOfGetHandleAcks.size() : "") + ")";
+        return super.toString() + "(" + (listOfSignalInfos != null ? listOfSignalInfos.size() : "") + ")";
     }
 }

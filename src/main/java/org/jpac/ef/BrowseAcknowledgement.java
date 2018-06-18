@@ -34,28 +34,28 @@ import java.util.List;
  * @author berndschuster
  */
 public class BrowseAcknowledgement extends Acknowledgement{
-    protected List<GetHandleAcknowledgement> listOfGetHandleAcknowledgements;
+    protected List<SignalInfo> listOfSignalInfos;
     
     public BrowseAcknowledgement(){
         super(MessageId.AckBrowse);
-        listOfGetHandleAcknowledgements = null;
+        listOfSignalInfos = null;
     }
 
-    public BrowseAcknowledgement(List<GetHandleAcknowledgement> listOfGetHandleAcknowledgement){
+    public BrowseAcknowledgement(List<SignalInfo> listOfSignalInfos){
         this();
-        this.listOfGetHandleAcknowledgements = listOfGetHandleAcknowledgement;
+        this.listOfSignalInfos = listOfSignalInfos;
     }
     
-    public List<GetHandleAcknowledgement> getListOfGetHandleAcknowledgements(){
-        return this.listOfGetHandleAcknowledgements;
+    public List<SignalInfo> getListOfSignalInfos(){
+        return this.listOfSignalInfos;
     }
         
     //server side
     @Override
     public void encode(ByteBuf byteBuf){
         super.encode(byteBuf);
-        byteBuf.writeInt(listOfGetHandleAcknowledgements.size());
-        listOfGetHandleAcknowledgements.forEach((gha) -> gha.encode(byteBuf));
+        byteBuf.writeInt(listOfSignalInfos.size());
+        listOfSignalInfos.forEach((gha) -> gha.encode(byteBuf));
     }
 
     //client side
@@ -63,15 +63,15 @@ public class BrowseAcknowledgement extends Acknowledgement{
     public void decode(ByteBuf byteBuf){
         super.decode(byteBuf);
         int length = byteBuf.readInt();
-        listOfGetHandleAcknowledgements = new ArrayList<GetHandleAcknowledgement>(length);
+        listOfSignalInfos = new ArrayList<SignalInfo>(length);
         for(int i = 0; i < length; i++){
             GetHandleAcknowledgement gha = (GetHandleAcknowledgement)MessageFactory.getMessage(byteBuf);
-            listOfGetHandleAcknowledgements.add(gha);
+            listOfSignalInfos.add(gha);
         }
     }
     
  @Override
     public String toString(){
-        return super.toString() + (listOfGetHandleAcknowledgements != null ? ", " +  listOfGetHandleAcknowledgements.size() : "") + ")";
+        return super.toString() + (listOfSignalInfos != null ? ", " +  listOfSignalInfos.size() : "") + ")";
     }    
 }

@@ -25,70 +25,15 @@
 
 package org.jpac.ef;
 
-import io.netty.buffer.ByteBuf;
-
 /**
  *
  * @author berndschuster
  */
-public class GetHandleAcknowledgement extends Acknowledgement{
-    protected int             handle;
-    protected String          signalIdentifier;
-    protected BasicSignalType signalType;
-    
+public class GetHandleAcknowledgement extends SignalInfo{
     public GetHandleAcknowledgement(){
-        super(MessageId.AckGetHandle);
-        this.signalIdentifier = null;
-    }
-
-    public GetHandleAcknowledgement(String signalIdentifier, int handle, BasicSignalType signalType){
-        this();
-        this.signalIdentifier = signalIdentifier;
-        this.handle           = handle;
-        this.signalType       = signalType;
-        
-    }
-    
-    public void setHandle(int handle){
-        this.handle = handle;
-    }
-    
-    public int getHandle(){
-        return this.handle;
-    }
-    
-    public void setSignalType(BasicSignalType signalType){
-        this.signalType = signalType;
-    }
-    
-    public BasicSignalType getSignalType(){
-        return this.signalType;
-    }
-    
-    public String getSignalIdentifier(){
-        return signalIdentifier;
-    }
-    
-    //server side
-    @Override
-    public void encode(ByteBuf byteBuf){
-        super.encode(byteBuf);
-        encodeString(signalIdentifier, byteBuf);
-        byteBuf.writeInt(handle);
-        signalType.encode(byteBuf);
-    }
-
-    //client side
-    @Override
-    public void decode(ByteBuf byteBuf){
-        super.decode(byteBuf);
-        signalIdentifier = decodeString(byteBuf);
-        handle           = byteBuf.readInt();
-        signalType       = BasicSignalType.fromInt(byteBuf.readInt());
-    }
-    
- @Override
-    public String toString(){
-        return super.toString() + ", '" + signalIdentifier + "', " + signalType + ", " + handle + ")";
+        super();
+    }       
+    public GetHandleAcknowledgement(String signalIdentifier, BasicSignalType signalType){
+        super(signalIdentifier, signalType);
     }    
 }

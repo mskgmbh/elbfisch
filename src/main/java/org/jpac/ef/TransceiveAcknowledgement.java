@@ -27,6 +27,7 @@ package org.jpac.ef;
 
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -34,19 +35,17 @@ import java.util.List;
  * @author berndschuster
  */
 public class TransceiveAcknowledgement extends Acknowledgement{
-    protected List<Byte>            listOfTransferResults;
-    protected List<SignalTransport> listOfSignalTransports;
-    
+    protected List<Byte>                        listOfTransferResults;
+    protected HashMap<Integer, SignalTransport> listOfSignalTransports;
+
     public TransceiveAcknowledgement(){
-        super(MessageId.AckTransceive);
-        listOfTransferResults   = new ArrayList<>();
-        listOfSignalTransports  = new ArrayList<>();
+        this(new ArrayList<>(), new HashMap<>());
     }
     
-    public TransceiveAcknowledgement(List<Byte> listOfReceiveResults, List<SignalTransport> listOfSignalTransports){
-        this();
-        this.listOfTransferResults  = listOfReceiveResults;
-        this.listOfSignalTransports = listOfSignalTransports;
+    public TransceiveAcknowledgement(List<Byte> listOfTransferResults, HashMap<Integer, SignalTransport> listOfSignalTransports){
+        super(MessageId.AckTransceive);
+        this.listOfTransferResults   = listOfTransferResults;
+        this.listOfSignalTransports  = listOfSignalTransports;     
     }
             
     //server
@@ -56,7 +55,7 @@ public class TransceiveAcknowledgement extends Acknowledgement{
         byteBuf.writeInt(listOfTransferResults.size());
         listOfTransferResults.forEach((r) -> byteBuf.writeByte(r));
         byteBuf.writeInt(listOfSignalTransports.size());
-        listOfSignalTransports.forEach((st) -> st.encode(byteBuf));
+        listOfSignalTransports.forEach((h, st) -> st.encode(byteBuf));
     }
     
     //client
@@ -73,14 +72,14 @@ public class TransceiveAcknowledgement extends Acknowledgement{
         listOfSignalTransports.clear();
         length = byteBuf.readInt();
         for(int i = 0; i < length; i++){
-            SignalTransport st = new SignalTransport();
+            SignalTransport st = new SignalTransport(null);//TODO object pooling ????
             st.decode(byteBuf);
-            listOfSignalTransports.add(st);
+            listOfSignalTransports.put(st.getHandle(), st);
             Log.debug("received value {}", st);
         }
     }
     
-    public List<SignalTransport> getListOfSignalTransports(){
+    public HashMap<Integer, SignalTransport> getListOfSignalTransports(){
         return this.listOfSignalTransports;
     }
 
@@ -96,9 +95,9 @@ public class TransceiveAcknowledgement extends Acknowledgement{
     }
 
     /**
-     * @param listOfSignalTransports the listOfSignalTransports to set
+     * @param listOfReceiveResults the listOfTransferResults to set
      */
-    public void setListOfSignalTransports(List<SignalTransport> listOfSignalTransports) {
+    public void setListOfSignalTransports(HashMap<Integer, SignalTransport> listOfSignalTransports) {
         this.listOfSignalTransports = listOfSignalTransports;
     }
 

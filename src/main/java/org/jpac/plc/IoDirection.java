@@ -25,6 +25,8 @@
 
 package org.jpac.plc;
 
+import io.netty.buffer.ByteBuf;
+
 /**
  *
  * @author berndschuster
@@ -34,4 +36,18 @@ public enum IoDirection {
     INPUT,
     OUTPUT,
     INOUT;
+    
+    public int toInt(){
+        return this.ordinal();
+    }
+    
+    static public IoDirection fromInt(int i){
+        IoDirection retIoD= UNDEFINED;
+        for (IoDirection iod: IoDirection.values()){
+            if (iod.ordinal() == i){
+                return iod;
+            }
+        }
+        return retIoD;
+    }    
 }

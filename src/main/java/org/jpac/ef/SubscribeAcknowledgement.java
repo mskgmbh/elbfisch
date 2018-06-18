@@ -26,6 +26,7 @@
 package org.jpac.ef;
 
 import io.netty.buffer.ByteBuf;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,7 +38,7 @@ public class SubscribeAcknowledgement extends Acknowledgement{
     
     public SubscribeAcknowledgement(){
         super(MessageId.AckSubscribe);
-        listOfResults = null;
+        listOfResults = new ArrayList<>();
     }
 
     public SubscribeAcknowledgement(List<Integer> listOfResults){

@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac) 
- * MODULE    : Subscribe.java (versatile input output subsystem)
+ * MODULE    : Unsubscribe.java (versatile input output subsystem)
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -36,17 +36,17 @@ import org.jpac.SignalRegistry;
  *
  * @author berndschuster
  */
-public class Subscribe extends Command{    
+public class Unsubscribe extends Command{    
     protected List<SubscriptionTransport> listOfSubScriptionTransports;
     
     //server
-    public Subscribe(){
-        super(MessageId.CmdSubscribe);
+    public Unsubscribe(){
+        super(MessageId.CmdUnsubscribe);
         this.listOfSubScriptionTransports = new ArrayList<>();
     }
     
     //client
-    public Subscribe(ArrayList<SubscriptionTransport> handles){
+    public Unsubscribe(ArrayList<SubscriptionTransport> handles){
         this();
         this.listOfSubScriptionTransports = handles;
     }
@@ -85,18 +85,13 @@ public class Subscribe extends Command{
                     result = Result.SignalTypeMismatched; 
                 }
                 switch(st.getIoDirection()){
-                    case INPUT://input from clients point of view   
-                        commandHandler.registerClientInputSignal(st.getHandle());
+                    case INPUT://input from clients point of view
+                        commandHandler.unregisterClientInputSignal(st.getHandle());
                         result = Result.NoFault;
                         break;
                     case OUTPUT://output from clients point of view
-                        if (signal.isConnectedAsTarget()){
-                            result = Result.SignalAlreadyConnectedAsTarget; 
-                        }
-                        else{
-                            commandHandler.registerClientOutputSignal(st.getHandle());
-                            result = Result.NoFault;
-                        }
+                        commandHandler.unregisterClientOutputSignal(st.getHandle());
+                        result = Result.NoFault;
                         break;
                     default:
                         result = Result.IoDirectionMustBeInOrOut;
@@ -110,14 +105,14 @@ public class Subscribe extends Command{
             }
             listOfResults.add(result.getValue());
         }
-        acknowledgement = new SubscribeAcknowledgement(listOfResults);
+        acknowledgement = new UnsubscribeAcknowledgement(listOfResults);
         return acknowledgement;
     }
 
     @Override
     public Acknowledgement getAcknowledgement() {
         if (acknowledgement == null){
-            acknowledgement = new SubscribeAcknowledgement();
+            acknowledgement = new UnsubscribeAcknowledgement();
         }
         return acknowledgement;
     }

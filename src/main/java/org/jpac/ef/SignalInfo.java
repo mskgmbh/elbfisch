@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac) 
- * MODULE    : GetHandle.java (versatile input output subsystem)
+ * MODULE    : GetHandleAcknowledgement.java (versatile input output subsystem)
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -26,80 +26,70 @@
 package org.jpac.ef;
 
 import io.netty.buffer.ByteBuf;
-import org.jpac.Signal;
-import org.jpac.SignalNotRegisteredException;
 import org.jpac.SignalRegistry;
 
 /**
  *
  * @author berndschuster
  */
-public class GetHandle extends Command{    
+public class SignalInfo extends Acknowledgement{
     protected int             handle;
     protected String          signalIdentifier;
     protected BasicSignalType signalType;
     
-    //server
-    public GetHandle(){
-        super(MessageId.CmdGetHandle);
+    public SignalInfo(){
+        super(MessageId.AckGetHandle);
         this.signalIdentifier = null;
     }
-    
-    //client
-    public GetHandle(String signalIdentifier, BasicSignalType signalType){
+
+    public SignalInfo(String signalIdentifier, BasicSignalType signalType){
         this();
         this.signalIdentifier = signalIdentifier;
+        this.handle           = SignalRegistry.getInstance().getHashCode(signalIdentifier);
         this.signalType       = signalType;
+        
     }
     
-    //client
+    public void setHandle(int handle){
+        this.handle = handle;
+    }
+    
+    public int getHandle(){
+        return this.handle;
+    }
+    
+    public void setSignalType(BasicSignalType signalType){
+        this.signalType = signalType;
+    }
+    
+    public BasicSignalType getSignalType(){
+        return this.signalType;
+    }
+    
+    public String getSignalIdentifier(){
+        return signalIdentifier;
+    }
+    
+    //server side
     @Override
     public void encode(ByteBuf byteBuf){
         super.encode(byteBuf);
         encodeString(signalIdentifier, byteBuf);
+        byteBuf.writeInt(handle);
         byteBuf.writeInt(signalType.toInt());
     }
-    
-    //server
+
+    //client side
     @Override
     public void decode(ByteBuf byteBuf){
         super.decode(byteBuf);
         signalIdentifier = decodeString(byteBuf);
+        handle           = byteBuf.readInt();
         signalType       = BasicSignalType.fromInt(byteBuf.readInt());
     }
     
-    //client
-    public int getHandle(){
-        return ((GetHandleAcknowledgement)getAcknowledgement()).getHandle();
-    }
-
-    //server
-    @Override
-    public Acknowledgement handleRequest(CommandHandler commandHandler) {
-        Log.debug("handleRequest(): " + this);
-        try{
-            Signal signal = SignalRegistry.getInstance().getSignal(signalIdentifier);
-            acknowledgement = new GetHandleAcknowledgement(signalIdentifier, BasicSignalType.fromSignal(signal));
-            acknowledgement.setResult(Result.NoFault);
-        }
-        catch(SignalNotRegisteredException exc){
-            acknowledgement = new GetHandleAcknowledgement(signalIdentifier, signalType);
-            acknowledgement.setResult(Result.SignalNotRegistered);            
-        }
-        catch(Exception exc){
-            acknowledgement = new GetHandleAcknowledgement(signalIdentifier, signalType);
-            acknowledgement.setResult(Result.GeneralFailure);
-        }
-        return getAcknowledgement();
-    }
-
-    @Override
-    public Acknowledgement getAcknowledgement() {
-        return acknowledgement;
-    }
-    
-    @Override
+ @Override
     public String toString(){
-        return super.toString() + "('" + signalIdentifier + "', " + signalType +", " + handle + ")";
-    }
+        return super.toString() + ", '" + signalIdentifier + "', " + signalType + ", " + handle + ")";
+    }    
 }

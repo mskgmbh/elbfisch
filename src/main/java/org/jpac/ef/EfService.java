@@ -29,12 +29,14 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
+import java.net.InetSocketAddress;
 import java.security.cert.CertificateException;
 import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
@@ -46,6 +48,7 @@ import org.slf4j.LoggerFactory;
  */
 public class EfService implements Runnable{
     public static final  int DEFAULTPORT = 13685;
+    public static final  int DEFAULTRECEIVEBUFFERSIZE = 4096;
     
     private final Logger Log = LoggerFactory.getLogger("jpac.ef");
 
@@ -56,11 +59,13 @@ public class EfService implements Runnable{
     private final boolean        useSSL;
     private final String         bindAddress;
     private final int            port;
+    private final int            receiveBufferSize;
     
-    public EfService(boolean useSSL, String bindAddress, int port) throws CertificateException, SSLException, InterruptedException{
-        this.useSSL          = useSSL;
-        this.bindAddress     = bindAddress;
-        this.port            = port;
+    public EfService(boolean useSSL, String bindAddress, int port, int receiveBufferSize) throws CertificateException, SSLException, InterruptedException{
+        this.useSSL            = useSSL;
+        this.bindAddress       = bindAddress;
+        this.port              = port;
+        this.receiveBufferSize = receiveBufferSize;
     }
 
     @Override
@@ -80,11 +85,12 @@ public class EfService implements Runnable{
              .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) throws Exception {
-                        ch.pipeline().addLast(new CommandHandler());
+                        ch.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(receiveBufferSize));
+                        ch.pipeline().addLast(new CommandHandler(ch.remoteAddress()));
                     }
                 });
             channelFuture = b.bind(bindAddress, port).sync();//TODO bind to more than one address
-            Log.info("Elbfisch communication server up and running"); 
+            Log.info("Elbfisch communication server up and running (" + bindAddress + ":" + port + ")"); 
             // Wait until the server socket is closed.
             channelFuture.channel().closeFuture().sync();            
         }
@@ -94,14 +100,15 @@ public class EfService implements Runnable{
         }
     }
     
-    public void updateInputSignals(){
-        CommandHandler.getListOfActiveCommandHandlers().forEach((ch)-> ch.transferInputValuesToSignals());
+    public void exchangeChangedSignals(){
+        synchronized(CommandHandler.getListOfActiveCommandHandlers()){
+            CommandHandler.getListOfActiveCommandHandlers().forEach((commandHandler)-> {
+                commandHandler.transferChangedClientOutputTransportsToSignals();
+                commandHandler.transferChangedSignalsToClientInputTransports();
+            });
+        }
     }
     
-    public void updateOutputSignals(){
-        CommandHandler.getListOfActiveCommandHandlers().forEach((ch)-> ch.transferSubcribedSignalsToOutputValues());        
-    }
-
     public void start(){
         Thread serviceStarter = new Thread(this);
         serviceStarter.setName("Ef Service");

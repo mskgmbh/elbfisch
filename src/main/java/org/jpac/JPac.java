@@ -52,6 +52,7 @@ import org.jpac.configuration.IntProperty;
 import org.jpac.configuration.LongProperty;
 import org.jpac.configuration.StringProperty;
 import org.jpac.console.TelnetService;
+import org.jpac.ef.CommandHandler;
 import org.jpac.ef.EfService;
 import org.jpac.opc.Opc;
 import org.jpac.opc.Opc.AccessLevel;
@@ -138,6 +139,7 @@ public class JPac extends Thread {
     private StringProperty  propEfBindAddress;
     private IntProperty     propEfServicePort;
     private StringProperty  propEfDefaultAccessLevel;
+    private IntProperty     propEfReceiveBufferSize;
     private BooleanProperty propConsoleServiceEnabled;
     private IntProperty     propConsoleServicePort;
     private StringProperty  propConsoleBindAddress;
@@ -166,6 +168,7 @@ public class JPac extends Thread {
     private int               efServicePort;
     private Opc.AccessLevel   efDefaultAccessLevel;
     private String            efBindAddress;
+    private int               efReceiveBufferSize;
     private boolean           consoleServiceEnabled;
     private int               consoleServicePort;
     private String            consoleBindAddress;
@@ -281,6 +284,7 @@ public class JPac extends Thread {
             propEfBindAddress                   = new StringProperty(this,"Ef.BindAddress","localhost","address this service is bound to", true);
             propEfServicePort                   = new IntProperty(this,"Ef.ServicePort",EfService.DEFAULTPORT,"port over which the elbfisch service is provided", true);
             propEfDefaultAccessLevel            = new StringProperty(this,"Ef.DefaultAccessLevel","NONE","access levels can be NONE,READ_ONLY,READ_WRITE", true);
+            propEfReceiveBufferSize             = new IntProperty(this,"Ef.ReceiveBufferSize",EfService.DEFAULTRECEIVEBUFFERSIZE,"size of the receive buffer [byte]", true);
             propConsoleServiceEnabled           = new BooleanProperty(this,"Console.ServiceEnabled",false,"enables the console service", true);
             propConsoleServicePort              = new IntProperty(this,"Console.ServicePort",CONSOLESERVICEDEFAULTPORT,"port over which the console service is provided", true);
             propConsoleBindAddress              = new StringProperty(this,"Console.BindAddress",DEFAULTCONSOLESERVICEBINDADDRESS,"address the console service is bound to", true);
@@ -310,6 +314,7 @@ public class JPac extends Thread {
             efServiceEnabled                = propEfServiceEnabled.get();
             efServicePort                   = propEfServicePort.get();
             efBindAddress                   = propEfBindAddress.get();
+            efReceiveBufferSize             = propEfReceiveBufferSize.get();
             
             consoleServiceEnabled           = propConsoleServiceEnabled.get();
             consoleServicePort              = propConsoleServicePort.get();
@@ -800,6 +805,10 @@ public class JPac extends Thread {
                 //run cyclic task
                 ct.run();
             }            
+        }
+        
+        if (efServiceEnabled){
+            efService.exchangeChangedSignals();
         }
                 
         ConcurrentHashMap<Integer, Signal> signals = SignalRegistry.getInstance().getSignals();
@@ -1294,7 +1303,7 @@ public class JPac extends Thread {
     
     protected void prepareEfService() throws Exception{
         if (efServiceEnabled){
-            efService = new EfService(false, efBindAddress, efServicePort);
+            efService = new EfService(false, efBindAddress, efServicePort, efReceiveBufferSize);
             efService.start();
             Log.info("Elbfisch communication service started");
         }

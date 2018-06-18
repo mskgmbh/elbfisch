@@ -34,26 +34,28 @@ import java.util.List;
  * @author berndschuster
  */
 public class Transceive extends Command{    
-    protected List<SignalTransport> listOfReceivedSignalTransports;
+    protected List<SignalTransport>     listOfSignalTransports;
     
     //server
     public Transceive(){
         super(MessageId.CmdTransceive);
-        this.listOfReceivedSignalTransports = new ArrayList<>();
+        this.listOfSignalTransports = new ArrayList<>();
+        this.acknowledgement        = new TransceiveAcknowledgement();
     }
     
     //client
     public Transceive(ArrayList<SignalTransport> listOfSignalTransports){
         this();
-        this.listOfReceivedSignalTransports = listOfSignalTransports;
+        this.listOfSignalTransports = listOfSignalTransports;
     }
     
     //client
     @Override
     public void encode(ByteBuf byteBuf){
         super.encode(byteBuf);
-        byteBuf.writeInt(listOfReceivedSignalTransports.size());
-        listOfReceivedSignalTransports.forEach((st) -> st.encode(byteBuf));
+        byteBuf.writeInt(listOfSignalTransports.size());
+        listOfSignalTransports.forEach((st) -> st.encode(byteBuf));
+        Log.debug("Transceive.encode");//TODO
     }
     
     //server
@@ -61,11 +63,11 @@ public class Transceive extends Command{
     public void decode(ByteBuf byteBuf){
         super.decode(byteBuf);
         int length = byteBuf.readInt();
-        listOfReceivedSignalTransports.clear();
+        listOfSignalTransports.clear();
         for(int i = 0; i < length; i++){
-            SignalTransport st = new SignalTransport();
+            SignalTransport st = new SignalTransport(null);//TODO recycle object ????
             st.decode(byteBuf);
-            listOfReceivedSignalTransports.add(st);
+            listOfSignalTransports.add(st);
             Log.debug("received: {}", st);
         }
     }
@@ -73,23 +75,23 @@ public class Transceive extends Command{
     //server
     @Override
     public Acknowledgement handleRequest(CommandHandler commandHandler) {
-        TransceiveAcknowledgement ack = (TransceiveAcknowledgement)getAcknowledgement();
         //take over received signal values
-        ack.setListOfReceiveResults(commandHandler.updateInputValues(listOfReceivedSignalTransports));
-        ack.setListOfSignalTransports(commandHandler.updateOutputValues());
+        ((TransceiveAcknowledgement)acknowledgement).setListOfReceiveResults(commandHandler.updateChangedClientOutputTransports(listOfSignalTransports));
+        ((TransceiveAcknowledgement)acknowledgement).setListOfSignalTransports(commandHandler.retrieveChangedClientInputTransports());
         return acknowledgement;
     }
 
     @Override
     public Acknowledgement getAcknowledgement() {
-        if (acknowledgement == null){
-            acknowledgement = new TransceiveAcknowledgement();
-        }
         return acknowledgement;
+    }
+    
+    public List<SignalTransport> getListOfSignalTransports(){
+        return this.listOfSignalTransports;
     }
     
     @Override
     public String toString(){
-        return super.toString() + "(" + (listOfReceivedSignalTransports != null ? listOfReceivedSignalTransports.size() : "") + ")";
+        return super.toString() + "(" + (listOfSignalTransports != null ? listOfSignalTransports.size() : "") + ")";
     }
 }

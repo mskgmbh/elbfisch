@@ -51,6 +51,15 @@ public class MessageFactory {
             case CmdBrowse:
                 message = new Browse();
                 break;
+            case CmdSubscribe:
+                message = new Subscribe();
+                break;
+            case CmdUnsubscribe:
+                message = new Unsubscribe();
+                break;
+            case CmdTransceive:
+                message = new Transceive();
+                break;
             case AckPing:
                 message = new PingAcknowledgement();
                 break;
@@ -62,6 +71,15 @@ public class MessageFactory {
                 break;
             case AckBrowse:
                 message = new BrowseAcknowledgement();
+                break;
+            case AckSubscribe:
+                message = new SubscribeAcknowledgement();
+                break;
+            case AckUnsubscribe:
+                message = new UnsubscribeAcknowledgement();
+                break;
+            case AckTransceive:
+                message = new TransceiveAcknowledgement();
                 break;
             default:
                 throw new InconsistencyException("illegal message id received: " + messageId);

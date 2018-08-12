@@ -129,7 +129,7 @@ public class Namespace implements org.eclipse.milo.opcua.sdk.server.api.Namespac
             SignalRegistry signals = SignalRegistry.getInstance();
             if (signals.getSignals().size() > 0){
                 //at least one signal present
-                TreeItem rootNode = new TreeItem(retrieveRootNodeIdentifier(signals.getSignals().get(0)), null);
+                TreeItem rootNode = new TreeItem(retrieveRootNodeIdentifier(signals.getSignals().values().stream().findFirst().get()), null);
                 //construct the tree hierarchy of signals of this Elbfisch instance 
                 for (Signal signal: signals.getSignals().values()){
                     if (signal instanceof Logical || signal instanceof SignedInteger || signal instanceof Decimal || signal instanceof CharString || signal instanceof Alarm){//TODO other signal types will be added later

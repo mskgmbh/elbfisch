@@ -27,6 +27,8 @@ package org.jpac;
 
 import java.util.ArrayList;
 
+import org.eclipse.milo.opcua.sdk.server.model.methods.GetMonitoredItems;
+
 /**
  * base class for all process events which can be await()ed by modules
  */
@@ -209,7 +211,7 @@ public abstract class ProcessEvent extends Fireable{
                     Log.info("InterruptedException occured for " + this);
                 }
               }
-            while(!isTimedout() && !isFired() && !isEmergencyStopOccured() && !isShutdownRequested() && !isProcessExceptionThrown());
+            while(!isTimedout() && !isFired() && !isMonitoredEventOccured() && !isEmergencyStopOccured() && !isShutdownRequested() && !isProcessExceptionThrown());
             module.storeWakeUpNanoTime();
             module.resetSleepNanoTime();// invalidate sleepNanoTime
         }
@@ -224,8 +226,6 @@ public abstract class ProcessEvent extends Fireable{
             throw new ShutdownRequestException();
         if (isEmergencyStopOccured())
             throw new EmergencyStopException(JPac.getInstance().getEmergencyStopExceptionCausedBy());
-        if (isMonitoredEventOccured())
-            throw new MonitorException(monitoredEvents);
         if (isProcessExceptionThrown()){
             if (getProcessException() instanceof InEveryCycleDoException){
                 throw new InEveryCycleDoException(getProcessException().getCause());
@@ -234,6 +234,9 @@ public abstract class ProcessEvent extends Fireable{
             } else{
                 throw new ProcessException(getProcessException());
             }
+        }
+        if (isMonitoredEventOccured()){
+            throw new MonitorException(monitoredEvents);
         }
         //module.setAwaitedEvent(null);
         //check for incoming interlock conditions to be handled by the observing module
@@ -353,6 +356,35 @@ public abstract class ProcessEvent extends Fireable{
     protected boolean isMonitoredEventOccured() {
         return this.monitoredEventOccured;
     }
+
+    @Override
+    protected boolean isProcessExceptionThrown(){
+    	//check own exception
+    	boolean pexThrown = super.isProcessExceptionThrown();
+    	//and those of the events monitored by the owning module in this cycle
+    	if (monitoredEvents != null) {
+	    	for (int i = 0; !pexThrown && i < monitoredEvents.size(); i++){
+	    		pexThrown = monitoredEvents.get(i).getProcessException() != null;
+	    	}
+    	}
+    	return pexThrown;
+    } 
+    
+    /**
+     * @return the processException
+     */
+    @Override
+    protected ProcessException getProcessException() {
+    	//check own exception
+    	ProcessException pe = super.getProcessException();
+    	//and those of the events monitored by the owning module in this cycle
+    	if (monitoredEvents != null) {
+	    	for (int i = 0; (pe == null) && i < monitoredEvents.size(); i++){
+	    		pe = monitoredEvents.get(i).getProcessException();
+	    	}
+    	}
+    	return pe;
+    }   
     
     public int getTracePoint(){
         return this.tracePoint;

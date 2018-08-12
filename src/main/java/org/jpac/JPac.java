@@ -79,7 +79,7 @@ public class JPac extends Thread {
     private     final String    OPCACCESSLEVELREADONLY               = "READ_ONLY";
     private     final String    OPCACCESSLEVELREADWRITE              = "READ_WRITE";
     private     final int       CONSOLESERVICEDEFAULTPORT            = 8023;
-    private     final String    DEFAULTCONSOLESERVICEBINDADDRESS     = "localhost";
+    private     final String    DEFAULTSERVICEBINDADDRESS     = "localhost";
     
     private     final String    CFGDIR                               = "./cfg";
     private     final String    DATADIR                              = "./data";
@@ -210,7 +210,8 @@ public class JPac extends Thread {
     private Hashtable<String, AbstractModule> moduleList;
 
 
-    protected JPac(){
+    @SuppressWarnings("unchecked")
+	protected JPac(){
         super();
         setName(getClass().getSimpleName());
         
@@ -244,7 +245,7 @@ public class JPac extends Thread {
         
         immediateShutdownRequested  = false;        
         
-        normalShutdownPending             = false;
+        normalShutdownPending       = false;
                 
         activeEventsLock            = new CountingLock();
         awaitedEventOfLastModule    = null;
@@ -287,7 +288,7 @@ public class JPac extends Thread {
             propEfReceiveBufferSize             = new IntProperty(this,"Ef.ReceiveBufferSize",EfService.DEFAULTRECEIVEBUFFERSIZE,"size of the receive buffer [byte]", true);
             propConsoleServiceEnabled           = new BooleanProperty(this,"Console.ServiceEnabled",false,"enables the console service", true);
             propConsoleServicePort              = new IntProperty(this,"Console.ServicePort",CONSOLESERVICEDEFAULTPORT,"port over which the console service is provided", true);
-            propConsoleBindAddress              = new StringProperty(this,"Console.BindAddress",DEFAULTCONSOLESERVICEBINDADDRESS,"address the console service is bound to", true);
+            propConsoleBindAddress              = new StringProperty(this,"Console.BindAddress",DEFAULTSERVICEBINDADDRESS,"address the console service is bound to", true);
             propGenerateSnapshotOnShutdown      = new BooleanProperty(this,"GenerateSnapShotOnShutdown",false,"used to enable the generation of a snapshot on shutdown", true);
             
             instanceIdentifier              = InetAddress.getLocalHost().getHostName() + ":" + propRemoteSignalPort.get();
@@ -309,7 +310,12 @@ public class JPac extends Thread {
             opcUaServiceName                = propOpcUaServiceName.get();
             opcUaMinSupportedSampleInterval = propOpcUaMinSupportedSampleInterval.get();
             opcUaDefaultAccessLevel         = AccessLevel.valueOf(propOpcUaDefaultAccessLevel.get());
-            opcUaBindAddresses              = Configuration.getInstance().getList("org..jpac..JPac.OpcUa.BindAddresses.BindAddress");
+            opcUaBindAddresses              = (List<String>)Configuration.getInstance().getList("org..jpac..JPac.OpcUa.BindAddresses.BindAddress");
+            if (opcUaBindAddresses.isEmpty()) {
+            	//if bind addresses not specified add one default address to the list
+            	StringProperty defaultBindAddress = new StringProperty(this,"OpcUa.BindAddresses.BindAddress",DEFAULTSERVICEBINDADDRESS,"address the opc ua service is bound to", true);
+            	opcUaBindAddresses.add(defaultBindAddress.get());
+            }
             
             efServiceEnabled                = propEfServiceEnabled.get();
             efServicePort                   = propEfServicePort.get();
@@ -557,7 +563,7 @@ public class JPac extends Thread {
 
     private void handleFireables(Set<Fireable> fireableList) throws SomeEventsNotProcessedException, InconsistencyException{
         boolean fired                        = false;
-        boolean shutdownRequestedInThisCycle = false;
+        boolean shutdownRequestedInThisCycle = isNormalShutdownRequested() && !normalShutdownPending;;
         //check, if some of the currently registered Fireables can be fired in this cycle
         for (Fireable f: fireableList) {
             try{//the fireable is fired, if
@@ -569,7 +575,6 @@ public class JPac extends Thread {
                 boolean fFired    = f.evaluateFiredCondition();
                 boolean fTimedOut = (f instanceof ProcessEvent) && ((ProcessEvent)f).evaluateTimedOutCondition();
                 
-                shutdownRequestedInThisCycle = isNormalShutdownRequested() && !normalShutdownPending;
                 fired = fFired ||
                         (f instanceof ProcessEvent && (shutdownRequestedInThisCycle                                                                       ||
                                                        emergencyStopIsToBeThrown   && !((ProcessEvent)f).getObservingModule().isRequestingEmergencyStop())||

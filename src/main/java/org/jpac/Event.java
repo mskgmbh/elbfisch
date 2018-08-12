@@ -25,7 +25,9 @@
 
 package org.jpac;
 
-import java.util.function.BooleanSupplier;
+import javax.annotation.Nonnull;
+
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  *
@@ -33,17 +35,27 @@ import java.util.function.BooleanSupplier;
  * represents an process event implementing an easy to use constructor utilizeing lambda operators
  */
 public class Event extends ProcessEvent{
-    private BooleanSupplier booleanSupplier;
+    private EventFiringSupplier eventFiringSupplier;
     
-    public Event(BooleanSupplier booleanSupplier){
-        if (booleanSupplier == null){
-            throw new NullPointerException("booleanSupplier must not be null");
-        }
-        this.booleanSupplier = booleanSupplier;
+    public Event(@Nonnull EventFiringSupplier eventFiringSupplier){
+    	super();
+        this.eventFiringSupplier = eventFiringSupplier;
     }
     
     @Override
     public boolean fire() throws ProcessException {
-        return booleanSupplier.getAsBoolean();
+    	boolean f = false;
+    	try {
+    		f = eventFiringSupplier.get();
+    	}
+    	catch(Exception exc) {
+    		throw new ProcessException("Error occured while evaluating an event : ", exc);
+    	}
+    	return f;
+    }
+    
+    @FunctionalInterface
+    public interface EventFiringSupplier {
+        boolean get() throws Exception;
     }
 }

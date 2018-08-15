@@ -27,11 +27,13 @@
 package org.jpac;
 
 import java.lang.reflect.Field;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Stack;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.jpac.configuration.Configuration;
 import org.jpac.statistics.Histogram;
 
 /**
@@ -42,7 +44,7 @@ public abstract class AbstractModule extends Thread{
 
     public class StatusStack{
 
-        private Stack   stack   = new Stack();
+        private Stack<Object>   stack   = new Stack();
         private boolean overrun = false;
 
         public int enter(Object subState){
@@ -122,7 +124,8 @@ public abstract class AbstractModule extends Thread{
     /**used to denote a span of time in seconds*/
     public  static final long sec    = 1000000000L;
     
-    public  static final int  MAXNUMBEROFMONITORS = 1000;
+    public  static final int    MAXNUMBEROFMONITORS = 1000;
+    public  static final String DEFAULTINSTANCE     = "ef://localhost:13000";   
 
     private JPac                  jPac;
     private int                   moduleIndex;
@@ -145,7 +148,8 @@ public abstract class AbstractModule extends Thread{
     private  boolean              inEveryCycleDoActive;
     
     private  CharString[]         stackTraceSignals;
-
+    private  URI                  instance;
+    
     /**
      * used to construct a module
      * @param containingModule null   : module is the top most module, which by definition must contain all other modules of the application.
@@ -192,6 +196,18 @@ public abstract class AbstractModule extends Thread{
         stackTraceSignals  = new CharString[10];
         for(int i = 0; i < stackTraceSignals.length; i++){
             try{stackTraceSignals[i] = new CharString(this,":StackTrace[" + i + "]");}catch(SignalAlreadyExistsException exc){/*cannot happen*/}
+        }
+        try {
+        	//determine the elbfisch instance, this module runs on
+        	String key = getQualifiedName() + "[@instance]";
+        	if (!Configuration.getInstance().containsKey(key)) {
+        		//if not present inside the configuration (for example on first innvocation) add one
+        		Configuration.getInstance().addPropertyDirect(key, DEFAULTINSTANCE);
+        	}
+        	this.instance = new URI((String)Configuration.getInstance().getProperty(key));
+        } 
+        catch(Exception exc) {
+        	Log.error("failed to access module configuration:", exc);
         }
         //register myself as an active module and retrieve my individual module index
         moduleIndex = getJPac().register(this);
@@ -524,6 +540,10 @@ public abstract class AbstractModule extends Thread{
            Log.error("Error:", exc); 
         }
         return field;
+    }
+    
+    public URI getInstance() {
+    	return this.instance;
     }
     
     /**

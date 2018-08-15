@@ -368,6 +368,7 @@ public class TelnetServerHandler extends SimpleChannelInboundHandler<String> {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    	this.exitRequested = false;
         // Send greeting for a new connection.
         ctx.write("Elbfisch command line interpreter. Connected to instance '" + InetAddress.getLocalHost().getHostName() + "'\r\n");
         ctx.write("type 'help' for detailed instructions, 'quit' to exit.\r\n\r\n");

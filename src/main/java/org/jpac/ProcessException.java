@@ -29,6 +29,7 @@ package org.jpac;
  * base class of all jPac related exceptions
  * @author berndschuster
  */
+@SuppressWarnings("serial")
 public class ProcessException extends RuntimeException{
 
     public ProcessException(){

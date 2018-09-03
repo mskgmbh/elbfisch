@@ -393,13 +393,13 @@ public class JPac extends Thread {
         start();
     }
 
-    public static JPac getInstance(){
+	public static JPac getInstance(){
         if (instance == null) {
             instance = new JPac();
         }
         return instance;
     }
-
+    
     @Override
     public void run(){
         boolean done                 = false;
@@ -1454,7 +1454,19 @@ public class JPac extends Thread {
         return projectName;
     }
 
-    protected void waitUntilShutdownComplete(){
+    public boolean isEfServiceEnabled() {
+		return efServiceEnabled;
+	}
+
+	public int getEfServicePort() {
+		return efServicePort;
+	}
+
+	public String getEfBindAddress() {
+		return efBindAddress;
+	}
+
+	protected void waitUntilShutdownComplete(){
         int times100ms;
         for(times100ms = 0; times100ms < 100 && !readyToShutdown; times100ms++){
             try {Thread.sleep(100);}catch(InterruptedException ex) {}

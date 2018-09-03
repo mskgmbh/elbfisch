@@ -27,6 +27,7 @@ package org.jpac;
 
 import java.util.function.Supplier;
 import org.jpac.alarm.Alarm;
+import org.jpac.plc.IoDirection;
 
 /**
  * represents a boolean signal
@@ -40,17 +41,17 @@ public class Logical extends Signal{
      * constructs a logical signal
      * @param containingModule: module, this signal is contained in
      * @param identifier: identifier of the signal
+     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to calculate the actual value
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
      * @throws org.jpac.SignalAlreadyExistsException
      */
-    public Logical(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
-        super(containingModule, identifier);
-        value           = new LogicalValue();
-        propagatedValue = new LogicalValue(); 
-        wrapperValue    = new LogicalValue();
-        invertOnUpdate  = false;
+    public Logical(AbstractModule containingModule, String identifier, Supplier<Boolean> intrinsicFunction, IoDirection ioDirection) throws SignalAlreadyExistsException{
+        super(containingModule, identifier, intrinsicFunction, ioDirection);
+        this.wrapperValue   = new LogicalValue();
+        this.invertOnUpdate = false;
     }
-    
-   /**
+
+    /**
      * constructs a logical signal
      * @param containingModule: module, this signal is contained in
      * @param identifier: identifier of the signal
@@ -58,8 +59,44 @@ public class Logical extends Signal{
      * @throws org.jpac.SignalAlreadyExistsException
      */
     public Logical(AbstractModule containingModule, String identifier, Supplier<Boolean> intrinsicFunction) throws SignalAlreadyExistsException{
-        this(containingModule, identifier);
-        this.intrinsicFunction = intrinsicFunction;
+        this(containingModule, identifier, intrinsicFunction, IoDirection.UNDEFINED);
+    }
+
+    /**
+     * constructs a logical signal
+     * @param containingModule: module, this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public Logical(AbstractModule containingModule, String identifier, IoDirection ioDirection) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, null, ioDirection);
+    }
+
+    /**
+     * constructs a logical signal
+     * @param containingModule: module, this signal is contained in
+     * @param identifier: identifier of the signal
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public Logical(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, null, IoDirection.UNDEFINED);
+    }
+    
+
+    /**
+     * constructs a logical signal
+     * @param containingModule: module, this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param defaultState: default state of this logical
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public Logical(AbstractModule containingModule, String identifier, boolean defaultState, IoDirection ioDirection) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, null, ioDirection);
+        this.initializing = true;//prevent signal access assertion
+        try{set(defaultState);}catch(SignalAccessException exc){/*cannot happen*/};
+        this.initializing = false;
     }
 
     /**
@@ -70,10 +107,7 @@ public class Logical extends Signal{
      * @throws org.jpac.SignalAlreadyExistsException
      */
     public Logical(AbstractModule containingModule, String identifier, boolean defaultState) throws SignalAlreadyExistsException{
-        this(containingModule, identifier);
-        this.initializing = true;//prevent signal access assertion
-        try{set(defaultState);}catch(SignalAccessException exc){/*cannot happen*/};
-        this.initializing = false;
+        this(containingModule, identifier, defaultState, IoDirection.UNDEFINED);
     }
 
     /**

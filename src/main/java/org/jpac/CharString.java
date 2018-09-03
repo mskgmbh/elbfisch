@@ -27,6 +27,8 @@ package org.jpac;
 
 import java.util.function.Supplier;
 
+import org.jpac.plc.IoDirection;
+
 /**
  * represents a char string signal
  */
@@ -38,16 +40,15 @@ public class CharString extends Signal{
      * constructs a char string signal
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
+     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to calculate the actual value
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
      * @throws org.jpac.SignalAlreadyExistsException
      */
-    public CharString(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
-        super(containingModule, identifier);
-        this.intrinsicFunction  = null;
-        this.value              = new CharStringValue();
-        this.propagatedValue    = new CharStringValue(); 
+    public CharString(AbstractModule containingModule, String identifier, Supplier<String> intrinsicFunction, IoDirection ioDirection) throws SignalAlreadyExistsException{
+        super(containingModule, identifier, intrinsicFunction, ioDirection);
         this.wrapperValue       = new CharStringValue();
     }
-    
+
     /**
      * constructs a char string signal
      * @param containingModule: module this signal is contained in
@@ -56,8 +57,45 @@ public class CharString extends Signal{
      * @throws org.jpac.SignalAlreadyExistsException
      */
     public CharString(AbstractModule containingModule, String identifier, Supplier<String> intrinsicFunction) throws SignalAlreadyExistsException{
-        this(containingModule, identifier);
-        this.intrinsicFunction  = intrinsicFunction;
+        super(containingModule, identifier, intrinsicFunction, IoDirection.UNDEFINED);
+        this.wrapperValue       = new CharStringValue();
+    }
+
+    /**
+     * constructs a char string signal
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public CharString(AbstractModule containingModule, String identifier, IoDirection ioDirection) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, (Supplier<String>) null, ioDirection);
+    }
+    
+    /**
+     * constructs a char string signal
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public CharString(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, (Supplier<String>) null);
+    }
+
+    /**
+     * constructs a char string signal
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param defaultValue: default value of the CharString
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
+     * @throws org.jpac.SignalAlreadyExistsException
+     * 
+     */
+    public CharString(AbstractModule containingModule, String identifier, String defaultValue, IoDirection ioDirection) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, ioDirection);
+        this.initializing = true;//prevent signal access assertion
+        try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/};
+        this.initializing = false;
     }
 
     /**

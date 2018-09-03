@@ -26,6 +26,7 @@
 package org.jpac;
 
 import org.slf4j.LoggerFactory;
+import org.jpac.plc.IoDirection;
 import org.slf4j.Logger;
 
 /**
@@ -66,11 +67,11 @@ public class Handshake {
         this.requestingModule         = null;
         this.servingModule            = servingModule;
         this.identifier               = identifier;
-        this.request                  = new Logical(servingModule, identifier + ".request", false);
-        this.acknowledge              = new Logical(servingModule, identifier + ".acknowledge", false);
-        this.active                   = new Logical(servingModule, identifier + ".active", false);
-        this.ready                    = new Logical(servingModule, identifier + ".ready", false);
-        this.resultSig                = new SignedInteger(servingModule, identifier + ".result", OK);
+        this.request                  = new Logical(servingModule, identifier + ".request", false, IoDirection.INPUT);
+        this.acknowledge              = new Logical(servingModule, identifier + ".acknowledge", false, IoDirection.OUTPUT);
+        this.active                   = new Logical(servingModule, identifier + ".active", false, IoDirection.OUTPUT);
+        this.ready                    = new Logical(servingModule, identifier + ".ready", false, IoDirection.OUTPUT);
+        this.resultSig                = new SignedInteger(servingModule, identifier + ".result", OK, IoDirection.OUTPUT);
         this.acknowledgedEvent        = acknowledge.state(true);
         this.activeEvent              = active.state(true);
         this.readyEvent               = ready.state(true);

@@ -27,13 +27,16 @@
 package org.jpac;
 
 import java.lang.reflect.Field;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Stack;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.jpac.configuration.Configuration;
+import org.jpac.plc.IoDirection;
 import org.jpac.statistics.Histogram;
 
 /**
@@ -54,7 +57,7 @@ public abstract class AbstractModule extends Thread{
                     stack.push(subState);
                 }
             }
-            if (Log.isDebugEnabled()) Log.debug("entering status: " + this);
+            //if (Log.isDebugEnabled()) Log.debug("entering status: " + this);     
             return stack.size() - 1;
         }
 
@@ -125,7 +128,7 @@ public abstract class AbstractModule extends Thread{
     public  static final long sec    = 1000000000L;
     
     public  static final int    MAXNUMBEROFMONITORS = 1000;
-    public  static final String DEFAULTINSTANCE     = "ef://localhost:13000";   
+    public  static final String DEFAULTINSTANCE     = "./"; //elbfisch instance depends containing module   
 
     private JPac                  jPac;
     private int                   moduleIndex;
@@ -148,7 +151,8 @@ public abstract class AbstractModule extends Thread{
     private  boolean              inEveryCycleDoActive;
     
     private  CharString[]         stackTraceSignals;
-    private  URI                  instance;
+    private  URI                  elbfischInstance;
+    private  boolean              runsLocally;
     
     /**
      * used to construct a module
@@ -182,32 +186,35 @@ public abstract class AbstractModule extends Thread{
         sleepNanoTime                = 0L;
         debugIndex                   = 0;
         inEveryCycleDoActive         = false;
+        runsLocally                  = false;
         
-        //retrieve instance of the automation controller
+        //retrieve elbfischInstance of the automation controller
         setJPac(JPac.getInstance());
-        //prepare qualified name for this instance and its subinstances
+        //prepare qualified name for this elbfischInstance and its subinstances
         setQualifiedName(generateQualifiedName());
-        //store fully qualified name for this instance
+        //store fully qualified name for this elbfischInstance
         setName(getQualifiedName());
         //let the application class initialize its modules and signals
         setPriority(MAX_PRIORITY - 1);
-        histogramm  = new Histogram(getQualifiedName(), getJPac().getCycleTime());
-        
-        stackTraceSignals  = new CharString[10];
-        for(int i = 0; i < stackTraceSignals.length; i++){
-            try{stackTraceSignals[i] = new CharString(this,":StackTrace[" + i + "]");}catch(SignalAlreadyExistsException exc){/*cannot happen*/}
-        }
+        histogramm  = new Histogram(getQualifiedName(), getJPac().getCycleTime());        
         try {
         	//determine the elbfisch instance, this module runs on
-        	String key = getQualifiedName() + "[@instance]";
+        	String key = getQualifiedName() + "[@elbfischInstance]";
         	if (!Configuration.getInstance().containsKey(key)) {
         		//if not present inside the configuration (for example on first innvocation) add one
         		Configuration.getInstance().addPropertyDirect(key, DEFAULTINSTANCE);
         	}
-        	this.instance = new URI((String)Configuration.getInstance().getProperty(key));
+	    	this.elbfischInstance = new URI((String)Configuration.getInstance().getProperty(key));
         } 
         catch(Exception exc) {
         	Log.error("failed to access module configuration:", exc);
+        }
+	    runsLocally = checkIfThisModuleIsInvokedLocally();
+        
+        stackTraceSignals  = new CharString[10];
+        for(int i = 0; i < stackTraceSignals.length; i++){
+        	//stack trace signals are instantiated as IoDirection.INPUT for the cases, in which this module is run remotely
+            try{stackTraceSignals[i] = new CharString(this,":StackTrace:" + i, IoDirection.INPUT);}catch(SignalAlreadyExistsException exc){/*cannot happen*/}
         }
         //register myself as an active module and retrieve my individual module index
         moduleIndex = getJPac().register(this);
@@ -226,7 +233,16 @@ public abstract class AbstractModule extends Thread{
             //willy go ...
             status.leave();
             status.enter(Status.RUNNING);
-            work();
+            if (runsLocally()) {
+            	Log.debug("invoked locally");
+            	work();
+            }
+            else {
+            	//this module instance serves as a proxy to an instance run on a remote elbfisch instance
+            	//do nothing but waiting until this elbfisch instance is shut down.
+            	Log.debug("invoked on elbfisch instance '" + this.getElbfischInstance() + "'");
+            	new ImpossibleEvent().await();
+            }
         } 
         catch (Exception ex) {
             if (! (ex instanceof ShutdownRequestException)){
@@ -239,12 +255,14 @@ public abstract class AbstractModule extends Thread{
         finally{
             status.reset();
             status.enter(Status.HALTED);
-            //clean up stack trace signals
-            for(int i = 0; i < stackTraceSignals.length; i++){
-                stackTraceSignals[i].set("");
+            if (runsLocally()) {
+	            //clean up stack trace signals
+	            for(int i = 0; i < stackTraceSignals.length; i++){
+	                stackTraceSignals[i].set("");
+	            }
+	            //invalidate all signals contained by this module
+	            SignalRegistry.getInstance().getSignals().forEach((h, s) -> {if (s.getContainingModule().equals(this) && !s.isConnectedAsTarget()) s.invalidate();});
             }
-            //invalidate all signals contained by this module
-            SignalRegistry.getInstance().getSignals().forEach((h, s) -> {if (s.getContainingModule().equals(this) && !s.isConnectedAsTarget()) s.invalidate();});
             //stop invocation of inEveryCycleDo()
             enableCyclicTasks(false);
             if (isAwakenedByProcessEvent()){
@@ -281,6 +299,69 @@ public abstract class AbstractModule extends Thread{
      * and perform some default handling
      */ 
     abstract protected void work() throws ProcessException;
+
+    /**
+     * determines if this module is to be run on this elbfisch instance
+     * @return
+     */
+    protected boolean checkIfThisModuleIsInvokedLocally(){
+    	boolean runsHere           = true;
+    	URI actualElbfischInstance = null;
+    	if (getJPac().isEfServiceEnabled()) {
+    		try{
+    			actualElbfischInstance = new URI("ef://" + getJPac().getEfBindAddress() + ":" + getJPac().getEfServicePort());
+    		} catch(URISyntaxException exc) {
+    			Log.error("Failed to determine this elbfisch instance: ", exc);
+    		}
+    		//starting with this module traverse the module hierarchy upwards until a module assigned to an absolute elbfisch instance is found
+    		//or the top most (main) module is reached
+    		AbstractModule module               = this;
+    		boolean        topMostModuleReached = false;
+    		while(!topMostModuleReached && !module.getElbfischInstance().isAbsolute()){
+    			if (module.getContainingModule() == null) {
+    				topMostModuleReached = true;
+    			} else {
+    				module = module.getContainingModule();
+    			}
+    		}
+    		runsHere = !module.getElbfischInstance().isAbsolute() ||
+    				   (module.getElbfischInstance().isAbsolute() &&
+    				   actualElbfischInstance.getScheme().equals(module.elbfischInstance.getScheme()) && 
+    				   actualElbfischInstance.getHost().equals(module.elbfischInstance.getHost())     &&
+    				   actualElbfischInstance.getPort() == (module.elbfischInstance.getPort()           ));
+    	}
+    	return runsHere;
+    }
+    
+    /**
+     * @return the elbfisch instance this module is effectively run on. Is null, if ef service is disabled
+     */
+    protected URI getEffectiveElbfischInstance(){
+    	URI effectiveElbfischInstance = null;
+    	try {
+	    	if (getJPac().isEfServiceEnabled()) {
+	    		//starting with this module traverse the module hierarchy upwards until a module assigned to an absolute elbfisch instance is found
+	    		//or the top most (main) module is reached
+	    		AbstractModule module               = this;
+	    		boolean        topMostModuleReached = false;
+	    		while(!topMostModuleReached && !module.getElbfischInstance().isAbsolute()){
+	    			if (module.getContainingModule() == null) {
+	    				topMostModuleReached = true;
+	    			} else {
+	    				module = module.getContainingModule();
+	    			}
+	    		}
+	    		if (module.getElbfischInstance().isAbsolute()) {
+	    			effectiveElbfischInstance = module.getElbfischInstance();
+	    		} else {
+	    			effectiveElbfischInstance = new URI("ef://" + getJPac().getEfBindAddress() + ":" + getJPac().getEfServicePort());    			
+	    		}
+	    	}
+    	} catch (URISyntaxException exc) {
+			Log.error("Failed to determine this elbfisch instance. Invalid URI: ", exc );    		
+    	}
+    	return effectiveElbfischInstance;
+    }
 
     void setJPac(JPac jPac) {
         this.jPac = jPac;
@@ -366,7 +447,7 @@ public abstract class AbstractModule extends Thread{
      * used to acknowledge an emergency stop condition
      */
     public void acknowledgeEmergencyStop(){
-        if (Log.isInfoEnabled()) Log.debug("emergency stop acknowledged by " + this);
+        //if (Log.isInfoEnabled()) Log.debug("emergency stop acknowledged by " + this);
         jPac.acknowledgeEmergencyStop();
     }
    
@@ -405,6 +486,10 @@ public abstract class AbstractModule extends Thread{
     
     public CharString[] getStackTraceSignals(){
         return stackTraceSignals;
+    }
+    
+    public boolean runsLocally() {
+    	return runsLocally;
     }
 
     @Override
@@ -542,8 +627,11 @@ public abstract class AbstractModule extends Thread{
         return field;
     }
     
-    public URI getInstance() {
-    	return this.instance;
+   /**
+    * @return the elbfisch instance of this module (might be relative to a containing module)
+    */
+    public URI getElbfischInstance() {
+    	return this.elbfischInstance;
     }
     
     /**

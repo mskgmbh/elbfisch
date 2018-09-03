@@ -37,6 +37,7 @@ import org.jpac.Signal;
 import org.jpac.SignalAccessException;
 import org.jpac.SignalAlreadyExistsException;
 import org.jpac.SignalInvalidException;
+import org.jpac.plc.IoDirection;
 
 
 /**
@@ -93,20 +94,18 @@ public class Alarm extends Signal{
      * @param message: a message, that can be displayed over a GUI
      * @param resetOnAcknowledgement: if true, the alarm will be automatically reset on acknowledgement by the user 
      * @param severity: severity of the alarm: ALARM, WARNING, MESSAGE (optional, default = Severity.MESSAGE)
+     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to evaluate an alarm condition
      */
-    public Alarm(AbstractModule containingModule, String identifier, Integer number, String message, boolean resetOnAcknowledgement, Severity severity) throws SignalAlreadyExistsException{
-        super(containingModule, identifier);
-        this.message                = message;
-        this.number                 = number;
-        this.value                  = new LogicalValue();
-        this.propagatedValue        = new LogicalValue(); 
-        this.acknowledged           = new LogicalValue();
-        this.propagatedAcknowledged = new LogicalValue();
+    public Alarm(AbstractModule containingModule, String identifier, Integer number, String message, boolean resetOnAcknowledgement, Severity severity, Supplier<Boolean> intrinsicFunction) throws SignalAlreadyExistsException{
+        super(containingModule, identifier, intrinsicFunction, IoDirection.UNDEFINED);
         this.wrapperValue           = new LogicalValue();
+        this.number                 = number;
+        this.message                = message;
+        this.propagatedAcknowledged = new LogicalValue();
         this.resetOnAcknowledgement = resetOnAcknowledgement;
         this.invertOnUpdate         = false;
         this.severity               = severity;
-        this.intrinsicFunction      = null;
+        this.acknowledged           = new LogicalValue();
 
         this.acknowledged.set(true);
         this.propagatedAcknowledged.set(true);
@@ -121,11 +120,9 @@ public class Alarm extends Signal{
      * @param message: a message, that can be displayed over a GUI
      * @param resetOnAcknowledgement: if true, the alarm will be automatically reset on acknowledgement by the user 
      * @param severity: severity of the alarm: ALARM, WARNING, MESSAGE (optional, default = Severity.MESSAGE)
-     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to evaluate an alarm condition
      */
-    public Alarm(AbstractModule containingModule, String identifier, Integer number, String message, boolean resetOnAcknowledgement, Severity severity, Supplier<Boolean> intrinsicFunction) throws SignalAlreadyExistsException{
-        this(containingModule, identifier, number, message, resetOnAcknowledgement, severity);
-        this.intrinsicFunction = intrinsicFunction;
+    public Alarm(AbstractModule containingModule, String identifier, Integer number, String message, boolean resetOnAcknowledgement, Severity severity) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, number, message, resetOnAcknowledgement, severity, null);
     }
 
     /**

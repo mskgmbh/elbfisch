@@ -27,6 +27,8 @@ package org.jpac;
 
 import java.util.function.Supplier;
 
+import org.jpac.plc.IoDirection;
+
 /**
  * represents a decimal signal
  */
@@ -45,21 +47,20 @@ public class Decimal extends Signal{
      * @param identifier: identifier of the signal
      * @param minValue: minimum value signalValid for this decimal
      * @param maxValue: maximum value signalValid for this decimal
+     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to calculate the actual value
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
      * @throws org.jpac.SignalAlreadyExistsException
      */
-    public Decimal(AbstractModule containingModule, String identifier, double minValue, double maxValue) throws SignalAlreadyExistsException{
-        super(containingModule, identifier);
+    public Decimal(AbstractModule containingModule, String identifier, double minValue, double maxValue, Supplier<Double> intrinsicFunction, IoDirection ioDirection) throws SignalAlreadyExistsException{
+    	super(containingModule, identifier, intrinsicFunction, ioDirection);
+        this.wrapperValue       = new DecimalValue();
         this.minValue           = minValue;
         this.maxValue           = maxValue;
         this.rangeChecked       = true;//activate range check
-        this.intrinsicFunction  = null;
         this.mapper             = null;
         this.unit               = null;
-        this.value              = new DecimalValue();
-        this.propagatedValue    = new DecimalValue(); 
-        this.wrapperValue       = new DecimalValue();
     }
-    
+
     /**
      * constructs a decimal signal with intrinsic range check
      * @param containingModule: module this signal is contained in
@@ -70,10 +71,51 @@ public class Decimal extends Signal{
      * @throws org.jpac.SignalAlreadyExistsException
      */
     public Decimal(AbstractModule containingModule, String identifier, double minValue, double maxValue, Supplier<Double> intrinsicFunction) throws SignalAlreadyExistsException{
-        this(containingModule, identifier, minValue, maxValue);
-        this.rangeChecked       = true;
-        this.intrinsicFunction  = intrinsicFunction;
+    	super(containingModule, identifier, intrinsicFunction, IoDirection.UNDEFINED);
+        this.wrapperValue       = new DecimalValue();
+        this.minValue           = minValue;
+        this.maxValue           = maxValue;
+        this.rangeChecked       = true;//activate range check
+        this.mapper             = null;
+        this.unit               = null;
     }
+
+    /**
+     * constructs a decimal signal with intrinsic range check
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param minValue: minimum value signalValid for this decimal
+     * @param maxValue: maximum value signalValid for this decimal
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public Decimal(AbstractModule containingModule, String identifier, double minValue, double maxValue, IoDirection ioDirection) throws SignalAlreadyExistsException{
+    	this(containingModule, identifier, minValue, maxValue, null, ioDirection);
+    }
+    
+    /**
+     * constructs a decimal signal with intrinsic range check
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param minValue: minimum value signalValid for this decimal
+     * @param maxValue: maximum value signalValid for this decimal
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public Decimal(AbstractModule containingModule, String identifier, double minValue, double maxValue) throws SignalAlreadyExistsException{
+    	this(containingModule, identifier, minValue, maxValue, IoDirection.UNDEFINED);
+    }
+
+    /**
+     * constructs a decimal signal without range check.
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public Decimal(AbstractModule containingModule, String identifier, IoDirection ioDirection) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, 0.0, 0.0, ioDirection);
+        this.rangeChecked      = false;
+    }    
 
     /**
      * constructs a decimal signal without range check.
@@ -84,7 +126,19 @@ public class Decimal extends Signal{
     public Decimal(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
         this(containingModule, identifier, 0.0, 0.0);
         this.rangeChecked      = false;
-        this.intrinsicFunction = null;
+    }    
+
+    /**
+     * constructs a decimal signal without range check.
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to calculate the actual value
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public Decimal(AbstractModule containingModule, String identifier, Supplier<Double> intrinsicFunction, IoDirection ioDirection) throws SignalAlreadyExistsException{
+    	this(containingModule, identifier, 0.0, 0.0, intrinsicFunction, ioDirection);
+        this.rangeChecked      = false;
     }    
 
     /**
@@ -95,11 +149,26 @@ public class Decimal extends Signal{
      * @throws org.jpac.SignalAlreadyExistsException
      */
     public Decimal(AbstractModule containingModule, String identifier, Supplier<Double> intrinsicFunction) throws SignalAlreadyExistsException{
-        this(containingModule, identifier, 0.0, 0.0);
+    	this(containingModule, identifier, 0.0, 0.0, intrinsicFunction);
         this.rangeChecked      = false;
-        this.intrinsicFunction = intrinsicFunction;
     }    
 
+    /**
+     * constructs a decimal signal with a given default value and without range check.
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param defaultValue: default value of the signal
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public Decimal(AbstractModule containingModule, String identifier, double defaultValue, IoDirection ioDirection) throws SignalAlreadyExistsException{
+    	this(containingModule, identifier, ioDirection);
+        this.rangeChecked      = false;
+        this.initializing      = true;//prevent signal access assertion
+        try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/}catch(NumberOutOfRangeException exc){/*cannot happen*/};
+        this.initializing      = false;
+    }
+    
     /**
      * constructs a decimal signal with a given default value and without range check.
      * @param containingModule: module this signal is contained in
@@ -108,14 +177,31 @@ public class Decimal extends Signal{
      * @throws org.jpac.SignalAlreadyExistsException
      */
     public Decimal(AbstractModule containingModule, String identifier, double defaultValue) throws SignalAlreadyExistsException{
-        this(containingModule, identifier);
+    	this(containingModule, identifier);
         this.rangeChecked      = false;
-        this.intrinsicFunction = null;
         this.initializing      = true;//prevent signal access assertion
         try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/}catch(NumberOutOfRangeException exc){/*cannot happen*/};
         this.initializing      = false;
     }
-    
+
+    /**
+     * constructs a decimal signal with a given default value and intrinsic range check
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param minValue: minimum value signalValid for this decimal
+     * @param maxValue: maximum value signalValid for this decimal
+     * @param defaultValue: default value of the decimal
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
+     * @throws NumberOutOfRangeException
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public Decimal(AbstractModule containingModule, String identifier, double minValue, double maxValue, double defaultValue, IoDirection ioDirection) throws NumberOutOfRangeException, SignalAlreadyExistsException{
+    	this(containingModule, identifier, minValue, minValue, ioDirection);
+        this.initializing      = true;//prevent signal access assertion
+        try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/};
+        this.initializing      = false;
+    }
+
     /**
      * constructs a decimal signal with a given default value and intrinsic range check
      * @param containingModule: module this signal is contained in
@@ -127,14 +213,11 @@ public class Decimal extends Signal{
      * @throws org.jpac.SignalAlreadyExistsException
      */
     public Decimal(AbstractModule containingModule, String identifier, double minValue, double maxValue, double defaultValue) throws NumberOutOfRangeException, SignalAlreadyExistsException{
-        this(containingModule, identifier, minValue, maxValue);
-        this.rangeChecked      = true;
-        this.intrinsicFunction = null;
+    	this(containingModule, identifier, minValue, minValue);
         this.initializing      = true;//prevent signal access assertion
         try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/};
         this.initializing      = false;
     }
-
     
     /**
      * used to set the decimal to the given value

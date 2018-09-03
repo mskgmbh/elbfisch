@@ -26,6 +26,8 @@
 package org.jpac;
 
 import java.lang.Thread.State;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Observable;
@@ -36,6 +38,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 import org.slf4j.LoggerFactory;
+import org.jpac.plc.IoDirection;
+import org.jpac.plc.IoSignal;
+import org.jpac.plc.StringLengthException;
+import org.jpac.vioss.ef.IoCharString;
+import org.jpac.vioss.ef.IoDecimal;
+import org.jpac.vioss.ef.IoLogical;
+import org.jpac.vioss.ef.IoSignedInteger;
 import org.slf4j.Logger;
 
 /**
@@ -43,7 +52,8 @@ import org.slf4j.Logger;
  * 
  */
 public abstract class Signal extends Observable implements Observer {
-        
+	protected final static String PROXYQUALIFIER = "$Proxy";     
+	
     private   enum ConnTask{CONNECT,DISCONNECT, REMOTECONNECT, REMOTEDISCONNECT, SIGNALOBSERVERCONNECT, SIGNALOBSERVERDISCONNECT};
     
     static    Logger Log = LoggerFactory.getLogger("jpac.Signal");
@@ -57,7 +67,7 @@ public abstract class Signal extends Observable implements Observer {
     private   Set<Signal>                observingSignals;
     private   Set<RemoteSignalOutput>    observingRemoteSignalOutputs;
     private   Queue<ConnectionTask>      connectionTasks;
-    protected Supplier                   intrinsicFunction;
+    protected Supplier<?>                intrinsicFunction;
     
     protected Value                      value;
     protected Value                      propagatedValue;
@@ -66,10 +76,13 @@ public abstract class Signal extends Observable implements Observer {
     protected boolean                    justConnectedAsSource;
     protected boolean                    intrinsicFunctionExceptionLogged;
     protected boolean                    inApplyIntrinsicFunction;
+    protected IoDirection                ioDirection;
     
-    public Signal(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
+    public Signal(AbstractModule containingModule, String identifier, Supplier<?> intrinsicFunction, IoDirection ioDirection) throws SignalAlreadyExistsException{
         super();
         this.identifier                       = identifier;
+        this.intrinsicFunction                = intrinsicFunction;
+        this.ioDirection                      = ioDirection;
         this.lastChangeCycleNumber            = 0L;
         this.propagatedLastChangeCycleNumber  = 0L;
         this.lastChangeNanoTime               = 0L;
@@ -85,7 +98,68 @@ public abstract class Signal extends Observable implements Observer {
         this.justConnectedAsSource            = false;
         this.intrinsicFunctionExceptionLogged = false;
         this.inApplyIntrinsicFunction         = false;
+
+        this.value              		      = getTypedValue();
+        this.propagatedValue    			  = getTypedValue(); 
+
+        if (!containingModule.runsLocally() && ! (this instanceof IoSignal)) {
+        	//the containing module will be run on a separate elbfisch instance and this is not an io signal
+        	this.intrinsicFunction = null; //disable intrinsicFunction on this instance
+        	//instantiate an io signal used to access the remote counterpart of this signal
+        	//and connect it to this signal according to the desired io direction
+        	Signal ioSig = getTypedProxyIoSignal(containingModule, getQualifiedIdentifier(), containingModule.getEffectiveElbfischInstance(), ioDirection);
+        	switch(getIoDirection()) {
+        	case INPUT:
+        		ioSig.connect(this);
+        		break;
+        	case OUTPUT:
+        		this.connect(ioSig);
+        		break;
+        	default:
+        		throw new WrongUseException("IoDirection must be either INPUT or OUTPUT. Currently set to " + getIoDirection());
+        	}
+        }
         SignalRegistry.getInstance().add(this);
+    }
+    
+    protected Value getTypedValue() {
+    	Value value = null;
+    	if (this instanceof Logical) {
+    		value = new LogicalValue();
+    	} else if (this instanceof SignedInteger) {
+    		value = new SignedIntegerValue();
+    	} else if (this instanceof Decimal) {
+    		value = new DecimalValue();
+    	} else if (this instanceof CharString) {
+    		value = new CharStringValue();
+    	} else {
+    		throw new UnsupportedOperationException("signal type " + this.getClass().getCanonicalName() + " not supported");
+    	}
+    	return value;
+    }
+    
+    protected Signal getTypedProxyIoSignal(AbstractModule containingModule, String identifier, URI remoteElbfischInstance, IoDirection ioDirection) {
+    	Signal signal = null;
+    	
+    	try{
+        	String sigIdentifier = identifier + PROXYQUALIFIER;
+    		URI  sigUri = new URI(remoteElbfischInstance + "/" + identifier);
+    	
+	    	if (this instanceof Logical) {
+	    		signal = new IoLogical(containingModule, sigIdentifier, sigUri, ioDirection);
+	    	} else if (this instanceof SignedInteger) {
+	    		signal = new IoSignedInteger(containingModule, sigIdentifier, sigUri, ioDirection);
+	    	} else if (this instanceof Decimal) {
+	    		signal = new IoDecimal(containingModule, sigIdentifier, sigUri, ioDirection);
+	    	} else if (this instanceof CharString) {
+	    		signal = new IoCharString(containingModule, sigIdentifier, sigUri, ioDirection);
+	    	} else {
+	    		throw new UnsupportedOperationException("signal type " + this.getClass().getCanonicalName() + " not supported as proxy");
+	    	}
+    	} catch(URISyntaxException | StringLengthException exc) {
+    		throw new RuntimeException("failed to instantiate proxy signal: ", exc);
+    	}
+    	return signal;
     }
     
     /**
@@ -442,6 +516,10 @@ public abstract class Signal extends Observable implements Observer {
         return observingSignals;
     }
     
+    public IoDirection getIoDirection() {
+    	return ioDirection;
+    }
+    
     @Override
     public String toString(){
         return getClass().getSimpleName() + "(" + containingModule.getName() + '.' + identifier + " = " + (isValid() ? getValue() : "???") + ")";
@@ -625,7 +703,11 @@ public abstract class Signal extends Observable implements Observer {
             inApplyIntrinsicFunction = false;
         }
     }
-
+    
+    protected void setIoDirection(IoDirection ioDirection) {
+    	this.ioDirection = ioDirection;
+    }
+    
     abstract protected boolean isCompatibleSignal(Signal signal);
     abstract protected void updateValue(Object o, Object arg) throws SignalAccessException;
     abstract protected void propagateSignalInternally() throws SignalInvalidException;    

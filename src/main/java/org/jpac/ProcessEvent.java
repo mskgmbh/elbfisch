@@ -167,19 +167,21 @@ public abstract class ProcessEvent extends Fireable{
         traceLength        = stackTrace.length;
         i                  = 0;
         j                  = traceLength;
-        //trace back to Module.work()
-        do{j--;} while(j > 0 && !stackTrace[j].getMethodName().equals("work"));
-        if (j >= 0){
-            do{
-                stackTraceElement = stackTrace[j]; 
-                methodName        = stackTraceElement.getMethodName();
-                stacktraceSignals[i].set(stackTraceElement.getClassName() + "." + methodName + "(): " + stackTraceElement.getLineNumber());
-                i++;j--;
-            }
-            while(j >= STACKTRACEOFFSET && i < stacktraceSignals.length);
-        }
-        while(i < stacktraceSignals.length){
-            stacktraceSignals[i++].invalidate();
+        if (module.runsLocally()) {
+	        //trace back to Module.work()
+	        do{j--;} while(j > 0 && !stackTrace[j].getMethodName().equals("work"));
+	        if (j >= 0 && stackTrace[j].getMethodName().equals("work")){
+	            do{
+	                stackTraceElement = stackTrace[j]; 
+	                methodName        = stackTraceElement.getMethodName();
+	                stacktraceSignals[i].set(stackTraceElement.getClassName() + "." + methodName + "(): " + stackTraceElement.getLineNumber());
+	                i++;j--;
+	            }
+	            while(j >= STACKTRACEOFFSET && i < stacktraceSignals.length);
+	        }
+	        while(i < stacktraceSignals.length){
+	            stacktraceSignals[i++].invalidate();
+	        }
         }
         //register myself as an active waiting event
         register();

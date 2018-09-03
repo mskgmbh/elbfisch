@@ -25,8 +25,8 @@
 
 package org.jpac;
 
-import java.util.function.IntSupplier;
 import java.util.function.Supplier;
+import org.jpac.plc.IoDirection;
 
 /**
  * represents a signed integer signal
@@ -41,28 +41,27 @@ public class SignedInteger extends Signal{
     private   SignedIntegerValue  wrapperValue;
 
     /**
-     * constructs a signed integer signal with intrinsic range check
+     * constructs a signed integer signal with intrinsic and range check
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
      * @param minValue: minimum value signalValid for this signed integer
      * @param maxValue: maximum value signalValid for this signed integer
+     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to calculate the actual value
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
      * @throws org.jpac.SignalAlreadyExistsException
      */
-    public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue) throws SignalAlreadyExistsException{
-        super(containingModule, identifier);
+    public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue, Supplier<Integer> intrinsicFunction, IoDirection ioDirection) throws SignalAlreadyExistsException{
+        super(containingModule, identifier, intrinsicFunction, ioDirection);
+        this.wrapperValue       = new SignedIntegerValue();
         this.minValue           = minValue;
         this.maxValue           = maxValue;
         this.rangeChecked       = true;//activate range check
-        this.intrinsicFunction  = null;
         this.mapper             = null;
         this.unit               = null;
-        this.value              = new SignedIntegerValue();
-        this.propagatedValue    = new SignedIntegerValue(); 
-        this.wrapperValue       = new SignedIntegerValue();
     }
-    
+
     /**
-     * constructs a signed integer signal with intrinsic range check
+     * constructs a signed integer signal with intrinsic and range check
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
      * @param minValue: minimum value signalValid for this signed integer
@@ -71,26 +70,74 @@ public class SignedInteger extends Signal{
      * @throws org.jpac.SignalAlreadyExistsException
      */
     public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue, Supplier<Integer> intrinsicFunction) throws SignalAlreadyExistsException{
-        this(containingModule, identifier, minValue, maxValue);
-        this.rangeChecked      = true;//activate range check
-        this.intrinsicFunction = intrinsicFunction;
+        this(containingModule, identifier, minValue, maxValue, intrinsicFunction, IoDirection.UNDEFINED);
     }
 
     /**
-     * constructs a signed integer signal with intrinsic range check.
+     * constructs a signed integer signal with rangecheck
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param minValue: minimum value signalValid for this signed integer
+     * @param maxValue: maximum value signalValid for this signed integer
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue, IoDirection ioDirection) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, minValue, maxValue, null, ioDirection);
+    }
+    
+    /**
+     * constructs a signed integer signal with rangecheck
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param minValue: minimum value signalValid for this signed integer
+     * @param maxValue: maximum value signalValid for this signed integer
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, minValue, maxValue, null, IoDirection.UNDEFINED);
+    }
+
+    /**
+     * constructs a signed integer signal.
+     * range check is disabled.
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public SignedInteger(AbstractModule containingModule, String identifier, IoDirection ioDirection) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, 0, 0, null, ioDirection);
+        this.rangeChecked = false;
+    }    
+
+    /**
+     * constructs a signed integer signal.
      * range check is disabled.
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
      * @throws org.jpac.SignalAlreadyExistsException
      */
     public SignedInteger(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
-        this(containingModule, identifier, 0, 0);
-        this.rangeChecked      = false;
-        this.intrinsicFunction = null;
+        this(containingModule, identifier, IoDirection.UNDEFINED);
     }    
     
     /**
-     * constructs a signed integer signal with intrinsic range check.
+     * constructs a signed integer signal with intrinsic function
+     * range check is disabled.
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to calculate the actual value
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public SignedInteger(AbstractModule containingModule, String identifier, Supplier<Integer> intrinsicFunction, IoDirection ioDirection) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, 0, 0, intrinsicFunction, ioDirection);
+        this.rangeChecked = false;
+    }    
+
+    /**
+     * constructs a signed integer signal with intrinsic function
      * range check is disabled.
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
@@ -98,44 +145,74 @@ public class SignedInteger extends Signal{
      * @throws org.jpac.SignalAlreadyExistsException
      */
     public SignedInteger(AbstractModule containingModule, String identifier, Supplier<Integer> intrinsicFunction) throws SignalAlreadyExistsException{
-        this(containingModule, identifier, 0, 0);
-        this.rangeChecked      = false;
-        this.intrinsicFunction = intrinsicFunction;
+        this(containingModule, identifier, intrinsicFunction, IoDirection.UNDEFINED);
+        this.rangeChecked = false;
     }    
 
     /**
-     * constructs a signed integer signal with a given default value and without range check.
+     * constructs a signed integer signal with a given default value.
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
      * @param defaultValue: default value of the signal
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
      * @throws org.jpac.SignalAlreadyExistsException
      */
-    public SignedInteger(AbstractModule containingModule, String identifier, int defaultValue) throws SignalAlreadyExistsException{
-        this(containingModule, identifier);
-        this.rangeChecked      = false;
-        this.intrinsicFunction = null;
+    public SignedInteger(AbstractModule containingModule, String identifier, int defaultValue, IoDirection ioDirection) throws SignalAlreadyExistsException{
+    	this(containingModule, identifier, ioDirection);
+        this.rangeChecked = false;
         this.initializing = true;//prevent signal access assertion
         try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/}catch(NumberOutOfRangeException exc){/*cannot happen*/};
         this.initializing = false;
     }
     
     /**
+     * constructs a signed integer signal with a given default value.
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param defaultValue: default value of the signal
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public SignedInteger(AbstractModule containingModule, String identifier, int defaultValue) throws SignalAlreadyExistsException{
+    	this(containingModule, identifier);
+        this.rangeChecked = false;
+        this.initializing = true;//prevent signal access assertion
+        try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/}catch(NumberOutOfRangeException exc){/*cannot happen*/};
+        this.initializing = false;
+    }
+
+    /**
      * constructs a signed integer signal with a given default value and intrinsic range check
      * @param containingModule: module this signal is contained in
      * @param identifier: identifier of the signal
-     * @param minValue: minimum value signalValid for this decimal
-     * @param maxValue: maximum value signalValid for this decimal
+     * @param minValue: minimum value for this decimal
+     * @param maxValue: maximum value for this decimal
      * @param defaultValue: default value of the decimal
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
      * @throws NumberOutOfRangeException
      */
-    public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue, int defaultValue) throws NumberOutOfRangeException, SignalAlreadyExistsException{
-        this(containingModule, identifier, minValue, maxValue);
+    public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue, int defaultValue, IoDirection ioDirection) throws NumberOutOfRangeException, SignalAlreadyExistsException{
+        this(containingModule, identifier, minValue, maxValue, ioDirection);
         this.initializing = true;//prevent signal access assertion
         try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/};
         this.initializing = false;
     }
-    
-    
+        
+    /**
+     * constructs a signed integer signal with a given default value and intrinsic range check
+     * @param containingModule: module this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param minValue: minimum value for this decimal
+     * @param maxValue: maximum value for this decimal
+     * @param defaultValue: default value of the decimal
+     * @throws NumberOutOfRangeException
+     */
+    public SignedInteger(AbstractModule containingModule, String identifier, int minValue, int maxValue, int defaultValue) throws NumberOutOfRangeException, SignalAlreadyExistsException{
+        this(containingModule, identifier, minValue, maxValue, IoDirection.UNDEFINED);
+        this.initializing = true;//prevent signal access assertion
+        try{set(defaultValue);}catch(SignalAccessException exc){/*cannot happen*/};
+        this.initializing = false;
+    }
+
     /**
      * used to set the signed integer to the given value
      * @param value: value, the signed integer is set to

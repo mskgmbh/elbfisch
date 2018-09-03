@@ -26,6 +26,8 @@ package org.jpac;
 
 import java.util.function.Supplier;
 
+import org.jpac.plc.IoDirection;
+
 /**
  * class template for generic objects used as signals, where ValueImpl is a class 
  * implementing the org.jpac.Value interface
@@ -38,25 +40,21 @@ public class Generic<ValueImpl> extends Signal{
      * constructs a Generic signal
      * @param containingModule: module, this signal is contained in
      * @param identifier: identifier of the signal
+     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to calculate the actual value
      * @throws org.jpac.SignalAlreadyExistsException
      */    
-    public Generic(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
-        super(containingModule, identifier);
-        intrinsicFunction = null;
-        value             = null;
-        propagatedValue   = null; 
+    public Generic(AbstractModule containingModule, String identifier, Supplier<ValueImpl> intrinsicFunction) throws SignalAlreadyExistsException{
+    	super(containingModule, identifier, intrinsicFunction, IoDirection.UNDEFINED);
     }
 
     /**
      * constructs a Generic signal
      * @param containingModule: module, this signal is contained in
      * @param identifier: identifier of the signal
-     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to calculate the actual value
      * @throws org.jpac.SignalAlreadyExistsException
      */    
-    public Generic(AbstractModule containingModule, String identifier, Supplier<ValueImpl> intrinsicFunction) throws SignalAlreadyExistsException{
-        super(containingModule, identifier);
-        this.intrinsicFunction = intrinsicFunction;
+    public Generic(AbstractModule containingModule, String identifier) throws SignalAlreadyExistsException{
+    	this(containingModule, identifier, (Supplier<ValueImpl>) null);
     }
 
     /**

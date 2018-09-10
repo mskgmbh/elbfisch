@@ -203,6 +203,12 @@ public class IoCharString extends CharString implements IoSignal{
         
     @Override
     public String toString(){
-       return super.toString() + (ioDirection == IoDirection.INPUT ? " <- " : " -> ") + address.toString(); 
+    	String msg = null;
+    	if (address != null) {
+    		msg = super.toString() + (ioDirection == IoDirection.INPUT ? " <- " : " -> ") + address.toString();
+    	} else {
+    		msg = super.toString();
+    	}
+       return msg; 
     }    
 }

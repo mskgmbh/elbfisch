@@ -33,59 +33,91 @@ import org.jpac.InconsistencyException;
  * @author berndschuster
  */
 public class MessageFactory {
+    protected CommandHandler commandHandler;
+    protected Transceive     recycledTransceive;
+
+    public MessageFactory(CommandHandler commandHandler) {
+    	this.commandHandler     = commandHandler;
+    	this.recycledTransceive = new Transceive();
+    }
     
-    public static Message getMessage(ByteBuf byteBuf) throws InconsistencyException{
+    public static Message getMessage(ByteBuf byteBuf) {
         Message message = null;
         short  messageId = byteBuf.readShort();
         MessageId commandId = MessageId.fromInt(messageId);
-        switch(commandId) {
-            case CmdPing:
-                message = new Ping();
-                break;
-            case CmdGetHandle:
-                message = new GetHandle();
-                break;
-            case CmdGetHandles:
-                message = new GetHandles();
-                break;
-            case CmdBrowse:
-                message = new Browse();
-                break;
-            case CmdSubscribe:
-                message = new Subscribe();
-                break;
-            case CmdUnsubscribe:
-                message = new Unsubscribe();
-                break;
-            case CmdTransceive:
-                message = new Transceive();
-                break;
-            case AckPing:
-                message = new PingAcknowledgement();
-                break;
-            case AckGetHandle:
-                message = new GetHandleAcknowledgement();
-                break;
-            case AckGetHandles:
-                message = new GetHandlesAcknowledgement();
-                break;
-            case AckBrowse:
-                message = new BrowseAcknowledgement();
-                break;
-            case AckSubscribe:
-                message = new SubscribeAcknowledgement();
-                break;
-            case AckUnsubscribe:
-                message = new UnsubscribeAcknowledgement();
-                break;
-            case AckTransceive:
-                message = new TransceiveAcknowledgement();
-                break;
-            default:
-                throw new InconsistencyException("illegal message id received: " + messageId);
+    	message = getCommand(commandId);
+        if (message != null){
+            message.decode(byteBuf);
+        } else {
+            throw new InconsistencyException("illegal message id received: " + commandId);        	
+        }
+        return message;
+    }
+    
+    public Message getRecycledMessage(ByteBuf byteBuf) throws InconsistencyException{
+        Message message = null;
+        short  messageId = byteBuf.readShort();
+        MessageId commandId = MessageId.fromInt(messageId);
+        //Up to now, only the transceive command is recycled because of its frequent use
+        if (commandId == MessageId.CmdTransceive) {
+        	message = recycledTransceive;
+        } else {
+        	message = getCommand(commandId);
         }
         if (message != null){
             message.decode(byteBuf);
+        } else {
+            throw new InconsistencyException("illegal message id received: " + commandId);        	
+        }
+        return message;
+    }
+
+    protected static Message getCommand(MessageId commandId) {
+    	Message message = null;
+        switch(commandId) {
+        case CmdPing:
+            message = new Ping();
+            break;
+        case CmdGetHandle:
+            message = new GetHandle();
+            break;
+        case CmdGetHandles:
+            message = new GetHandles();
+            break;
+        case CmdBrowse:
+            message = new Browse();
+            break;
+        case CmdSubscribe:
+            message = new Subscribe();
+            break;
+        case CmdUnsubscribe:
+            message = new Unsubscribe();
+            break;
+        case CmdTransceive:
+            message = new Transceive();            		            		
+            break;
+        case AckPing:
+            message = new PingAcknowledgement();
+            break;
+        case AckGetHandle:
+            message = new GetHandleAcknowledgement();
+            break;
+        case AckGetHandles:
+            message = new GetHandlesAcknowledgement();
+            break;
+        case AckBrowse:
+            message = new BrowseAcknowledgement();
+            break;
+        case AckSubscribe:
+            message = new SubscribeAcknowledgement();
+            break;
+        case AckUnsubscribe:
+            message = new UnsubscribeAcknowledgement();
+            break;
+        case AckTransceive:
+            message = new TransceiveAcknowledgement();
+            break;
+         default:
         }
         return message;
     }

@@ -53,24 +53,21 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
     
     protected HashMap<Integer, SignalTransport> listOfClientInputTransports;
     protected HashMap<Integer, SignalTransport> listOfClientOutputTransports;
-    protected List<Byte>                        listOfReceiveResults;
-    protected HashMap<Integer, SignalTransport> listOfSignalTransports;
 
-    protected HashMap<Integer, SignalTransport> listOfChangedClientInputTransports;                 
-    protected HashSet<SignalTransport>          listOfChangedClientOutputTransports;                 
     protected boolean                           firstSignalValueTransmission;
     protected InetSocketAddress                 remoteSocketAddress;
+    protected MessageFactory                    messageFactory;
+	protected SignalTransport                   target;
+	protected int                               index;                      
     
     public CommandHandler(InetSocketAddress remoteSocketAddress){
         this.remoteSocketAddress                 = remoteSocketAddress;
         this.listOfClientInputTransports         = new HashMap<>();
         this.listOfClientOutputTransports        = new HashMap<>();
-        this.listOfReceiveResults                = new ArrayList<>();
-        this.listOfSignalTransports              = new HashMap<>();
         
-        this.listOfChangedClientOutputTransports = new HashSet<>();
-        this.listOfChangedClientInputTransports  = new HashMap<>();
         this.firstSignalValueTransmission        = true;
+        
+        this.messageFactory                      = new MessageFactory(this);
         this.listOfActiveCommandHandlers.add(this);
     }
 
@@ -82,12 +79,12 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
      
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        Command command;
+        Command         command;
         Acknowledgement acknowledgement;
         
         try{        
             in      = (ByteBuf) msg;
-            command = (Command)MessageFactory.getMessage(in);
+            command = (Command)messageFactory.getRecycledMessage(in);
             Log.debug("received command {}", command);
             acknowledgement = command.handleRequest(this);
             Log.debug("{} acknowledged with {}", command, acknowledgement);
@@ -107,7 +104,6 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
         //disconnect all received signals, and invalidate them
         listOfClientOutputTransports.keySet().forEach(
                 (h)-> {Signal signal = SignalRegistry.getInstance().getSignal(h);
-                Log.info("invalidate " + signal);
                 signal.setConnectedAsTarget(false);
                 signal.invalidateDeferred();
         });
@@ -120,7 +116,8 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception{
         super.channelActive(ctx);
-        Log.info("remote connection for ef://" + remoteSocketAddress.getHostName() + ":" + remoteSocketAddress.getPort() + " opened");
+        Log.info("remote connection for ef://" + remoteSocketAddress.getHostName() + ":" + remoteSocketAddress.getPort() + " established");
+        firstSignalValueTransmission = true;//invoke transfer of all client input signals on first transmission regardless if changed or not
     }
 
     @Override
@@ -143,36 +140,38 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
 
     protected void registerClientInputSignal(int handle) {
         Signal signal = SignalRegistry.getInstance().getSignal(handle);
-        listOfClientInputTransports.put(handle, new SignalTransport(signal));
+        SignalTransport st = new SignalTransport(signal);
+        listOfClientInputTransports.put(handle, st);
     }
    
     protected void registerClientOutputSignal(int handle) {
         Signal signal = SignalRegistry.getInstance().getSignal(handle);        
-        listOfClientOutputTransports.put(handle, new SignalTransport(signal));
-        signal.setConnectedAsTarget(true);//inhibit changes to this signal by other sources
+        SignalTransport st = new SignalTransport(signal);
+        signal.setConnectedAsTarget(true);
+        listOfClientOutputTransports.put(handle, st);
         Log.debug("register " + signal);
     }
 
     protected void unregisterClientInputSignal(int handle) {
+    	SignalTransport st = listOfClientInputTransports.get(handle);
+    	st.getConnectedSignal().disconnect(st);
         listOfClientInputTransports.remove(handle);
     }
    
     protected void unregisterClientOutputSignal(int handle) {
+    	SignalTransport st = listOfClientOutputTransports.get(handle);
+    	st.getConnectedSignal().setConnectedAsTarget(false);
+        st.getConnectedSignal().invalidateDeferred();
         listOfClientOutputTransports.remove(handle);
-        Signal signal = SignalRegistry.getInstance().getSignal(handle);
-        signal.setConnectedAsTarget(false);
-        signal.invalidateDeferred();
     }
 
     /**
-     * called by CommandHandler (command Transceive)
+     * called by CommandHandler (command Transceive.handleRequest())
      * @param signalTransport 
      */
-    protected List<Byte> updateChangedClientOutputTransports(List<SignalTransport> signalTransports){
+    protected void updateClientOutputTransports(List<SignalTransport> signalTransports){
         synchronized(listOfClientOutputTransports){
-            listOfReceiveResults.clear();
             signalTransports.forEach((st)-> {
-                Result result;
                 try{
                     SignalTransport target = listOfClientOutputTransports.get(st.getHandle());
                     if (target != null){
@@ -180,35 +179,19 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
                             //copy only changed values
                             target.getValue().copy(st.getValue());
                             target.setChanged(true);          
-                            listOfChangedClientOutputTransports.add(target);
                         }
-                        result = Result.NoFault;
                     } 
-                    else{
-                        result = Result.SignalNotSubscribed; 
-                    }
                 }
                 catch(Exception exc){
-                    Log.error("Error accessing signal with handle {} .", st.getHandle(), exc);
-                    result = Result.GeneralFailure;
+                	if (target != null) {
+                		Log.error("Error accessing " + target.getConnectedSignal(),  exc);
+                	} else {
+                		Log.error("Error accessing signal with handle " + st.getHandle(),  exc);                		
+                	}
                 }
-                listOfReceiveResults.add((byte)result.getValue());                    
             });
         }
-        return listOfReceiveResults;
-    }
-
-    /**
-     * called by CommandHandler (command Transceive) 
-     * @return  
-     */
-    protected HashMap<Integer, SignalTransport> retrieveChangedClientInputTransports(){
-        synchronized(listOfClientInputTransports){
-            listOfSignalTransports.clear();
-            listOfChangedClientInputTransports.forEach((handle, signalTransport)-> listOfSignalTransports.put(handle, signalTransport));
-            listOfChangedClientInputTransports.clear();
-        }
-        return listOfSignalTransports;
+        return;
     }
 
     /**
@@ -216,11 +199,7 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
      */
     public void transferChangedClientOutputTransportsToSignals(){
         synchronized(listOfClientOutputTransports){
-            listOfChangedClientOutputTransports.forEach((st)-> {
-                SignalRegistry.getInstance().getSignal(st.getHandle()).setValue(st.getValue());
-                st.setChanged(false);
-            });
-            listOfChangedClientOutputTransports.clear();
+            listOfClientOutputTransports.values().forEach((st)-> st.getConnectedSignal().setValue(st.getValue()));
         }
     }
 
@@ -229,25 +208,21 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
      */
     public void transferChangedSignalsToClientInputTransports(){
         synchronized(listOfClientInputTransports){
-            listOfClientInputTransports.forEach((handle, signalTransport)->{
-                Signal signal     = SignalRegistry.getInstance().getSignal(handle);
-                Value sigValue    = signal.getValue();
-                Value outputValue = signalTransport.getValue();
-                if (firstSignalValueTransmission || !sigValue.equals(outputValue)){
-                    //first signal transmission after connection or signal changed
-                    signalTransport.getValue().copy(sigValue);
-                    signalTransport.setChanged(true);
-                    listOfChangedClientInputTransports.put(signalTransport.getHandle(), signalTransport);
-                }
-            });
-            firstSignalValueTransmission  = false;
+            listOfClientInputTransports.values().forEach((st)->	st.setValue(st.getConnectedSignal().getValue()));
         }
     }
 
     /**
-     * @return the listOfChangedClientInputTransports
+     * @return the listOfClientInputTransports
      */
-    public HashMap<Integer, SignalTransport> getListOfChangedOutputTransports() {
-        return listOfChangedClientInputTransports;
+    public HashMap<Integer, SignalTransport> getListOfClientInputTransports() {
+        return listOfClientInputTransports;
+    }
+
+    /**
+     * @return the listOfClientOutputTransports
+     */
+    public HashMap<Integer, SignalTransport> getListOfClientOutputTransports() {
+        return listOfClientOutputTransports;
     }
 }

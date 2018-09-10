@@ -27,6 +27,9 @@ package org.jpac.ef;
 
 import io.netty.buffer.ByteBuf;
 import java.util.Observable;
+
+import javax.annotation.Nonnull;
+
 import org.jpac.CharStringValue;
 import org.jpac.DecimalValue;
 import org.jpac.LogicalValue;
@@ -41,22 +44,24 @@ import org.slf4j.LoggerFactory;
  *
  * @author berndschuster
  */
-public class SignalTransport implements SignalObserver{    
-    protected Logger            Log = LoggerFactory.getLogger("jpac.ef");
+public class SignalTransport implements SignalObserver {    
+	transient protected Logger  Log = LoggerFactory.getLogger("jpac.ef");
+    transient protected boolean connected;
+    transient protected Signal  connectedSignal;
     protected Integer           handle;
     protected Value             value;
     protected boolean           changed;
     protected BasicSignalType   signalType;
-    transient protected boolean connected;
     
     public SignalTransport(Signal signal){
         try{
             if (signal != null){
-                this.handle     = signal.getQualifiedIdentifier().hashCode();
-                this.value      = signal.getValue().clone();
-                this.changed    = false;
-                this.signalType = BasicSignalType.fromSignal(signal);
-                this.connected  = false;
+                this.handle          = signal.getQualifiedIdentifier().hashCode();
+                this.value           = signal.getValue().clone();
+                this.changed         = true;
+                this.signalType      = BasicSignalType.fromSignal(signal);
+                this.connected       = false;
+                this.connectedSignal = signal;
             }
         }
         catch(Exception exc){
@@ -64,7 +69,7 @@ public class SignalTransport implements SignalObserver{
         }
     }
     
-    protected Value getValueFromSignalType(BasicSignalType sigType){
+    protected static Value getValueFromSignalType(BasicSignalType sigType){
         Value value;
         switch(sigType){
             case Logical:
@@ -99,6 +104,13 @@ public class SignalTransport implements SignalObserver{
         value      = getValueFromSignalType(signalType);
         value.decode(byteBuf);
     }
+    
+    public void propagate() {
+    	if (connectedSignal != null && changed) {
+    		connectedSignal.setValue(value);
+    		changed = false;
+    	}
+    }
 
     public int getHandle() {
         return handle;
@@ -112,8 +124,14 @@ public class SignalTransport implements SignalObserver{
         return value;
     }
 
-    public void setValue(Value value) {
-        this.value = value;
+    public void setValue(@Nonnull Value value) {
+    	if (this.value == null) {
+    		try{this.value = value.clone();}catch(CloneNotSupportedException exc) {/*cannot happen*/}
+        	setChanged(true);
+    	} else if (!this.value.equals(value)) {
+    		this.value.copy(value);
+        	setChanged(true);
+    	}
     }
             
     public boolean isChanged() {
@@ -122,6 +140,10 @@ public class SignalTransport implements SignalObserver{
 
     public void setChanged(boolean changed) {
         this.changed = changed;
+    }
+    
+    public Signal getConnectedSignal() {
+    	return this.connectedSignal;
     }
 
     @Override
@@ -133,17 +155,24 @@ public class SignalTransport implements SignalObserver{
     public boolean isConnectedAsTarget() {
         return this.connected;
     }
+    
+    public BasicSignalType getSignalType() {
+    	return this.signalType;
+    }
 
     @Override
     public void update(Observable o, Object arg) {
-        Signal sourceSignal = (Signal)o;
-        if (value == null){
-            try{value = sourceSignal.getValue().clone();}catch(CloneNotSupportedException exc){/*cannot happen*/};
-        }
-        else{
-            value.copy(sourceSignal.getValue());
-        }
+        value.copy(((Signal)o).getValue());
         setChanged(true);
+    }
+    
+    public void copyData(SignalTransport source) {
+    	setValue(source.getValue());
+        this.handle          = source.handle;
+        this.signalType      = source.signalType;
+        this.connected       = source.connected;
+        this.connectedSignal = source.connectedSignal;
+
     }
 
     @Override

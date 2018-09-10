@@ -52,7 +52,7 @@ import org.slf4j.Logger;
  * 
  */
 public abstract class Signal extends Observable implements Observer {
-	protected final static String PROXYQUALIFIER = "$Proxy";     
+	public final static String PROXYQUALIFIER = "$Proxy";     
 	
     private   enum ConnTask{CONNECT,DISCONNECT, REMOTECONNECT, REMOTEDISCONNECT, SIGNALOBSERVERCONNECT, SIGNALOBSERVERDISCONNECT};
     
@@ -102,21 +102,28 @@ public abstract class Signal extends Observable implements Observer {
         this.value              		      = getTypedValue();
         this.propagatedValue    			  = getTypedValue(); 
 
-        if (!containingModule.runsLocally() && ! (this instanceof IoSignal)) {
-        	//the containing module will be run on a separate elbfisch instance and this is not an io signal
+        if (!containingModule.isRunLocally() && !(this instanceof IoSignal) && (getIoDirection() == IoDirection.INPUT || getIoDirection() == IoDirection.OUTPUT)) {
+        	//the containing module will be run on a separate elbfisch instance and 
+        	//this signal is not an io signal and 
+        	//this signal is explicitly designated as being either INPUT or OUTPUT:
         	this.intrinsicFunction = null; //disable intrinsicFunction on this instance
-        	//instantiate an io signal used to access the remote counterpart of this signal
-        	//and connect it to this signal according to the desired io direction
-        	Signal ioSig = getTypedProxyIoSignal(containingModule, getQualifiedIdentifier(), containingModule.getEffectiveElbfischInstance(), ioDirection);
-        	switch(getIoDirection()) {
-        	case INPUT:
-        		ioSig.connect(this);
-        		break;
-        	case OUTPUT:
-        		this.connect(ioSig);
-        		break;
-        	default:
-        		throw new WrongUseException("IoDirection must be either INPUT or OUTPUT. Currently set to " + getIoDirection());
+        	//The containing module is either proxy or inactive
+            if (containingModule.isProxy()) {
+	        	//instantiate an io signal as a proxy used to access the remote counterpart of this signal
+	        	//and connect it to this signal according to the desired io direction
+	        	Signal ioSig = getTypedProxyIoSignal(containingModule.getEffectiveElbfischInstance(), invert(getIoDirection()));
+	        	switch(getIoDirection()) {
+	        	case INPUT:
+	        		//pass incoming signal through to remote counterpart
+	        		Log.info("PROXY: " + this + ".connect(" + ioSig + ")");//TODO
+	        		this.connect(ioSig);
+	        		break;
+	        	case OUTPUT:
+	        		//pass incoming signal from remote counterpart to this
+	        		Log.info("PROXY: " + ioSig.getQualifiedIdentifier() + ".connect(" + this + ")");//TODO
+	        		ioSig.connect(this);
+	        		break;
+	        	}
         	}
         }
         SignalRegistry.getInstance().add(this);
@@ -138,12 +145,12 @@ public abstract class Signal extends Observable implements Observer {
     	return value;
     }
     
-    protected Signal getTypedProxyIoSignal(AbstractModule containingModule, String identifier, URI remoteElbfischInstance, IoDirection ioDirection) {
+    protected Signal getTypedProxyIoSignal(URI remoteElbfischInstance, IoDirection ioDirection) {
     	Signal signal = null;
     	
     	try{
         	String sigIdentifier = identifier + PROXYQUALIFIER;
-    		URI  sigUri = new URI(remoteElbfischInstance + "/" + identifier);
+    		URI   sigUri         = new URI(remoteElbfischInstance + "/" + getQualifiedIdentifier());
     	
 	    	if (this instanceof Logical) {
 	    		signal = new IoLogical(containingModule, sigIdentifier, sigUri, ioDirection);
@@ -160,6 +167,10 @@ public abstract class Signal extends Observable implements Observer {
     		throw new RuntimeException("failed to instantiate proxy signal: ", exc);
     	}
     	return signal;
+    }
+    
+    protected IoDirection invert(IoDirection ioDirection) {
+    	return ioDirection == IoDirection.INPUT ? IoDirection.OUTPUT : IoDirection.INPUT;
     }
     
     /**

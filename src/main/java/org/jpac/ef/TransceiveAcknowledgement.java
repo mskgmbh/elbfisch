@@ -26,81 +26,74 @@
 package org.jpac.ef;
 
 import io.netty.buffer.ByteBuf;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 /**
  *
  * @author berndschuster
  */
 public class TransceiveAcknowledgement extends Acknowledgement{
-    protected List<Byte>                        listOfTransferResults;
     protected HashMap<Integer, SignalTransport> listOfSignalTransports;
+    protected boolean                           signalsAddedOrRemoved;
 
     public TransceiveAcknowledgement(){
-        this(new ArrayList<>(), new HashMap<>());
-    }
-    
-    public TransceiveAcknowledgement(List<Byte> listOfTransferResults, HashMap<Integer, SignalTransport> listOfSignalTransports){
         super(MessageId.AckTransceive);
-        this.listOfTransferResults   = listOfTransferResults;
-        this.listOfSignalTransports  = listOfSignalTransports;     
+        this.listOfSignalTransports = new HashMap<>(100);     
+        this.signalsAddedOrRemoved  = false;
     }
-            
+                
     //server
     @Override
     public void encode(ByteBuf byteBuf){
         super.encode(byteBuf);
-        byteBuf.writeInt(listOfTransferResults.size());
-        listOfTransferResults.forEach((r) -> byteBuf.writeByte(r));
         byteBuf.writeInt(listOfSignalTransports.size());
-        listOfSignalTransports.forEach((h, st) -> st.encode(byteBuf));
+        listOfSignalTransports.values().forEach((st) -> st.encode(byteBuf));			
     }
     
     //client
     @Override
     public void decode(ByteBuf byteBuf){
+    	SignalTransport st     = new SignalTransport(null);
+    	SignalTransport target = null;
+    	
         super.decode(byteBuf);
-        listOfTransferResults.clear();
         int length = byteBuf.readInt();
         for(int i = 0; i < length; i++){
-            byte b = byteBuf.readByte();
-            listOfTransferResults.add(b);
-            Log.debug("received tx result for {} : {}", i, Result.fromInt(b));
+        	st.decode(byteBuf);
+        	target = listOfSignalTransports.get(st.getHandle());
+        	if (target == null) {
+        		target = new SignalTransport(null);
+        		listOfSignalTransports.put(st.getHandle(), target);
+        	}
+    		target.copyData(st);
+            Log.debug("received value {}", listOfSignalTransports.get(i));
         }
-        listOfSignalTransports.clear();
-        length = byteBuf.readInt();
-        for(int i = 0; i < length; i++){
-            SignalTransport st = new SignalTransport(null);//TODO object pooling ????
-            st.decode(byteBuf);
-            listOfSignalTransports.put(st.getHandle(), st);
-            Log.debug("received value {}", st);
-        }
+    }
+        
+    //server
+    public void updateListOfSignalTransports(HashMap<Integer, SignalTransport> updatedListOfSignalTransports) {
+    	synchronized(updatedListOfSignalTransports) {
+    		if (signalsAddedOrRemoved) {
+    			//a difference of contence between the updateListOfSignalTransport and the local listOfSignalTransports
+    			//detected during last update. Clear local copy to refresh its content
+    			listOfSignalTransports.clear();
+    		}
+	    	updatedListOfSignalTransports.values().forEach((st) -> {
+	    		SignalTransport target = listOfSignalTransports.get(st.getHandle()); 
+	    		if (target == null) {
+	    			target = new SignalTransport(null);
+	    			listOfSignalTransports.put(st.getHandle(), target);
+	    		}
+	    		target.copyData(st);
+	    	});
+	    	signalsAddedOrRemoved = updatedListOfSignalTransports.size() != listOfSignalTransports.size();
+    	}
     }
     
     public HashMap<Integer, SignalTransport> getListOfSignalTransports(){
         return this.listOfSignalTransports;
-    }
-
-    public List<Byte> getListOfReceiveResults() {
-        return listOfTransferResults;
-    }
-
-    /**
-     * @param listOfReceiveResults the listOfTransferResults to set
-     */
-    public void setListOfReceiveResults(List<Byte> listOfReceiveResults) {
-        this.listOfTransferResults = listOfReceiveResults;
-    }
-
-    /**
-     * @param listOfReceiveResults the listOfTransferResults to set
-     */
-    public void setListOfSignalTransports(HashMap<Integer, SignalTransport> listOfSignalTransports) {
-        this.listOfSignalTransports = listOfSignalTransports;
-    }
-
+    }   
+    
     @Override
     public String toString(){
         return super.toString() + (listOfSignalTransports != null ? ", " +  listOfSignalTransports.size() : "") + ")";

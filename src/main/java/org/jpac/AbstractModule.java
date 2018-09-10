@@ -128,7 +128,7 @@ public abstract class AbstractModule extends Thread{
     public  static final long sec    = 1000000000L;
     
     public  static final int    MAXNUMBEROFMONITORS = 1000;
-    public  static final String DEFAULTINSTANCE     = "./"; //elbfisch instance depends containing module   
+    public  static final String RELATIVEINSTANCE     = "./"; //elbfisch instance depends containing module   
 
     private JPac                  jPac;
     private int                   moduleIndex;
@@ -152,7 +152,10 @@ public abstract class AbstractModule extends Thread{
     
     private  CharString[]         stackTraceSignals;
     private  URI                  elbfischInstance;
-    private  boolean              runsLocally;
+    
+    private  boolean              isRunLocally;
+    private  boolean              isInactive;
+    private  boolean              isProxy;
     
     /**
      * used to construct a module
@@ -186,7 +189,7 @@ public abstract class AbstractModule extends Thread{
         sleepNanoTime                = 0L;
         debugIndex                   = 0;
         inEveryCycleDoActive         = false;
-        runsLocally                  = false;
+        isRunLocally                  = false;
         
         //retrieve elbfischInstance of the automation controller
         setJPac(JPac.getInstance());
@@ -202,19 +205,22 @@ public abstract class AbstractModule extends Thread{
         	String key = getQualifiedName() + "[@elbfischInstance]";
         	if (!Configuration.getInstance().containsKey(key)) {
         		//if not present inside the configuration (for example on first innvocation) add one
-        		Configuration.getInstance().addPropertyDirect(key, DEFAULTINSTANCE);
+        		Configuration.getInstance().addPropertyDirect(key, RELATIVEINSTANCE);
         	}
 	    	this.elbfischInstance = new URI((String)Configuration.getInstance().getProperty(key));
         } 
         catch(Exception exc) {
         	Log.error("failed to access module configuration:", exc);
         }
-	    runsLocally = checkIfThisModuleIsInvokedLocally();
+        
+	    isRunLocally  = checkIfThisModuleIsRunLocally();
+	    isProxy       = !isRunLocally && (containingModule != null && containingModule.isRunLocally());
+	    isInactive    = !isRunLocally && (containingModule == null || containingModule.isInactive());
         
         stackTraceSignals  = new CharString[10];
         for(int i = 0; i < stackTraceSignals.length; i++){
-        	//stack trace signals are instantiated as IoDirection.INPUT for the cases, in which this module is run remotely
-            try{stackTraceSignals[i] = new CharString(this,":StackTrace:" + i, IoDirection.INPUT);}catch(SignalAlreadyExistsException exc){/*cannot happen*/}
+        	//stack trace signals are instantiated as IoDirection.OUTPUT for the cases, in which this module is run remotely
+            try{stackTraceSignals[i] = new CharString(this,":StackTrace:" + i, IoDirection.OUTPUT);}catch(SignalAlreadyExistsException exc){/*cannot happen*/}
         }
         //register myself as an active module and retrieve my individual module index
         moduleIndex = getJPac().register(this);
@@ -233,14 +239,19 @@ public abstract class AbstractModule extends Thread{
             //willy go ...
             status.leave();
             status.enter(Status.RUNNING);
-            if (runsLocally()) {
+            if (isRunLocally()) {
             	Log.debug("invoked locally");
             	work();
-            }
-            else {
-            	//this module instance serves as a proxy to an instance run on a remote elbfisch instance
-            	//do nothing but waiting until this elbfisch instance is shut down.
-            	Log.debug("invoked on elbfisch instance '" + this.getElbfischInstance() + "'");
+            } else {
+            	if (isProxy()) {
+                	//this module instance serves as a proxy to an instance run on a remote elbfisch instance
+                	//do nothing but waiting until this elbfisch instance is shut down.
+                	Log.debug("instantiated as proxy for its counterpart on elbfisch instance '" + this.getEffectiveElbfischInstance() + "'");            		
+            	} else {
+                	//this module instance is run on a remote elbfisch instance (inactive here) 
+                	//do nothing but waiting until this elbfisch instance is shut down.
+                	Log.debug("inactive but is run on elbfisch instance '" + this.getEffectiveElbfischInstance() + "'");            		            		
+            	}
             	new ImpossibleEvent().await();
             }
         } 
@@ -255,7 +266,7 @@ public abstract class AbstractModule extends Thread{
         finally{
             status.reset();
             status.enter(Status.HALTED);
-            if (runsLocally()) {
+            if (isRunLocally()) {
 	            //clean up stack trace signals
 	            for(int i = 0; i < stackTraceSignals.length; i++){
 	                stackTraceSignals[i].set("");
@@ -304,7 +315,7 @@ public abstract class AbstractModule extends Thread{
      * determines if this module is to be run on this elbfisch instance
      * @return
      */
-    protected boolean checkIfThisModuleIsInvokedLocally(){
+    protected boolean checkIfThisModuleIsRunLocally(){
     	boolean runsHere           = true;
     	URI actualElbfischInstance = null;
     	if (getJPac().isEfServiceEnabled()) {
@@ -488,8 +499,25 @@ public abstract class AbstractModule extends Thread{
         return stackTraceSignals;
     }
     
-    public boolean runsLocally() {
-    	return runsLocally;
+    /**
+     * @return true, if this module is run on this elbfisch instance
+     */
+    public boolean isRunLocally() {
+    	return isRunLocally;
+    }
+
+    /**
+     * @return true, if this module is not run on this elbfisch instance and is not used as a proxy
+     */
+    public boolean isInactive() {
+    	return isInactive;
+    }
+
+    /**
+     * @return true, if this module is not run on this elbfisch instance but is instantiated as a proxy
+     */
+    public boolean isProxy() {
+    	return isProxy;
     }
 
     @Override

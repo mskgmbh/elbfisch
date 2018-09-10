@@ -27,6 +27,7 @@ package org.jpac.ef;
 
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -34,19 +35,22 @@ import java.util.List;
  * @author berndschuster
  */
 public class Transceive extends Command{    
-    protected List<SignalTransport>     listOfSignalTransports;
+    protected ArrayList<SignalTransport>  listOfSignalTransports;
+    protected SignalTransport        st;
     
     //server
     public Transceive(){
         super(MessageId.CmdTransceive);
-        this.listOfSignalTransports = new ArrayList<>();
+        this.listOfSignalTransports = new ArrayList<>(100);
         this.acknowledgement        = new TransceiveAcknowledgement();
+        this.st  					= new SignalTransport(null);
     }
     
     //client
     public Transceive(ArrayList<SignalTransport> listOfSignalTransports){
-        this();
-        this.listOfSignalTransports = listOfSignalTransports;
+        super(MessageId.CmdTransceive);
+        this.listOfSignalTransports  = listOfSignalTransports;
+        this.acknowledgement         = new TransceiveAcknowledgement();
     }
     
     //client
@@ -55,29 +59,34 @@ public class Transceive extends Command{
         super.encode(byteBuf);
         byteBuf.writeInt(listOfSignalTransports.size());
         listOfSignalTransports.forEach((st) -> st.encode(byteBuf));
-        Log.debug("Transceive.encode");//TODO
     }
     
     //server
     @Override
     public void decode(ByteBuf byteBuf){
+    	SignalTransport target;
         super.decode(byteBuf);
         int length = byteBuf.readInt();
-        listOfSignalTransports.clear();
+        listOfSignalTransports.ensureCapacity(length);
         for(int i = 0; i < length; i++){
-            SignalTransport st = new SignalTransport(null);//TODO recycle object ????
             st.decode(byteBuf);
-            listOfSignalTransports.add(st);
+            if (i >= listOfSignalTransports.size()) {
+            	SignalTransport nSt = new SignalTransport(null);
+            	nSt.setValue(SignalTransport.getValueFromSignalType(st.getSignalType()));
+            	listOfSignalTransports.add(i, nSt);
+            }
+            target = listOfSignalTransports.get(i);
+            target.copyData(st);
             Log.debug("received: {}", st);
-        }
+        }			
     }
     
     //server
     @Override
     public Acknowledgement handleRequest(CommandHandler commandHandler) {
         //take over received signal values
-        ((TransceiveAcknowledgement)acknowledgement).setListOfReceiveResults(commandHandler.updateChangedClientOutputTransports(listOfSignalTransports));
-        ((TransceiveAcknowledgement)acknowledgement).setListOfSignalTransports(commandHandler.retrieveChangedClientInputTransports());
+    	commandHandler.updateClientOutputTransports(listOfSignalTransports);
+    	((TransceiveAcknowledgement)acknowledgement).updateListOfSignalTransports(commandHandler.getListOfClientInputTransports());
         return acknowledgement;
     }
 

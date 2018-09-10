@@ -167,7 +167,7 @@ public abstract class ProcessEvent extends Fireable{
         traceLength        = stackTrace.length;
         i                  = 0;
         j                  = traceLength;
-        if (module.runsLocally()) {
+        if (module.isRunLocally()) {
 	        //trace back to Module.work()
 	        do{j--;} while(j > 0 && !stackTrace[j].getMethodName().equals("work"));
 	        if (j >= 0 && stackTrace[j].getMethodName().equals("work")){

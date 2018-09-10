@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : ModuleModel.java
+ * MODULE    : IoSignal.java (versatile input output subsystem)
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -23,16 +23,15 @@
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jpac.utilities;
+package org.jpac.vioss;
 
-import java.lang.reflect.Field;
+import java.net.URI;
 
 /**
  *
  * @author berndschuster
  */
-public interface ModuleModel {
-    public void setName(String name);
-    public ModuleModel addContainedModule(Field module);
-    public void addSignal(Field signal);
+public interface IoSignal extends org.jpac.plc.IoSignal{
+    public URI getUri();
+    public Object getErrorCode();
 }

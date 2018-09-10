@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : NewMain.java
+ * MODULE    : IllegalUriException.java (versatile input output subsystem)
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -22,25 +22,18 @@
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  */
-package jpac.test.fg;
+
+package org.jpac.vioss;
 
 /**
  *
  * @author berndschuster
  */
-public class NewMain {
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        try {
-            FunctionGenerator fg = new FunctionGenerator("FunctionGenerator");
-            fg.start();
-        } 
-        catch (Exception ex) {
-            ex.printStackTrace();
-        }
+public class IllegalUriException extends Exception{
+    public IllegalUriException(String message){
+        super(message);
     }
-
+    public IllegalUriException(Exception causedBy){
+        super(causedBy);
+    }
 }

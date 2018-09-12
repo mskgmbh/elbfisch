@@ -26,6 +26,8 @@
 package org.jpac.vioss.ef;
 
 import java.net.URI;
+import java.util.HashMap;
+
 import org.jpac.AbstractModule;
 import org.jpac.InconsistencyException;
 import org.jpac.SignalAccessException;
@@ -56,11 +58,8 @@ public class IoDecimal extends org.jpac.vioss.IoDecimal implements IoSignal{
     public void checkIn() throws SignalAccessException, AddressException {
         try{
             inCheck = true;
-            SignalTransport st = ((org.jpac.vioss.ef.IOHandler)getIOHandler()).getListOfReceivedSignalTransports().get(signalInfo.getHandle());
-            if (st != null){
-                //subscribed value changed on remote side. Take it over.
-                setValue(st.getValue());
-            }
+            //subscribed value changed on remote side. Take it over.
+            setValue(signalTransport.getValue());
         }
         finally{
             inCheck = false;
@@ -72,7 +71,7 @@ public class IoDecimal extends org.jpac.vioss.IoDecimal implements IoSignal{
         try{
             outCheck = true;
             signalTransport.getValue().copy(getValue());
-            ((org.jpac.vioss.ef.IOHandler)getIOHandler()).getListOfSignalTransportsToBeTransmitted().add(signalTransport);
+            signalTransport.setChanged(true);
         }
         finally{
             outCheck = false;

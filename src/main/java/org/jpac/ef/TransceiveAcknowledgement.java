@@ -33,69 +33,66 @@ import java.util.HashMap;
  * @author berndschuster
  */
 public class TransceiveAcknowledgement extends Acknowledgement{
-    protected HashMap<Integer, SignalTransport> listOfSignalTransports;
-    protected boolean                           signalsAddedOrRemoved;
+    protected HashMap<Integer, SignalTransport> listOfClientInputTransports;
+    protected int                               transportsCount;
+    protected int                               transportsCountIndex;
+    protected SignalTransport                   receivedSignalTransport;
 
-    public TransceiveAcknowledgement(){
+
+    //client/server
+    public TransceiveAcknowledgement(HashMap<Integer, SignalTransport> listOfClientInputTransports){
         super(MessageId.AckTransceive);
-        this.listOfSignalTransports = new HashMap<>(100);     
-        this.signalsAddedOrRemoved  = false;
+        this.listOfClientInputTransports = listOfClientInputTransports;     
+        this.receivedSignalTransport     = new SignalTransport(null);
     }
-                
+    
     //server
     @Override
     public void encode(ByteBuf byteBuf){
         super.encode(byteBuf);
-        byteBuf.writeInt(listOfSignalTransports.size());
-        listOfSignalTransports.values().forEach((st) -> st.encode(byteBuf));			
+    	transportsCountIndex  = byteBuf.writerIndex();
+        byteBuf.writeInt(0);//reserve space for the transports count
+    	transportsCount       = 0;
+        synchronized(listOfClientInputTransports) {
+	        listOfClientInputTransports.values().forEach((st) -> {
+	        		if (st.isChanged()) {
+	        			st.encode(byteBuf);
+	        			st.setChanged(false);
+	        			transportsCount++;
+	        		}
+	        	});			
+        }
+        //insert actual number of transports to be transmitted into the stream
+        int lastWriterIndex = byteBuf.writerIndex();
+        byteBuf.writerIndex(transportsCountIndex);
+        byteBuf.writeInt(transportsCount);
+        //and restore writer index
+        byteBuf.writerIndex(lastWriterIndex);        
     }
     
     //client
     @Override
     public void decode(ByteBuf byteBuf){
-    	SignalTransport st     = new SignalTransport(null);
     	SignalTransport target = null;
     	
         super.decode(byteBuf);
         int length = byteBuf.readInt();
-        for(int i = 0; i < length; i++){
-        	st.decode(byteBuf);
-        	target = listOfSignalTransports.get(st.getHandle());
-        	if (target == null) {
-        		target = new SignalTransport(null);
-        		listOfSignalTransports.put(st.getHandle(), target);
-        	}
-    		target.copyData(st);
-            Log.debug("received value {}", listOfSignalTransports.get(i));
+        synchronized(listOfClientInputTransports) {
+	        for(int i = 0; i < length; i++){
+	        	receivedSignalTransport.decode(byteBuf);
+	        	target = listOfClientInputTransports.get(receivedSignalTransport.getHandle());
+	    		target.copyData(receivedSignalTransport);
+	    		target.setChanged(true);
+	        }
         }
     }
-        
-    //server
-    public void updateListOfSignalTransports(HashMap<Integer, SignalTransport> updatedListOfSignalTransports) {
-    	synchronized(updatedListOfSignalTransports) {
-    		if (signalsAddedOrRemoved) {
-    			//a difference of contence between the updateListOfSignalTransport and the local listOfSignalTransports
-    			//detected during last update. Clear local copy to refresh its content
-    			listOfSignalTransports.clear();
-    		}
-	    	updatedListOfSignalTransports.values().forEach((st) -> {
-	    		SignalTransport target = listOfSignalTransports.get(st.getHandle()); 
-	    		if (target == null) {
-	    			target = new SignalTransport(null);
-	    			listOfSignalTransports.put(st.getHandle(), target);
-	    		}
-	    		target.copyData(st);
-	    	});
-	    	signalsAddedOrRemoved = updatedListOfSignalTransports.size() != listOfSignalTransports.size();
-    	}
-    }
-    
-    public HashMap<Integer, SignalTransport> getListOfSignalTransports(){
-        return this.listOfSignalTransports;
+            
+    public HashMap<Integer, SignalTransport> getListOfClientInputTransports(){
+        return this.listOfClientInputTransports;
     }   
     
     @Override
     public String toString(){
-        return super.toString() + (listOfSignalTransports != null ? ", " +  listOfSignalTransports.size() : "") + ")";
+        return super.toString() + (listOfClientInputTransports != null ? ", " +  listOfClientInputTransports.size() : "") + ")";
     }    
 }

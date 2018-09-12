@@ -56,7 +56,7 @@ public class SignalRegistry {
      */
     public void add(Signal signal) throws SignalAlreadyExistsException{
         String identifier = signal.getQualifiedIdentifier();
-        if (signals.get(identifier) != null){
+        if (signals.get(identifier.hashCode()) != null){
             throw new SignalAlreadyExistsException(getSignal(identifier));
         }
         signals.put(identifier.hashCode(), signal);

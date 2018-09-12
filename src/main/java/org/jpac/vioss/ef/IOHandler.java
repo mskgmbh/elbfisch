@@ -80,21 +80,24 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
     
     private HashMap<String, SignalInfo>                listOfRemoteSignalInfos;
     private HashMap<Integer , org.jpac.vioss.IoSignal> listOfRemoteSignals;
+    private HashMap<Integer, SignalTransport>          listOfClientInputTransports; 
+    private HashMap<Integer, SignalTransport>          listOfClientOutputTransports; 
     
-    private Transceive                  transceive;
-    private TransceiveAcknowledgement   transceiveAcknowledgement;
+    private Transceive                                 transceive;
     
     public IOHandler(URI uri) throws IllegalUriException {
         super(uri);
         if (!getHandledScheme().equals(uri.getScheme().toUpperCase())){
             throw new IllegalUriException("scheme '" + uri.getScheme() + "' not handled by " + toString());
         }
-        this.connectionRunner       = new ConnectionRunner(this + " connection runner");
-        this.subscriptionRunner     = new SubscriptionRunner(this + "subscription runner");
-        this.closeConnectionRunner  = new CloseConnectionRunner(this + "close connection runner");
-        this.state                  = State.IDLE;
-        this.transceive             = new Transceive();
-        this.listOfRemoteSignals    = new HashMap<>();
+        this.connectionRunner             = new ConnectionRunner(this + " connection runner");
+        this.subscriptionRunner           = new SubscriptionRunner(this + "subscription runner");
+        this.closeConnectionRunner        = new CloseConnectionRunner(this + "close connection runner");
+        this.state                        = State.IDLE;
+        this.listOfRemoteSignals          = new HashMap<>();
+        this.listOfClientInputTransports  = new HashMap<>();
+        this.listOfClientOutputTransports = new HashMap<>();
+        this.transceive                   = new Transceive(this.listOfClientInputTransports, this.listOfClientOutputTransports);
     }
 
     @Override
@@ -291,28 +294,25 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
     protected boolean transceiving() throws TimeoutException, InterruptedException, SignalAccessException, AddressException{
         boolean                   allSignalsProperlyTransferred = true;
         //put out output signals
-        transceive.getListOfSignalTransports().clear();
-        for(org.jpac.plc.IoSignal ios: getOutputSignals()){
-            if (ios.isToBePutOut() || connection.isJustConnected()){
-                //transmit signal on first transmission of a new connection or if it has changed in last cycle
-                ios.resetToBePutOut();
-                ios.checkOut();
-            }
+        synchronized(listOfClientOutputTransports) {
+	        for(org.jpac.plc.IoSignal ios: getOutputSignals()){
+	            if (ios.isToBePutOut() || connection.isJustConnected()){
+	                //transmit signal on first transmission of a new connection or if it has changed in last cycle
+	                ios.resetToBePutOut();
+	                ios.checkOut();
+	            }
+	        }
         }
         //start transception
-        transceiveAcknowledgement = (TransceiveAcknowledgement)connection.getClientHandler().transact(transceive);
+        connection.getClientHandler().transact(transceive);
         connection.resetJustConnected();//reset justConnected flag if not already reset
         connection.getClientHandler().resetTransactionInProgress();
-//        for(int i = 0; i < transceiveAcknowledgement.getListOfReceiveResults().size(); i++){
-//            if (transceiveAcknowledgement.getListOfReceiveResults().get(i) != Result.NoFault.getValue()){
-//                allSignalsProperlyTransferred = false;
-//                Log.error("Failed to transmit signal " + listOfRemoteSignalInfos.get(transceive.getListOfSignalTransports().get(i).getHandle()).getSignalIdentifier());
-//            }
-//        }
         //propagate input signals
-        for(org.jpac.plc.IoSignal ios: getInputSignals()){
-            ((org.jpac.vioss.IoSignal)ios).checkIn();
-        } 
+        synchronized(listOfClientInputTransports) {
+	        for(org.jpac.plc.IoSignal ios: getInputSignals()){
+	            ((org.jpac.vioss.IoSignal)ios).checkIn();
+	        }
+        }
         return allSignalsProperlyTransferred;
     };    
     
@@ -347,7 +347,6 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
             SignalInfo si = listOfRemoteSignalInfos.get(ios.getUri().getPath().substring(1));
             if (si != null){
                 ((org.jpac.vioss.ef.IoSignal)ios).setSignalInfo(si);
-                listOfRemoteSignals.put(si.getHandle(), ios);
             }
         }
         for (org.jpac.vioss.IoSignal ios: getOutputSignals()){
@@ -355,7 +354,6 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
             SignalInfo si = listOfRemoteSignalInfos.get(remoteSignalPath);
             if (si != null){
                 ((org.jpac.vioss.ef.IoSignal)ios).setSignalInfo(si);
-                listOfRemoteSignals.put(si.getHandle(), ios);
             }
         }        
     }
@@ -382,12 +380,16 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                 if (((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo() != null){
                     SubscriptionTransport st = new SubscriptionTransport(((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getHandle(), ((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getSignalType(), ios.getIoDirection());
                     subscriptionTransports.add(st);
+                    listOfRemoteSignals.put(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle(), ios);
+                    listOfClientInputTransports.put(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle(), ((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport());
                 }
             }
             for (org.jpac.vioss.IoSignal ios: getOutputSignals()){
                 if (((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo() != null){
                     SubscriptionTransport st = new SubscriptionTransport(((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getHandle(), ((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getSignalType(), ios.getIoDirection());
                     subscriptionTransports.add(st);
+                    listOfRemoteSignals.put(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle(), ios);
+                    listOfClientOutputTransports.put(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle(), ((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport());
                 }
             }
             if (subscriptionTransports.size() > 0){
@@ -419,12 +421,16 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                 if (((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo() != null){
                     SubscriptionTransport st = new SubscriptionTransport(((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getHandle(), ((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getSignalType(), ios.getIoDirection());
                     subscriptionTransports.add(st);
+                    listOfRemoteSignals.remove(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle());
+                    listOfClientInputTransports.remove(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle());
                 }
             }
             for (org.jpac.vioss.IoSignal ios: getOutputSignals()){
                 if (((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo() != null){
                     SubscriptionTransport st = new SubscriptionTransport(((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getHandle(), ((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getSignalType(), ios.getIoDirection());
                     subscriptionTransports.add(st);
+                    listOfRemoteSignals.remove(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle());
+                    listOfClientInputTransports.remove(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle());
                 }
             }
             Unsubscribe unsubscribe = new Unsubscribe(subscriptionTransports);
@@ -465,12 +471,12 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
         return this.connection;
     }
     
-    public List<SignalTransport> getListOfSignalTransportsToBeTransmitted(){
-        return transceive.getListOfSignalTransports();
+    public HashMap<Integer, SignalTransport> getListOfClientOutputTransports(){
+        return listOfClientOutputTransports;
     }
     
-    public HashMap<Integer, SignalTransport> getListOfReceivedSignalTransports(){
-        return transceiveAcknowledgement.getListOfSignalTransports();
+    public HashMap<Integer, SignalTransport> getListOfClientInputTransports(){
+        return listOfClientInputTransports;
     }
     
     @Override
@@ -497,6 +503,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
     public boolean isFinished() {
         return state == State.STOPPING;
     }
+    
     
     class ConnectionRunner extends AsynchronousTask{ 
         private boolean     connected;

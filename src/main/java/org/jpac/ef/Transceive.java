@@ -26,39 +26,48 @@
 package org.jpac.ef;
 
 import io.netty.buffer.ByteBuf;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 /**
  *
  * @author berndschuster
  */
 public class Transceive extends Command{    
-    protected ArrayList<SignalTransport>  listOfSignalTransports;
-    protected SignalTransport        st;
+    protected HashMap<Integer, SignalTransport> listOfClientOutputTransports;
+    protected int                               transportsCount;
+    protected int                               transportsCountIndex;
+    protected SignalTransport                   receivedSignalTransport;
     
-    //server
-    public Transceive(){
+    //client, server
+    public Transceive(HashMap<Integer, SignalTransport> listOfClientInputTransports, HashMap<Integer, SignalTransport> listOfClientOutputTransports){
         super(MessageId.CmdTransceive);
-        this.listOfSignalTransports = new ArrayList<>(100);
-        this.acknowledgement        = new TransceiveAcknowledgement();
-        this.st  					= new SignalTransport(null);
-    }
-    
-    //client
-    public Transceive(ArrayList<SignalTransport> listOfSignalTransports){
-        super(MessageId.CmdTransceive);
-        this.listOfSignalTransports  = listOfSignalTransports;
-        this.acknowledgement         = new TransceiveAcknowledgement();
+        this.listOfClientOutputTransports  = listOfClientOutputTransports;
+        this.acknowledgement               = new TransceiveAcknowledgement(listOfClientInputTransports);
+        this.receivedSignalTransport       = new SignalTransport(null);
     }
     
     //client
     @Override
     public void encode(ByteBuf byteBuf){
         super.encode(byteBuf);
-        byteBuf.writeInt(listOfSignalTransports.size());
-        listOfSignalTransports.forEach((st) -> st.encode(byteBuf));
+    	transportsCountIndex  = byteBuf.writerIndex();
+        byteBuf.writeInt(0);//reserve space for the transports count
+    	transportsCount       = 0;
+        synchronized(listOfClientOutputTransports) {
+        	listOfClientOutputTransports.values().forEach((st) -> {
+	        		if (st.isChanged()) {
+	        			st.encode(byteBuf);
+	        			st.setChanged(false);
+	        			transportsCount++;
+	        		}
+	        	});			
+        }
+        //insert actual number of transports to be transmitted into the stream
+        int lastWriterIndex = byteBuf.writerIndex();
+        byteBuf.writerIndex(transportsCountIndex);
+        byteBuf.writeInt(transportsCount);
+        //and restore writer index
+        byteBuf.writerIndex(lastWriterIndex); 
     }
     
     //server
@@ -67,26 +76,20 @@ public class Transceive extends Command{
     	SignalTransport target;
         super.decode(byteBuf);
         int length = byteBuf.readInt();
-        listOfSignalTransports.ensureCapacity(length);
-        for(int i = 0; i < length; i++){
-            st.decode(byteBuf);
-            if (i >= listOfSignalTransports.size()) {
-            	SignalTransport nSt = new SignalTransport(null);
-            	nSt.setValue(SignalTransport.getValueFromSignalType(st.getSignalType()));
-            	listOfSignalTransports.add(i, nSt);
-            }
-            target = listOfSignalTransports.get(i);
-            target.copyData(st);
-            Log.debug("received: {}", st);
-        }			
+        synchronized(listOfClientOutputTransports) {
+	        for(int i = 0; i < length; i++){
+	            receivedSignalTransport.decode(byteBuf);
+	            target = listOfClientOutputTransports.get(receivedSignalTransport.getHandle());
+	            target.copyData(receivedSignalTransport);
+	            target.setChanged(true);
+	        }			
+        }
     }
     
     //server
     @Override
     public Acknowledgement handleRequest(CommandHandler commandHandler) {
-        //take over received signal values
-    	commandHandler.updateClientOutputTransports(listOfSignalTransports);
-    	((TransceiveAcknowledgement)acknowledgement).updateListOfSignalTransports(commandHandler.getListOfClientInputTransports());
+        //received signal values taken over during message decoding
         return acknowledgement;
     }
 
@@ -95,12 +98,12 @@ public class Transceive extends Command{
         return acknowledgement;
     }
     
-    public List<SignalTransport> getListOfSignalTransports(){
-        return this.listOfSignalTransports;
+    public HashMap<Integer, SignalTransport> getListOfClientOutputTransports(){
+        return this.listOfClientOutputTransports;
     }
     
     @Override
     public String toString(){
-        return super.toString() + "(" + (listOfSignalTransports != null ? listOfSignalTransports.size() : "") + ")";
+        return super.toString() + "(" + (listOfClientOutputTransports != null ? listOfClientOutputTransports.size() : "") + ")";
     }
 }

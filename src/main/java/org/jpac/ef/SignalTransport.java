@@ -170,9 +170,7 @@ public class SignalTransport implements SignalObserver {
     	setValue(source.getValue());
         this.handle          = source.handle;
         this.signalType      = source.signalType;
-        this.connected       = source.connected;
-        this.connectedSignal = source.connectedSignal;
-
+        this.changed         = source.changed;        
     }
 
     @Override

@@ -31,7 +31,7 @@ import java.io.Serializable;
 /**
  * represents the value of a signed integer signal
  * @author berndschuster
- * represents a Decimal value
+ * represents a signed integer value
  */
 public class SignedIntegerValue implements Value, Cloneable, Serializable{
     static final long serialVersionUID = -1131118539659815694L;//to be compatible to legacy RemoteSignals

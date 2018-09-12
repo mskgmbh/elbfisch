@@ -28,7 +28,6 @@ package org.jpac.vioss.ef;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.FixedRecvByteBufAllocator;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -36,6 +35,7 @@ import org.jpac.InconsistencyException;
 import org.jpac.ef.Acknowledgement;
 import org.jpac.ef.Command;
 import org.jpac.ef.MessageFactory;
+import org.jpac.ef.MessageId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +52,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     protected ChannelHandlerContext context;
     protected Acknowledgement       receivedAcknowledgement;
     protected boolean               transactionInProgress;
+    protected Command               actualCommand;
     
     public ClientHandler(){
         super();
@@ -70,8 +71,14 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         ByteBuf rxByteBuf = (ByteBuf) msg; // (1)
         try {
-            receivedAcknowledgement = (Acknowledgement)MessageFactory.getMessage(rxByteBuf);
-            Log.debug("acknowledgement received from server: " + receivedAcknowledgement);
+        	MessageId receivedMessageId = MessageFactory.readMessageId(rxByteBuf);
+        	if (receivedMessageId.equals(actualCommand.getAcknowledgement().getMessageId())) {
+	            receivedAcknowledgement = actualCommand.getAcknowledgement();
+	            receivedAcknowledgement.decode(rxByteBuf);
+	            Log.debug("acknowledgement received from server: " + receivedAcknowledgement);
+        	} else {
+        		throw new InconsistencyException("received " + receivedMessageId + " expected " + actualCommand.getAcknowledgement().getMessageId());
+        	}
         } finally {
             //tell transact()ing thread, that an acknowledgement arrived
             serverResponded.release();
@@ -102,7 +109,8 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         }
         txByteBuf.retain();//increment reference count to avoid destruction of buffer
         txByteBuf.clear();
-        command.encode(txByteBuf);
+        actualCommand = command;
+        actualCommand.encode(txByteBuf);
         Log.debug("sending " + command + " to server ...");
         transactionInProgress = true;
         //acquire semaphore

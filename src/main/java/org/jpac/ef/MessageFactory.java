@@ -38,7 +38,7 @@ public class MessageFactory {
 
     public MessageFactory(CommandHandler commandHandler) {
     	this.commandHandler     = commandHandler;
-    	this.recycledTransceive = new Transceive();
+    	this.recycledTransceive = new Transceive(commandHandler.getListOfClientInputTransports(), commandHandler.getListOfClientOutputTransports());
     }
     
     public static Message getMessage(ByteBuf byteBuf) {
@@ -56,8 +56,7 @@ public class MessageFactory {
     
     public Message getRecycledMessage(ByteBuf byteBuf) throws InconsistencyException{
         Message message = null;
-        short  messageId = byteBuf.readShort();
-        MessageId commandId = MessageId.fromInt(messageId);
+        MessageId commandId = readMessageId(byteBuf);
         //Up to now, only the transceive command is recycled because of its frequent use
         if (commandId == MessageId.CmdTransceive) {
         	message = recycledTransceive;
@@ -70,6 +69,10 @@ public class MessageFactory {
             throw new InconsistencyException("illegal message id received: " + commandId);        	
         }
         return message;
+    }
+    
+    public static MessageId readMessageId(ByteBuf byteBuf) {
+    	return MessageId.fromInt(byteBuf.readShort());
     }
 
     protected static Message getCommand(MessageId commandId) {
@@ -94,7 +97,7 @@ public class MessageFactory {
             message = new Unsubscribe();
             break;
         case CmdTransceive:
-            message = new Transceive();            		            		
+            message = null;//Transceive command can only be used as a recylced instance      		
             break;
         case AckPing:
             message = new PingAcknowledgement();
@@ -115,7 +118,7 @@ public class MessageFactory {
             message = new UnsubscribeAcknowledgement();
             break;
         case AckTransceive:
-            message = new TransceiveAcknowledgement();
+            message = null;//Transceive command can only be used as a recylced instance   
             break;
          default:
         }

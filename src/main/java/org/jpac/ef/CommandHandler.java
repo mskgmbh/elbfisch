@@ -31,11 +31,9 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import org.jpac.Signal;
 import org.jpac.SignalRegistry;
-import org.jpac.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +56,8 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
     protected InetSocketAddress                 remoteSocketAddress;
     protected MessageFactory                    messageFactory;
 	protected SignalTransport                   target;
-	protected int                               index;                      
+	protected int                               index;     
+	protected boolean                           signalsAddedOrRemoved;				
     
     public CommandHandler(InetSocketAddress remoteSocketAddress){
         this.remoteSocketAddress                 = remoteSocketAddress;
@@ -68,7 +67,9 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
         this.firstSignalValueTransmission        = true;
         
         this.messageFactory                      = new MessageFactory(this);
-        this.listOfActiveCommandHandlers.add(this);
+        this.signalsAddedOrRemoved               = false;
+
+        listOfActiveCommandHandlers.add(this);
     }
 
     @Override
@@ -163,35 +164,6 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
     	st.getConnectedSignal().setConnectedAsTarget(false);
         st.getConnectedSignal().invalidateDeferred();
         listOfClientOutputTransports.remove(handle);
-    }
-
-    /**
-     * called by CommandHandler (command Transceive.handleRequest())
-     * @param signalTransport 
-     */
-    protected void updateClientOutputTransports(List<SignalTransport> signalTransports){
-        synchronized(listOfClientOutputTransports){
-            signalTransports.forEach((st)-> {
-                try{
-                    SignalTransport target = listOfClientOutputTransports.get(st.getHandle());
-                    if (target != null){
-                        if (!target.getValue().equals(st.getValue())){
-                            //copy only changed values
-                            target.getValue().copy(st.getValue());
-                            target.setChanged(true);          
-                        }
-                    } 
-                }
-                catch(Exception exc){
-                	if (target != null) {
-                		Log.error("Error accessing " + target.getConnectedSignal(),  exc);
-                	} else {
-                		Log.error("Error accessing signal with handle " + st.getHandle(),  exc);                		
-                	}
-                }
-            });
-        }
-        return;
     }
 
     /**

@@ -50,13 +50,10 @@ public class Handshake {
     private ProcessEvent           acknowledgedRemovedEvent;
     private ProcessEvent           activeEvent;
     private ProcessEvent           readyEvent;
+    private ProcessEvent           becomesValid;
     private AbstractModule         requestingModule;
     private AbstractModule         servingModule;
     private String                 identifier;
-    private long                   lastRequestCycle;
-    private long                   lastAcknowledgeCycle;
-    private RequestRunner          requestRunner;
-    private ResetRequestRunner     resetRequestRunner;
     private int                    result;
     
     /**
@@ -78,10 +75,8 @@ public class Handshake {
         this.requestedEvent           = request.state(true);
         this.requestedRemovedEvent    = request.state(false);
         this.acknowledgedRemovedEvent = acknowledge.state(false);
-        this.lastRequestCycle         = 0L;
-        this.lastAcknowledgeCycle     = 0L;
-        this.requestRunner            = new RequestRunner();
-        this.resetRequestRunner       = new ResetRequestRunner();
+        this.becomesValid             = new Event(()-> isValid());
+        
         this.result                   = OK;
     }
     
@@ -141,6 +136,15 @@ public class Handshake {
     }
 
     /**
+     * @return returns a ProcessEvent which is fired, when the handshake got valid. Can be awaited by the requesting module. 
+     *         If the handshake was already before this call it returns in the next cycle
+     */
+    public ProcessEvent becomesValid(){
+        return becomesValid;
+    }
+
+    
+    /**
      * used by the requesting module to trigger a request to be handled by the acknowledging module
      * @throws SignalAccessException 
      */
@@ -157,8 +161,7 @@ public class Handshake {
                 throw new WrongUseException("handshake " + this + " not idle: acknowledge= " + acknowledge.is(true) + " active= " + active.is(true) + " result= " + result);
             }
         }catch(SignalInvalidException exc){/*cannot happen*/}
-        
-        JPac.getInstance().invokeLater(requestRunner);
+        request.setDeferred(true);
     }
 
     /**
@@ -173,7 +176,7 @@ public class Handshake {
         if (request.isConnectedAsTarget()){
             throw new SignalAccessException("request of handshake " + this + " cannot be reset directly, because it's acknowledge, active, resultSig or request signal is connected as a target ");            
         }
-        JPac.getInstance().invokeLater(resetRequestRunner);
+        request.setDeferred(false);
     }    
 
     /**
@@ -252,7 +255,7 @@ public class Handshake {
         resultSig.set(OK);
         active.set(false);
         acknowledge.set(false);
-        JPac.getInstance().invokeLater(resetRequestRunner);
+        request.setDeferred(false);
     }
 
     /**
@@ -262,7 +265,15 @@ public class Handshake {
     public void acknowledge() throws SignalAccessException, NumberOutOfRangeException{
         acknowledge(OK);
     }
-        
+    
+    /**
+     * used by the requesting module to check, if the handshake is operational
+     * @throws SignalAccessException 
+     */
+    public boolean isValid() {
+    	return acknowledge.isValid() && active.isValid() && ready.isValid() && resultSig.isValid();
+    }
+            
     /**
      * @return returns true, if a request is pending, which is not acknoweldedged yet
      * @throws SignalInvalidException 
@@ -375,32 +386,5 @@ public class Handshake {
      */
     public SignedInteger getResultSig() {
         return resultSig;
-    }
-    
-    private class RequestEvent extends ProcessEvent{
-        @Override
-        public boolean fire() throws ProcessException {
-            return request != null ? request.is(true) : false;
-        }  
-    }
-        
-    private class RequestRunner implements Runnable{
-        @Override
-        public void run() {
-            try{
-                request.set(true);
-            }
-            catch(SignalAccessException exc){/*cannot happen*/};
-        }
-    }
-
-    private class ResetRequestRunner implements Runnable{
-        @Override
-        public void run() {
-            try{
-                request.set(false);
-            }
-            catch(SignalAccessException exc){/*cannot happen*/};
-        }
-    }
+    }   
 }

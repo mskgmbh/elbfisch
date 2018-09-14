@@ -36,6 +36,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
+
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.security.cert.CertificateException;
 import javax.net.ssl.SSLException;
@@ -93,8 +95,12 @@ public class EfService implements Runnable{
             Log.info("Elbfisch communication server up and running (" + bindAddress + ":" + port + ")"); 
             // Wait until the server socket is closed.
             channelFuture.channel().closeFuture().sync();            
-        }
-        catch(CertificateException | SSLException | InterruptedException exc){
+        } catch(Exception exc){
+        	if (exc instanceof BindException) {
+                Log.error("Failed to start Elbfisch communication server: bind address already in use (" + bindAddress + ":" + port + ")");         		
+        	} else {
+        		Log.error("Failed to start Elbfisch communication server (" + bindAddress + ":" + port + ")", exc);
+        	}
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();    
         }
@@ -117,7 +123,9 @@ public class EfService implements Runnable{
 
     public void stop(){
         try{
-            channelFuture.channel().close().sync();
+        	if (channelFuture != null) {
+            	channelFuture.channel().close().sync();
+        	}
         }
         catch(InterruptedException exc){/*ignore*/}
         finally{

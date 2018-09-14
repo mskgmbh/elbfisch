@@ -195,7 +195,7 @@ public class Handshake {
         if (this.active.isConnectedAsTarget()){
             throw new SignalAccessException("handshake " + this + " cannot be set active directly, because it's active signal is connected as a target ");            
         }        
-        this.active.set(true);
+        this.active.set(active);
     }
 
     /**

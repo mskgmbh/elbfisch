@@ -68,8 +68,10 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
         
         this.messageFactory                      = new MessageFactory(this);
         this.signalsAddedOrRemoved               = false;
-
-        listOfActiveCommandHandlers.add(this);
+        
+        synchronized(listOfActiveCommandHandlers) {
+        	listOfActiveCommandHandlers.add(this);
+        }
     }
 
     @Override
@@ -108,9 +110,11 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
                 signal.setConnectedAsTarget(false);
                 signal.invalidateDeferred();
         });
-        if (listOfActiveCommandHandlers.contains(this)){
-            listOfActiveCommandHandlers.remove(this);
-        }
+        synchronized (listOfActiveCommandHandlers) {			
+	        if (listOfActiveCommandHandlers.contains(this)){
+	            listOfActiveCommandHandlers.remove(this);
+	        }
+		}
         Log.info("remote connection for ef://" + remoteSocketAddress.getHostName() + ":" + remoteSocketAddress.getPort() + " closed");
     }
     

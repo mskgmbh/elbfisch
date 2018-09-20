@@ -26,6 +26,7 @@
 package org.jpac.vioss.ef;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -34,11 +35,17 @@ import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
+import io.netty.handler.codec.protobuf.ProtobufEncoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Connection{
-    static final int         DEFAULTRECEIVEBUFFERSIZE = 4096;    
+    static final int         DEFAULTRECEIVEBUFFERSIZE = 32000;    
     static final Logger      Log = LoggerFactory.getLogger("jpac.vioss.ef");
     protected boolean        connected;
     protected boolean        justConnected;
@@ -54,7 +61,7 @@ public class Connection{
     /**
      * an instance of Connection is created and the connection to given the Elbfisch instance is initiated immediately
      */
-    public Connection(String host, int port) {
+    public Connection(String host, int port) throws Exception{
         this.host          = host;
         this.port          = port;
         this.clientHandler = new ClientHandler();
@@ -66,19 +73,23 @@ public class Connection{
         this.bootstrap.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
-                ch.pipeline().addLast(clientHandler);
+            	ch.pipeline().addLast("frameDecoder", new LengthFieldBasedFrameDecoder(DEFAULTRECEIVEBUFFERSIZE, 0, 4, 0, 4));
+            	ch.pipeline().addLast("frameEncoder", new LengthFieldPrepender(4));                
+            	ch.pipeline().addLast("handler", clientHandler);
                 ch.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(DEFAULTRECEIVEBUFFERSIZE));//should be a property
             }
         });
         // Start the client.
-        try{
-            channelFuture = this.bootstrap.connect(host, port).sync();
-            connected     = true;
-            justConnected = true;
-        }
-        catch(InterruptedException exc){
-            connected = false;
-        };
+        channelFuture = this.bootstrap.connect(host, port).sync();
+        connected     = true;
+        justConnected = true; 
+    }
+    
+    protected void connect() throws Exception{
+        // Start the client.
+        channelFuture = this.bootstrap.connect(host, port).sync();
+        connected     = true;
+        justConnected = true; 	
     }
                     
     /**

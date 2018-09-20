@@ -75,7 +75,7 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         super.channelRegistered(ctx);
-        out = ctx.alloc().buffer(4096);
+        out = ctx.alloc().buffer(32000);
     }
      
     @Override
@@ -142,28 +142,36 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
     protected void registerClientInputSignal(int handle) {
         Signal signal = SignalRegistry.getInstance().getSignal(handle);
         SignalTransport st = new SignalTransport(signal);
-        listOfClientInputTransports.put(handle, st);
+        synchronized(listOfClientOutputTransports){
+        	listOfClientInputTransports.put(handle, st);
+        }
     }
    
     protected void registerClientOutputSignal(int handle) {
         Signal signal = SignalRegistry.getInstance().getSignal(handle);        
         SignalTransport st = new SignalTransport(signal);
         signal.setConnectedAsTarget(true);
-        listOfClientOutputTransports.put(handle, st);
+        synchronized(listOfClientOutputTransports){
+        	listOfClientOutputTransports.put(handle, st);
+        }
         Log.debug("register " + signal);
     }
 
     protected void unregisterClientInputSignal(int handle) {
     	SignalTransport st = listOfClientInputTransports.get(handle);
     	st.getConnectedSignal().disconnect(st);
-        listOfClientInputTransports.remove(handle);
+        synchronized(listOfClientOutputTransports){
+        	listOfClientInputTransports.remove(handle);
+        }
     }
    
     protected void unregisterClientOutputSignal(int handle) {
     	SignalTransport st = listOfClientOutputTransports.get(handle);
     	st.getConnectedSignal().setConnectedAsTarget(false);
         st.getConnectedSignal().invalidateDeferred();
-        listOfClientOutputTransports.remove(handle);
+        synchronized(listOfClientOutputTransports){
+        	listOfClientOutputTransports.remove(handle);
+        }
     }
 
     /**

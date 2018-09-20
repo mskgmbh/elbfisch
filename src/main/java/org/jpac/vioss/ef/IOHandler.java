@@ -52,6 +52,7 @@ import org.jpac.ef.SubscriptionTransport;
 import org.jpac.ef.Transceive;
 import org.jpac.ef.TransceiveAcknowledgement;
 import org.jpac.ef.Unsubscribe;
+import org.jpac.ef.UnsubscribeAcknowledgement;
 import org.jpac.plc.AddressException;
 import static org.jpac.vioss.IOHandler.Log;
 import org.jpac.vioss.IllegalUriException;
@@ -144,19 +145,19 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                     try{
                         transceiving();
                     }
-                    catch(TimeoutException exc){
+                    catch(Exception exc){
                         //server did not respond in time. Connection is supposed to be broken
                         //Just invalidate input signals and reconnect
                         invalidateInputSignals();
-                        Log.error("Error: ", exc);
+                        Log.error(this + " : Connection lost.");
                         state            = State.IDLE;
                         justEnteredState = true;                            
                     }
-                    catch(Exception exc){
-                        Log.error("Error: ", exc);
-                        state            = State.CLOSINGCONNECTION;
-                        justEnteredState = true;                            
-                    }
+//                    catch(Exception exc){
+//                        Log.error("Error: ", exc);
+//                        state            = State.CLOSINGCONNECTION;
+//                        justEnteredState = true;                            
+//                    }
                     break;
                 case CLOSINGCONNECTION:
                     invalidateInputSignals();
@@ -434,10 +435,10 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                 }
             }
             Unsubscribe unsubscribe = new Unsubscribe(subscriptionTransports);
-            SubscribeAcknowledgement sa = (SubscribeAcknowledgement)connection.getClientHandler().transact(unsubscribe);
+            UnsubscribeAcknowledgement usa = (UnsubscribeAcknowledgement)connection.getClientHandler().transact(unsubscribe);
             for(int i = 0; i < subscriptionTransports.size(); i++){
-                if (sa.getListOfResults().get(i) != Result.NoFault.getValue()){
-                    Log.error("Failed to unsubscribe signal for connection to " + getUri() + ", error code : " + Result.fromInt(sa.getListOfResults().get(i)));
+                if (usa.getListOfResults().get(i) != Result.NoFault.getValue()){
+                    Log.error("Failed to unsubscribe signal for connection to " + getUri() + ", error code : " + Result.fromInt(usa.getListOfResults().get(i)));
                 }
             }
         }
@@ -457,7 +458,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
         try{
             if (connection != null ){
                 unsubscribeSignals();
-                connection.close();
+               //TODO connection.close();
                 done = true;
             }
         }
@@ -509,6 +510,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
         private boolean     connected;
         private Connection  connection;
         private boolean     running;
+        private int         browseAttempts;
         
         public ConnectionRunner(String identifier){
             super(identifier);
@@ -527,11 +529,13 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                 else{
                     throw new InconsistencyException("runners should not be invoked in parallel.");
                 }
-                Log.debug("establishing connection for " + getInputSignals().size() + " input and " + getOutputSignals().size() + " output signals ...");
+                Log.info("establishing connection for " + getInputSignals().size() + " input and " + getOutputSignals().size() + " output signals ...");
+                browseAttempts = 0;
                 do{
+                                 	
                     do{
                         try{
-                            connection = new Connection(getUri().getHost(), getUri().getPort());
+                        	connection = new Connection(getUri().getHost(), getUri().getPort());
                             //wait, until plc is running
                             connected  = true;
                         }
@@ -545,6 +549,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                         //try to retrieve variable handles
                         try{
                             //retrieve index of remote signals
+                        	browseAttempts++;
                             Browse                browse    = new Browse();
                             BrowseAcknowledgement browseAck = (BrowseAcknowledgement)connection.getClientHandler().transact(browse);
                             listOfRemoteSignalInfos         = new HashMap<>(browseAck.getListOfSignalInfos().size());
@@ -555,9 +560,11 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                         }
                         catch(Exception exc){
                             //close connection
-                            try{closeConnection();}catch(Exception ex){};
-                            exceptionOccured = true;
-                            Log.error("Error:", exc);
+                            //TODO try{closeConnection();}catch(Exception ex){};
+                            //TODO exceptionOccured = true;
+                            if (Log.isDebugEnabled()){Log.error("Error:", exc);};
+                            connected = false;
+                            try{Thread.sleep(CONNECTIONRETRYTIME);}catch(InterruptedException ex){/*cannot happen*/};//TODO                                                        
                         }
                     }
                     else {
@@ -566,12 +573,12 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                 }
                 while(!connected && !isTerminated() && !exceptionOccured);
                 if (connected){
-                    Log.debug("... connection established.");            
+                    Log.info("... connection established. " + browseAttempts + " attempts made to get signal dictionary");            
                 }
             }
             finally{
                 running               = false;
-                currentlyActiveRunner = null;                
+                currentlyActiveRunner = null;  
             }
         }
         
@@ -609,7 +616,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                 running = true;
                 subscriptionSucceeded = subscribeSignals();
                 running = false;
-                Log.debug("... subscription of signals done. Success = " + subscriptionSucceeded);            
+                Log.debug("... subscription of signals done. Success = " + subscriptionSucceeded);        
             }
             finally{
                 running               = false;

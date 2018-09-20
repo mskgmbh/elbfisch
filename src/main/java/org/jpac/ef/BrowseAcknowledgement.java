@@ -67,6 +67,7 @@ public class BrowseAcknowledgement extends Acknowledgement{
         for(int i = 0; i < length; i++){
             GetHandleAcknowledgement gha = (GetHandleAcknowledgement)MessageFactory.getMessage(byteBuf);
             listOfSignalInfos.add(gha);
+            //Log.error(i + ": BrowseAcknowledgement: " + gha.signalIdentifier);
         }
     }
     

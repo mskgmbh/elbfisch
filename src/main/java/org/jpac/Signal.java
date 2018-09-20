@@ -115,12 +115,10 @@ public abstract class Signal extends Observable implements Observer {
 	        	switch(getIoDirection()) {
 	        	case INPUT:
 	        		//pass incoming signal through to remote counterpart
-	        		Log.info("PROXY: " + this + ".connect(" + ioSig + ")");//TODO
 	        		this.connect(ioSig);
 	        		break;
 	        	case OUTPUT:
 	        		//pass incoming signal from remote counterpart to this
-	        		Log.info("PROXY: " + ioSig.getQualifiedIdentifier() + ".connect(" + this + ")");//TODO
 	        		ioSig.connect(this);
 	        		break;
 	        	}

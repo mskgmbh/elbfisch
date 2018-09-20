@@ -271,7 +271,7 @@ public class Handshake {
      * @throws SignalAccessException 
      */
     public boolean isValid() {
-    	return acknowledge.isValid() && active.isValid() && ready.isValid() && resultSig.isValid();
+    	return acknowledge.isValid() && active.isValid() && ready.isValid() && resultSig.isValid() && request.isValid();
     }
             
     /**

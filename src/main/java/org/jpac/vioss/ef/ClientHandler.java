@@ -53,22 +53,27 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     protected Acknowledgement       receivedAcknowledgement;
     protected boolean               transactionInProgress;
     protected Command               actualCommand;
+    protected boolean               transactionSucceeded;
     
     public ClientHandler(){
         super();
         this.serverResponded       = new Semaphore(ONEPERMIT);
         this.transactionInProgress = false;
+        this.transactionSucceeded  = false;
     }
     
     @Override
-    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        super.channelRegistered(ctx);
+    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
         context   = ctx;
-        txByteBuf = ctx.alloc().buffer(4096);
+        if (txByteBuf != null) {
+        	txByteBuf.release();
+        }
+        txByteBuf = ctx.alloc().buffer(32000);
     }
-    
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
+    	transactionSucceeded = false;
         ByteBuf rxByteBuf = (ByteBuf) msg; // (1)
         try {
         	MessageId receivedMessageId = MessageFactory.readMessageId(rxByteBuf);
@@ -76,9 +81,15 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
 	            receivedAcknowledgement = actualCommand.getAcknowledgement();
 	            receivedAcknowledgement.decode(rxByteBuf);
 	            Log.debug("acknowledgement received from server: " + receivedAcknowledgement);
+	            transactionSucceeded = true;
         	} else {
         		throw new InconsistencyException("received " + receivedMessageId + " expected " + actualCommand.getAcknowledgement().getMessageId());
         	}
+       
+        }  catch(Exception exc) {
+        	Log.error("Error: ", exc);
+        	throw exc;
+        
         } finally {
             //tell transact()ing thread, that an acknowledgement arrived
             serverResponded.release();
@@ -86,14 +97,22 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         }
     }
     
+//    @Override
+//    public void channelInactive(ChannelHandlerContext ctx) {
+//    
+//    }    
+    
     public Acknowledgement transact(Command command) throws InterruptedException, InconsistencyException, TimeoutException{
         boolean done = false;
         startAsynchronously(command);
         try{
             //wait until server responses (serverResponded released by channelRead())
-            done = serverResponded.tryAcquire(500, TimeUnit.MILLISECONDS);
+            done = serverResponded.tryAcquire(3000, TimeUnit.MILLISECONDS);
             if(!done){
                 throw new TimeoutException("server did not respond in time");
+            }
+            if (!transactionSucceeded) {
+            	throw new InconsistencyException("transaction failed: " + command);
             }
         }
         finally{
@@ -132,7 +151,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        cause.printStackTrace();
+        Log.error("Error: " + cause);
         ctx.close();
     }
 }

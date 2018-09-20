@@ -33,12 +33,14 @@ import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
+
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 
 import java.net.BindException;
-import java.net.InetSocketAddress;
 import java.security.cert.CertificateException;
 import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
@@ -49,8 +51,8 @@ import org.slf4j.LoggerFactory;
  * @author berndschuster
  */
 public class EfService implements Runnable{
-    public static final  int DEFAULTPORT = 13685;
-    public static final  int DEFAULTRECEIVEBUFFERSIZE = 4096;
+    public static final  int DEFAULTPORT              = 13685;
+    public static final  int DEFAULTRECEIVEBUFFERSIZE = 32000;
     
     private final Logger Log = LoggerFactory.getLogger("jpac.ef");
 
@@ -88,7 +90,9 @@ public class EfService implements Runnable{
                     @Override
                     public void initChannel(SocketChannel ch) throws Exception {
                         ch.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(receiveBufferSize));
-                        ch.pipeline().addLast(new CommandHandler(ch.remoteAddress()));
+                    	ch.pipeline().addLast("frameDecoder", new LengthFieldBasedFrameDecoder(DEFAULTRECEIVEBUFFERSIZE, 0, 4, 0, 4));
+                    	ch.pipeline().addLast("frameEncoder", new LengthFieldPrepender(4));                
+                        ch.pipeline().addLast("handler", new CommandHandler(ch.remoteAddress()));
                     }
                 });
             channelFuture = b.bind(bindAddress, port).sync();//TODO bind to more than one address

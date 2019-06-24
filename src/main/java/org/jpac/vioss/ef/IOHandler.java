@@ -31,12 +31,9 @@ import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.TimeoutException;
-import org.jpac.Address;
 import org.jpac.AsynchronousTask;
 import org.jpac.InconsistencyException;
-import org.jpac.NumberOutOfRangeException;
 import org.jpac.ProcessException;
 import org.jpac.Signal;
 import org.jpac.SignalAccessException;
@@ -44,18 +41,14 @@ import org.jpac.WrongUseException;
 import org.jpac.ef.Browse;
 import org.jpac.ef.BrowseAcknowledgement;
 import org.jpac.ef.Result;
-import org.jpac.ef.SignalInfo;
-import org.jpac.ef.SignalTransport;
 import org.jpac.ef.Subscribe;
 import org.jpac.ef.SubscribeAcknowledgement;
 import org.jpac.ef.SubscriptionTransport;
 import org.jpac.ef.Transceive;
-import org.jpac.ef.TransceiveAcknowledgement;
 import org.jpac.ef.Unsubscribe;
 import org.jpac.ef.UnsubscribeAcknowledgement;
-import org.jpac.plc.AddressException;
-import static org.jpac.vioss.IOHandler.Log;
 import org.jpac.vioss.IllegalUriException;
+import org.jpac.vioss.IoSignal;
 
 /**
  *
@@ -79,12 +72,11 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
     private boolean               operationPending;
     private boolean               justEnteredState;
     
-    private HashMap<String, SignalInfo>                listOfRemoteSignalInfos;
-    private HashMap<Integer , org.jpac.vioss.IoSignal> listOfRemoteSignals;
-    private HashMap<Integer, SignalTransport>          listOfClientInputTransports; 
-    private HashMap<Integer, SignalTransport>          listOfClientOutputTransports; 
+    private HashMap<String, RemoteSignalInfo> listOfRemoteSignalInfos;
+    private HashMap<Integer, SignalTransport> listOfClientInputTransports; 
+    private HashMap<Integer, SignalTransport> listOfClientOutputTransports; 
     
-    private Transceive                                 transceive;
+    private Transceive transceive;
     
     public IOHandler(URI uri) throws IllegalUriException {
         super(uri);
@@ -95,7 +87,6 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
         this.subscriptionRunner           = new SubscriptionRunner(this + "subscription runner");
         this.closeConnectionRunner        = new CloseConnectionRunner(this + "close connection runner");
         this.state                        = State.IDLE;
-        this.listOfRemoteSignals          = new HashMap<>();
         this.listOfClientInputTransports  = new HashMap<>();
         this.listOfClientOutputTransports = new HashMap<>();
         this.transceive                   = new Transceive(this.listOfClientInputTransports, this.listOfClientOutputTransports);
@@ -149,7 +140,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                         //server did not respond in time. Connection is supposed to be broken
                         //Just invalidate input signals and reconnect
                         invalidateInputSignals();
-                        Log.error(this + " : Connection lost.");
+                        Log.error(this + " : Connection lost. Cause: " + exc);
                         state            = State.IDLE;
                         justEnteredState = true;                            
                     }
@@ -292,15 +283,17 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
     /**
      * is called in every cycle while in state TRANSCEIVING
      */
-    protected boolean transceiving() throws TimeoutException, InterruptedException, SignalAccessException, AddressException{
+    protected boolean transceiving() throws TimeoutException, InterruptedException, SignalAccessException{
         boolean                   allSignalsProperlyTransferred = true;
         //put out output signals
         synchronized(listOfClientOutputTransports) {
-	        for(org.jpac.plc.IoSignal ios: getOutputSignals()){
-	            if (ios.isToBePutOut() || connection.isJustConnected()){
+	        for(Signal ios: getOutputSignals()){
+	        	IoSignal ioSig = (IoSignal)ios;
+	            if (ioSig.isToBePutOut() || connection.isJustConnected()){
 	                //transmit signal on first transmission of a new connection or if it has changed in last cycle
-	                ios.resetToBePutOut();
-	                ios.checkOut();
+	            	ioSig.resetToBePutOut();
+	            	ioSig.checkOut();//transfer value to RemoteSignalInfo
+	            	((RemoteSignalInfo)ioSig.getRemoteSignalInfo()).getSignalTransport().setValue(((RemoteSignalInfo)ioSig.getRemoteSignalInfo()).getValue());
 	            }
 	        }
         }
@@ -310,8 +303,10 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
         connection.getClientHandler().resetTransactionInProgress();
         //propagate input signals
         synchronized(listOfClientInputTransports) {
-	        for(org.jpac.plc.IoSignal ios: getInputSignals()){
-	            ((org.jpac.vioss.IoSignal)ios).checkIn();
+	        for(Signal ios: getInputSignals()){
+	        	IoSignal ioSig = (IoSignal)ios;
+	        	ioSig.getRemoteSignalInfo().setValue(((RemoteSignalInfo)ioSig.getRemoteSignalInfo()).getSignalTransport().getValue());
+	            ioSig.checkIn();
 	        }
         }
         return allSignalsProperlyTransferred;
@@ -344,30 +339,31 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
     
     protected void prepareSignalsForTransfer(){
         //assign local IoSignal's to remote counterpart ...
-        for (org.jpac.vioss.IoSignal ios: getInputSignals()){
-            SignalInfo si = listOfRemoteSignalInfos.get(ios.getUri().getPath().substring(1));
+        for (Signal ios: getInputSignals()){
+            RemoteSignalInfo si = listOfRemoteSignalInfos.get(((org.jpac.vioss.IoSignal)ios).getPath());
             if (si != null){
-                ((org.jpac.vioss.ef.IoSignal)ios).setSignalInfo(si);
+                ((org.jpac.vioss.IoSignal)ios).setRemoteSignalInfo(si);
+                ((RemoteSignalInfo)((org.jpac.vioss.IoSignal)ios).getRemoteSignalInfo()).getSignalTransport().setHandle(si.getHandle());             
             }
         }
-        for (org.jpac.vioss.IoSignal ios: getOutputSignals()){
-            String remoteSignalPath = ios.getUri().getPath().substring(1);
-            SignalInfo si = listOfRemoteSignalInfos.get(remoteSignalPath);
+        for (Signal ios: getOutputSignals()){
+            RemoteSignalInfo si = listOfRemoteSignalInfos.get(((org.jpac.vioss.IoSignal)ios).getPath());
             if (si != null){
-                ((org.jpac.vioss.ef.IoSignal)ios).setSignalInfo(si);
+                ((org.jpac.vioss.IoSignal)ios).setRemoteSignalInfo(si);
+                ((RemoteSignalInfo)((org.jpac.vioss.IoSignal)ios).getRemoteSignalInfo()).getSignalTransport().setHandle(si.getHandle());             
             }
         }        
     }
             
     protected void logIoSignalsWhichFailedToConnect(){
-        for (org.jpac.vioss.IoSignal ios: getInputSignals()){
-            if (((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo() == null){
-                Log.error("failed to retrieve signal info for " + ios.getUri());
+        for (Signal ios: getInputSignals()){
+            if (((org.jpac.vioss.IoSignal)ios).getRemoteSignalInfo() == null){
+                Log.error("failed to retrieve signal info for " + ((org.jpac.vioss.IoSignal)ios).getUri());
             }
         }
-        for (org.jpac.vioss.IoSignal ios: getOutputSignals()){
-            if (((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo() == null){
-                Log.error("failed to retrieve signal info for " + ios.getUri());
+        for (Signal ios: getOutputSignals()){
+            if (((org.jpac.vioss.IoSignal)ios).getRemoteSignalInfo() == null){
+                Log.error("failed to retrieve signal info for " + ((org.jpac.vioss.IoSignal)ios).getUri());
             }
         }
     }   
@@ -377,20 +373,20 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
         try{
             ArrayList<SubscriptionTransport> subscriptionTransports = new ArrayList<>();
 
-            for (org.jpac.vioss.IoSignal ios: getInputSignals()){
-                if (((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo() != null){
-                    SubscriptionTransport st = new SubscriptionTransport(((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getHandle(), ((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getSignalType(), ios.getIoDirection());
+            for (Signal ios: getInputSignals()){
+            	RemoteSignalInfo rsi = (RemoteSignalInfo)((org.jpac.vioss.IoSignal)ios).getRemoteSignalInfo();
+                if (rsi != null){
+                    SubscriptionTransport st = new SubscriptionTransport(rsi.getHandle(), rsi.getType(), ios.getIoDirection());
                     subscriptionTransports.add(st);
-                    listOfRemoteSignals.put(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle(), ios);
-                    listOfClientInputTransports.put(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle(), ((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport());
+                    listOfClientInputTransports.put(rsi.getHandle(), rsi.getSignalTransport());
                 }
             }
-            for (org.jpac.vioss.IoSignal ios: getOutputSignals()){
-                if (((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo() != null){
-                    SubscriptionTransport st = new SubscriptionTransport(((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getHandle(), ((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getSignalType(), ios.getIoDirection());
+            for (Signal ios: getOutputSignals()){
+            	RemoteSignalInfo rsi = (RemoteSignalInfo)((org.jpac.vioss.IoSignal)ios).getRemoteSignalInfo();
+                if (rsi != null){                    
+                	SubscriptionTransport st = new SubscriptionTransport(rsi.getHandle(), rsi.getType(), ios.getIoDirection());
                     subscriptionTransports.add(st);
-                    listOfRemoteSignals.put(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle(), ios);
-                    listOfClientOutputTransports.put(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle(), ((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport());
+                    listOfClientOutputTransports.put(rsi.getHandle(), rsi.getSignalTransport());
                 }
             }
             if (subscriptionTransports.size() > 0){
@@ -398,7 +394,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                 SubscribeAcknowledgement sa = (SubscribeAcknowledgement)connection.getClientHandler().transact(subscribe);
                 for(int i = 0; i < subscriptionTransports.size(); i++){
                     if (sa.getListOfResults().get(i) != Result.NoFault.getValue()){
-                        Log.error("Failed to subscribe signal " + listOfRemoteSignals.get(subscriptionTransports.get(i).getHandle()).getUri() +" , error code : " + Result.fromInt(sa.getListOfResults().get(i)));
+                        Log.error("Failed to subscribe signal " + getSignalIdentifierByRemoteHandle(subscriptionTransports.get(i).getHandle()) +" , error code : " + Result.fromInt(sa.getListOfResults().get(i)));
                     }
                 }
             }
@@ -418,27 +414,27 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
         try{
             ArrayList<SubscriptionTransport> subscriptionTransports = new ArrayList<>();
 
-            for (org.jpac.vioss.IoSignal ios: getInputSignals()){
-                if (((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo() != null){
-                    SubscriptionTransport st = new SubscriptionTransport(((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getHandle(), ((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getSignalType(), ios.getIoDirection());
+            for (Signal ios: getInputSignals()){
+            	RemoteSignalInfo rsi = (RemoteSignalInfo)((org.jpac.vioss.IoSignal)ios).getRemoteSignalInfo();
+                if (rsi != null){                    
+                    SubscriptionTransport st = new SubscriptionTransport(rsi.getHandle(), rsi.getType(), ios.getIoDirection());
                     subscriptionTransports.add(st);
-                    listOfRemoteSignals.remove(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle());
-                    listOfClientInputTransports.remove(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle());
+                    listOfClientInputTransports.remove(rsi.getHandle());
                 }
             }
-            for (org.jpac.vioss.IoSignal ios: getOutputSignals()){
-                if (((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo() != null){
-                    SubscriptionTransport st = new SubscriptionTransport(((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getHandle(), ((org.jpac.vioss.ef.IoSignal)ios).getSignalInfo().getSignalType(), ios.getIoDirection());
+            for (Signal ios: getOutputSignals()){
+            	RemoteSignalInfo rsi = (RemoteSignalInfo)((org.jpac.vioss.IoSignal)ios).getRemoteSignalInfo();
+                if (rsi != null){                    
+                    SubscriptionTransport st = new SubscriptionTransport(rsi.getHandle(), rsi.getType(), ios.getIoDirection());
                     subscriptionTransports.add(st);
-                    listOfRemoteSignals.remove(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle());
-                    listOfClientInputTransports.remove(((org.jpac.vioss.ef.IoSignal)ios).getSignalTransport().getHandle());
+                    listOfClientOutputTransports.remove(rsi.getHandle());
                 }
             }
             Unsubscribe unsubscribe = new Unsubscribe(subscriptionTransports);
             UnsubscribeAcknowledgement usa = (UnsubscribeAcknowledgement)connection.getClientHandler().transact(unsubscribe);
             for(int i = 0; i < subscriptionTransports.size(); i++){
                 if (usa.getListOfResults().get(i) != Result.NoFault.getValue()){
-                    Log.error("Failed to unsubscribe signal for connection to " + getUri() + ", error code : " + Result.fromInt(usa.getListOfResults().get(i)));
+                    Log.error("Failed to unsubscribe signal for connection to " + getSignalIdentifierByRemoteHandle(subscriptionTransports.get(i).getHandle()) + ", error code : " + Result.fromInt(usa.getListOfResults().get(i)));
                 }
             }
         }
@@ -446,9 +442,15 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
             Log.error("general error occured while unsubscribing signals", exc);
         }
     }
+    
+    protected String getSignalIdentifierByRemoteHandle(int handle) {
+    	String signalIdentifier = null;
+    	signalIdentifier = listOfRemoteSignalInfos.values().stream().filter((si) -> si.getHandle() == handle).findFirst().get().getIdentifier();
+    	return signalIdentifier;
+    }
 
     protected void invalidateInputSignals() throws SignalAccessException{
-        for (org.jpac.vioss.IoSignal ios: getInputSignals()){
+        for (Signal ios: getInputSignals()){
             ios.invalidate();
         }        
     }
@@ -481,7 +483,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
     }
     
     @Override
-    public boolean handles(Address address, URI uri) {
+    public boolean handles(URI uri) {
         boolean isHandledByThisInstance = false;
         try{
             isHandledByThisInstance  = uri != null;
@@ -552,8 +554,8 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                         	browseAttempts++;
                             Browse                browse    = new Browse();
                             BrowseAcknowledgement browseAck = (BrowseAcknowledgement)connection.getClientHandler().transact(browse);
-                            listOfRemoteSignalInfos         = new HashMap<>(browseAck.getListOfSignalInfos().size());
-                            browseAck.getListOfSignalInfos().forEach((si) -> listOfRemoteSignalInfos.put(si.getSignalIdentifier(), si));
+                            listOfRemoteSignalInfos         = new HashMap<>(browseAck.getListOfGetHandleAcks().size());
+                            browseAck.getListOfGetHandleAcks().forEach((gha) ->	listOfRemoteSignalInfos.put(gha.getSignalIdentifier(), new RemoteSignalInfo(gha.getSignalIdentifier(), gha.getSignalType(), gha.getHandle(), new SignalTransport(gha.getHandle(), gha.getSignalType()))));
                             prepareSignalsForTransfer();
                             //log signals which failed to connect
                             logIoSignalsWhichFailedToConnect();        

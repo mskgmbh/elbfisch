@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.jpac.AbstractModule;
 import org.jpac.CharString;
+import org.jpac.IoDirection;
 import org.jpac.SignalAccessException;
 import org.jpac.SignalAlreadyExistsException;
 import org.jpac.SignalInvalidException;
@@ -53,13 +54,13 @@ public class IoCharString extends CharString implements IoSignal{
     protected boolean    toBePutOut;    
     
     
-    public IoCharString(AbstractModule containingModule, String name, Data data, Address address, IoDirection ioDirection) throws SignalAlreadyExistsException, StringLengthException{
+    public IoCharString(AbstractModule containingModule, String name, Data data, Address address, IoDirection ioDirection) throws SignalAlreadyExistsException {
         super(containingModule, name);
         this.data        = data;
         this.address     = address;
         this.ioDirection = ioDirection;
         if (address != null){
-            this.plcString   = new PlcString("",address.getSize() - 2);//suitable for S7 strings, but not for others
+            try{this.plcString   = new PlcString("",address.getSize() - 2);}catch(StringLengthException exc) {/*cannot happen*/}//suitable for S7 strings, but not for others
         }
         else{
             this.plcString   = null;

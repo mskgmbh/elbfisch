@@ -28,6 +28,7 @@ package org.jpac.plc;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.jpac.AbstractModule;
+import org.jpac.IoDirection;
 import org.jpac.NumberOutOfRangeException;
 import org.jpac.SignalAccessException;
 import org.jpac.SignalAlreadyExistsException;

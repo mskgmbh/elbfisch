@@ -28,6 +28,7 @@ package org.jpac.ef;
 import io.netty.buffer.ByteBuf;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import org.jpac.SignalRegistry;
 
 /**
@@ -35,7 +36,7 @@ import org.jpac.SignalRegistry;
  * @author berndschuster
  */
 public class Browse extends Command{
-    List<SignalInfo> listOfSignalInfos;
+    List<GetHandleAcknowledgement> listOfGetHandleAcks;
     
     //server
     public Browse(){
@@ -57,10 +58,8 @@ public class Browse extends Command{
     //server
     @Override
     public Acknowledgement handleRequest(CommandHandler commandHandler) {
-        listOfSignalInfos = SignalRegistry.getInstance().getSignals().values().stream().
-                map(s -> new SignalInfo(s.getQualifiedIdentifier(), BasicSignalType.fromSignal(s))).
-                collect(Collectors.toList());
-        acknowledgement = new BrowseAcknowledgement(listOfSignalInfos);
+    	listOfGetHandleAcks = SignalRegistry.getInstance().getSignals().values().stream().map(s -> new GetHandleAcknowledgement(s)).collect(Collectors.toList());
+        acknowledgement     = new BrowseAcknowledgement(listOfGetHandleAcks);
         return acknowledgement;
     }
 
@@ -74,6 +73,6 @@ public class Browse extends Command{
     
     @Override
     public String toString(){
-        return super.toString() + "(" + (listOfSignalInfos != null ? listOfSignalInfos.size() : "") + ")";
+        return super.toString() + "(" + (listOfGetHandleAcks != null ? listOfGetHandleAcks.size() : "") + ")";
     }
 }

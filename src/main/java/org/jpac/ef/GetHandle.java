@@ -26,6 +26,8 @@
 package org.jpac.ef;
 
 import io.netty.buffer.ByteBuf;
+
+import org.jpac.BasicSignalType;
 import org.jpac.Signal;
 import org.jpac.SignalNotRegisteredException;
 import org.jpac.SignalRegistry;
@@ -79,15 +81,15 @@ public class GetHandle extends Command{
         Log.debug("handleRequest(): " + this);
         try{
             Signal signal = SignalRegistry.getInstance().getSignal(signalIdentifier);
-            acknowledgement = new GetHandleAcknowledgement(signalIdentifier, BasicSignalType.fromSignal(signal));
+            acknowledgement = new GetHandleAcknowledgement(signal);
             acknowledgement.setResult(Result.NoFault);
         }
         catch(SignalNotRegisteredException exc){
-            acknowledgement = new GetHandleAcknowledgement(signalIdentifier, signalType);
+            acknowledgement = new GetHandleAcknowledgement(signalIdentifier, 0, signalType);
             acknowledgement.setResult(Result.SignalNotRegistered);            
         }
         catch(Exception exc){
-            acknowledgement = new GetHandleAcknowledgement(signalIdentifier, signalType);
+            acknowledgement = new GetHandleAcknowledgement(signalIdentifier, 0, signalType);
             acknowledgement.setResult(Result.GeneralFailure);
         }
         return getAcknowledgement();

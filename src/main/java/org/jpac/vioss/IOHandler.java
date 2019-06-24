@@ -26,22 +26,17 @@
 package org.jpac.vioss;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.jpac.Address;
 import org.jpac.CyclicTask;
+import org.jpac.IoDirection;
 import org.jpac.JPac;
-import org.jpac.NumberOutOfRangeException;
 import org.jpac.Signal;
-import org.jpac.SignalAccessException;
 import org.jpac.SignalRegistry;
 import org.jpac.WrongUseException;
-import org.jpac.plc.AddressException;
-import org.jpac.plc.IoDirection;
 
 /**
  * implements basic functions of vioss IOHandlers.
@@ -50,38 +45,22 @@ import org.jpac.plc.IoDirection;
 abstract public class IOHandler implements CyclicTask{
     static public Logger Log = LoggerFactory.getLogger("jpac.vioss.IOHandler");
     
-    private URI             uri; 
-    private List<IoSignal>  inputSignals;
-    private List<IoSignal>  outputSignals;
-    private boolean         processingStarted;
-    private boolean         processingAborted;
+    private URI            uri; 
+    private List<Signal> inputSignals;
+    private List<Signal> outputSignals;
+    private boolean       processingStarted;
+    private boolean       processingAborted;
     
-    private String          toString;
+    private String        toString;
     
     public IOHandler(URI uri)  throws IllegalUriException {
-        this.inputSignals       = Collections.synchronizedList(new ArrayList<IoSignal>());
-        this.outputSignals      = Collections.synchronizedList(new ArrayList<IoSignal>());
+        this.inputSignals       = Collections.synchronizedList(new ArrayList<Signal>());
+        this.outputSignals      = Collections.synchronizedList(new ArrayList<Signal>());
         this.uri                = uri;
         this.processingStarted  = false;
         try{JPac.getInstance().registerCyclicTask(this);}catch(WrongUseException exc){/*cannot happen*/};
     }
     
-    protected void putSignalsToOutputProcessImage(){
-        synchronized(outputSignals){
-            for (IoSignal outputSignal: outputSignals){
-                try{outputSignal.checkOut();} catch(Exception exc){/*cannot happen*/};
-            }
-        }        
-    }
-    
-    protected void seizeSignalsFromInputProcessImage() throws SignalAccessException, AddressException{
-        synchronized(inputSignals){
-            for (IoSignal inputSignal: inputSignals){
-                try{inputSignal.checkIn();}catch(NumberOutOfRangeException exc){/*cannot happen*/}
-            }
-        }
-    }
-
     /**
      * @return the uri
      */
@@ -90,12 +69,12 @@ abstract public class IOHandler implements CyclicTask{
     }
 
     /**
-     * @used to register an InputSignal. If it is already registered, it is omitted. Must be called before
+     * @used to register an inout signal. Must be called before
      *  the first jPac cycle
      * @param signal input signal to regiester
      * @throws org.jpac.WrongUseException thrown, if called while jPac is running
      */
-    public void registerInputSignal(IoSignal signal) throws WrongUseException {
+    public void registerInputSignal(Signal signal) throws WrongUseException {
         if (processingStarted){
             throw new WrongUseException("all input/output signals must be registered before jpac is started");
         }
@@ -108,12 +87,12 @@ abstract public class IOHandler implements CyclicTask{
     }
 
     /**
-     * @used to register an OutputSignal. If it is already registered, it is omitted. Must be called before
+     * @used to register an OutputSignal. Must be called before
      *  the first jPac cycle
      * @param signal output signal to regiester
      * @throws org.jpac.WrongUseException thrown, if called while jPac is running
      */
-    public void registerOutputSignal(IoSignal signal) throws WrongUseException {
+    public void registerOutputSignal(Signal signal) throws WrongUseException {
         if (processingStarted){
             throw new WrongUseException("all input/output signals must be registered before jpac is started");
         }
@@ -125,7 +104,7 @@ abstract public class IOHandler implements CyclicTask{
         }
     }
     
-    public void discardSignal(IoSignal signal){
+    public void discardSignal(Signal signal){
         if (inputSignals.contains(signal)){
             inputSignals.remove(signal);
         }
@@ -143,14 +122,14 @@ abstract public class IOHandler implements CyclicTask{
     /**
      * @return the list of registered inputSignals
      */
-    public List<IoSignal> getInputSignals() {
+    public List<Signal> getInputSignals() {
         return inputSignals;
     }
 
     /**
      * @return the list of registered outputSignals
      */
-    public List<IoSignal> getOutputSignals() {
+    public List<Signal> getOutputSignals() {
         return outputSignals;
     }
     
@@ -184,7 +163,14 @@ abstract public class IOHandler implements CyclicTask{
     }
     
     public String getTargetInstance(){
-        return uri.toString().replace(uri.getPath(),"");
+    	String ti = uri.getScheme();
+    	if (uri.getHost() != null) {
+    		ti = ti + "//" + uri.getHost();
+    	}
+    	if (uri.getPort() != -1) {
+    		ti = ti + ":" + uri.getPort();
+    	} 	
+        return ti;
     }
 
     /**
@@ -205,11 +191,10 @@ abstract public class IOHandler implements CyclicTask{
 
     /**
      * used to checkIn, if this IOHandler handles the data item with the given address
-     * @param address address to checkIn
      * @param uri     uri to checkIn
      * @return true : this IOHandler handles this data item 
      */
-    abstract public boolean handles(Address address, URI uri);
+    abstract public boolean handles(URI uri);
     
     /**
      * used to do some initializing after all InputSignal's and OutputSignal's are registered for this

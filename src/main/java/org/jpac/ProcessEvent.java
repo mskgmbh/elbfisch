@@ -27,8 +27,6 @@ package org.jpac;
 
 import java.util.ArrayList;
 
-import org.eclipse.milo.opcua.sdk.server.model.methods.GetMonitoredItems;
-
 /**
  * base class for all process events which can be await()ed by modules
  */

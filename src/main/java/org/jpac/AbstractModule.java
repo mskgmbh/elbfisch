@@ -27,7 +27,6 @@
 package org.jpac;
 
 import java.lang.reflect.Field;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -36,7 +35,6 @@ import java.util.Stack;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.jpac.configuration.Configuration;
-import org.jpac.plc.IoDirection;
 import org.jpac.statistics.Histogram;
 
 /**

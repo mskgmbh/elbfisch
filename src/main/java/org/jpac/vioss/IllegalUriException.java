@@ -30,7 +30,8 @@ package org.jpac.vioss;
  * @author berndschuster
  */
 public class IllegalUriException extends Exception{
-    public IllegalUriException(String message){
+	private static final long serialVersionUID = -2517445377363439009L;
+	public IllegalUriException(String message){
         super(message);
     }
     public IllegalUriException(Exception causedBy){

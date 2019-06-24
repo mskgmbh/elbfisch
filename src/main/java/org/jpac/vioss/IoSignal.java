@@ -26,12 +26,32 @@
 package org.jpac.vioss;
 
 import java.net.URI;
+import java.util.Map;
+
+import org.jpac.IoDirection;
+import org.jpac.NumberOutOfRangeException;
+import org.jpac.SignalAccessException;
 
 /**
  *
  * @author berndschuster
  */
-public interface IoSignal extends org.jpac.plc.IoSignal{
-    public URI getUri();
-    public Object getErrorCode();
+public interface IoSignal extends org.jpac.IoSignal {
+	public IoDirection         getIoDirection();
+    public URI                 getUri();
+    public Object              getErrorCode();
+    public void                setErrorCode(Object errorCode);
+    public IOHandler           getIOHandler();
+    public RemoteSignalInfo    getRemoteSignalInfo();
+    public void                setRemoteSignalInfo(RemoteSignalInfo remoteSignalInfo);
+    public void                checkIn() throws SignalAccessException, NumberOutOfRangeException;
+    public void                checkOut() throws SignalAccessException, NumberOutOfRangeException;
+    public boolean             isToBePutOut();
+    public void                resetToBePutOut();
+    public void                invalidate();
+    public Map<String, String> getParameters();
+    
+    default public String   getPath() {
+    	return getUri().getPath().substring(1);
+    }
 }

@@ -44,29 +44,37 @@
 package org.jpac.opc;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.UUID;
 
 import org.eclipse.milo.opcua.sdk.server.OpcUaServer;
 import org.eclipse.milo.opcua.sdk.server.api.config.OpcUaServerConfig;
-import org.eclipse.milo.opcua.sdk.server.api.config.OpcUaServerConfigBuilder;
-import org.eclipse.milo.opcua.stack.core.application.CertificateManager;
-import org.eclipse.milo.opcua.stack.core.application.CertificateValidator;
-import org.eclipse.milo.opcua.stack.core.application.DefaultCertificateManager;
-import org.eclipse.milo.opcua.stack.core.application.DefaultCertificateValidator;
+import org.eclipse.milo.opcua.sdk.server.util.HostnameUtil;
+import org.eclipse.milo.opcua.stack.server.EndpointConfiguration;
+import org.eclipse.milo.opcua.stack.core.security.CertificateManager;
+import org.eclipse.milo.opcua.stack.core.security.CertificateValidator;
+import org.eclipse.milo.opcua.stack.core.security.DefaultCertificateManager;
+import org.eclipse.milo.opcua.stack.core.security.DefaultCertificateValidator;
+import org.eclipse.milo.opcua.stack.core.security.DefaultTrustListManager;
 import org.eclipse.milo.opcua.stack.core.security.SecurityPolicy;
+import org.eclipse.milo.opcua.stack.core.transport.TransportProfile;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DateTime;
 import org.eclipse.milo.opcua.stack.core.types.builtin.LocalizedText;
 import org.eclipse.milo.opcua.stack.core.types.structured.BuildInfo;
+import static org.eclipse.milo.opcua.sdk.server.api.config.OpcUaServerConfig.USER_TOKEN_POLICY_ANONYMOUS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.collect.Lists.newArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UShort;
+import org.eclipse.milo.opcua.stack.core.types.enumerated.MessageSecurityMode;
 
 public class OpcUaService implements Runnable{
 
@@ -85,12 +93,12 @@ public class OpcUaService implements Runnable{
 
     private final Logger Log = LoggerFactory.getLogger("jpac.opc");
 
-    private OpcUaServer       server;
-    private String            serverName;
-    private int               port;
-    private boolean           stopRequested;
-    private Double            minSupportedSampleInterval;
-    private List<String>      bindAddresses;
+    private OpcUaServer             server;
+    private String                  serverName;
+    private int        		        port;
+    private boolean                 stopRequested;
+    private Double                  minSupportedSampleInterval;
+    private List<String>            bindAddresses;
     
     public OpcUaService(String serverName, List<String> bindAddresses, int port, Double minSupportedSampleInterval) throws Exception {
         this.server                     = null;
@@ -180,7 +188,7 @@ public class OpcUaService implements Runnable{
                remainingTime = 0;
            }
            try{
-               stopped = server.getServer().getExecutorService().awaitTermination(remainingTime, TimeUnit.MILLISECONDS);
+               stopped = server.getExecutorService().awaitTermination(remainingTime, TimeUnit.MILLISECONDS);
                done    = true;
            }
            catch(InterruptedException exc){
@@ -193,29 +201,104 @@ public class OpcUaService implements Runnable{
 
     @Override
     public void run() {
-        CertificateManager certificateManager = new DefaultCertificateManager();
-        CertificateValidator certificateValidator = new DefaultCertificateValidator(new File("./cfg/security"));
-        
-        OpcUaServerConfigLimits limits = new OpcUaServerConfigLimits().setMinSupportedSampleRate(minSupportedSampleInterval);//"CAUTION: Inside the digital petri api the sample rate is treated as a sample interval
-        OpcUaServerConfigBuilder cb = OpcUaServerConfig.builder();
-        OpcUaServerConfig serverConfig = cb
-                .setApplicationName(getApplicationName())
-                .setApplicationUri(getApplicationUri())
-                .setBindAddresses(bindAddresses)
-                .setBindPort(port)
-                .setBuildInfo(getBuildInfo())
-                .setCertificateManager(certificateManager)
-                .setCertificateValidator(certificateValidator)
-                .setHostname(getDefaultHostname())
-                .setProductUri(getProductUri())
-                .setSecurityPolicies(EnumSet.allOf(SecurityPolicy.class))
-                .setServerName(getServerName())
-                .setUserTokenPolicies(newArrayList(OpcUaServerConfig.USER_TOKEN_POLICY_ANONYMOUS))
-                .setLimits(limits)
-                .build();
-        server = new OpcUaServer(serverConfig);
-        server.getNamespaceManager().registerAndAdd(Namespace.NAMESPACE_URI, (namespaceIndex) -> new Namespace(server, namespaceIndex));      
-        server.startup();
-        Log.info("OPC UA server up and running");        
+    	try {
+	    	Set<EndpointConfiguration> endpointConfigurations = new LinkedHashSet<>();
+	//        CertificateManager certificateManager = new DefaultCertificateManager();
+	        CertificateManager certificateManager = new DefaultCertificateManager();
+	//        CertificateValidator certificateValidator = new DefaultCertificateValidator(new File("./cfg/security"));
+	        DefaultTrustListManager trustListManager = new DefaultTrustListManager(new File("./cfg/security"));
+	        CertificateValidator certificateValidator = new DefaultCertificateValidator(trustListManager);
+	        
+	//        OpcUaServerConfigLimits limits = new OpcUaServerConfigLimits().setMinSupportedSampleRate(minSupportedSampleInterval);
+	//        OpcUaServerConfigBuilder cb = OpcUaServerConfig.builder();
+	//        OpcUaServerConfig serverConfig = cb
+	//                .setApplicationName(getApplicationName())
+	//                .setApplicationUri(getApplicationUri())
+	//                .setBindAddresses(bindAddresses)
+	//                .setBindPort(port)
+	//                .setBuildInfo(getBuildInfo())
+	//                .setCertificateManager(certificateManager)
+	//                .setCertificateValidator(certificateValidator)
+	//                .setHostname(getDefaultHostname())
+	//                .setProductUri(getProductUri())
+	//                .setSecurityPolicies(EnumSet.allOf(SecurityPolicy.class))
+	//                .setServerName(getServerName())
+	//                .setUserTokenPolicies(newArrayList(OpcUaServerConfig.USER_TOKEN_POLICY_ANONYMOUS))
+	//                .setLimits(limits)
+	//                .build();
+	//        server = new OpcUaServer(serverConfig);
+	//        server.getNamespaceManager().registerAndAdd(Namespace.NAMESPACE_URI, (namespaceIndex) -> new Namespace(server, namespaceIndex));      
+	        endpointConfigurations = createEndpointConfigurations();
+	        OpcUaServerConfig serverConfig = OpcUaServerConfig.builder()
+	            .setApplicationUri(getApplicationUri())
+	            .setApplicationName(getApplicationName())
+	            .setEndpoints(endpointConfigurations)
+	            .setBuildInfo(
+	                new BuildInfo(
+	                    "urn:eclipse:milo:example-server",
+	                    "eclipse",
+	                    "eclipse milo example server",
+	                    OpcUaServer.SDK_VERSION,
+	                    "", DateTime.now()))
+	//            .setCertificateManager(certificateManager)
+	//            .setTrustListManager(trustListManager)
+	//            .setCertificateValidator(certificateValidator)
+	//            .setHttpsKeyPair(httpsKeyPair)
+	//            .setHttpsCertificate(httpsCertificate)
+	//            .setIdentityValidator(new CompositeValidator(identityValidator, x509IdentityValidator))
+	            .setProductUri("urn:eclipse:milo:example-server")
+	            .build();
+	        server = new OpcUaServer(serverConfig);
+	//        server.getNamespaceManager().registerAndAdd(Namespace.NAMESPACE_URI, (namespaceIndex) -> new Namespace(server, namespaceIndex));      
+	//        server.startup();
+	        Namespace namespace = new Namespace(server);
+	        namespace.startup();
+	        server.startup().get();
+	        Log.info("OPC UA server up and running");
+	    } catch(Exception exc) {
+    		Log.error("Error", exc);
+    	}
+    }
+    
+    private Set<EndpointConfiguration> createEndpointConfigurations() {
+        Set<EndpointConfiguration> endpointConfigurations = new LinkedHashSet<>();
+
+        List<String> bindAddresses = newArrayList();
+        bindAddresses.add("0.0.0.0");
+
+        Set<String> hostnames = new LinkedHashSet<>();
+        hostnames.add(HostnameUtil.getHostname());
+        hostnames.addAll(HostnameUtil.getHostnames("0.0.0.0"));
+
+        for (String bindAddress : bindAddresses) {
+            for (String hostname : hostnames) {
+
+                EndpointConfiguration.Builder noSecurityBuilder = EndpointConfiguration.newBuilder()
+                    .setBindAddress(bindAddress)
+                    .setHostname(hostname)
+                    .setPath("/" + DEFAULTSERVERNAME)
+                    .setSecurityPolicy(SecurityPolicy.None)
+                    .setSecurityMode(MessageSecurityMode.None)
+                    .addTokenPolicies(USER_TOKEN_POLICY_ANONYMOUS);
+
+                endpointConfigurations.add(buildTcpEndpoint(noSecurityBuilder));
+
+                EndpointConfiguration.Builder discoveryBuilder = noSecurityBuilder.copy()
+                    .setPath("/" + DEFAULTSERVERNAME + "/discovery")
+                    .setSecurityPolicy(SecurityPolicy.None)
+                    .setSecurityMode(MessageSecurityMode.None);
+
+                endpointConfigurations.add(buildTcpEndpoint(discoveryBuilder));
+            }
+        }
+
+        return endpointConfigurations;
+    }   
+
+    private EndpointConfiguration buildTcpEndpoint(EndpointConfiguration.Builder base) {
+        return base.copy()
+            .setTransportProfile(TransportProfile.TCP_UASC_UABINARY)
+            .setBindPort(port)
+            .build();
     }
 }

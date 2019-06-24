@@ -27,7 +27,6 @@ package org.jpac;
 
 import java.util.function.Supplier;
 import org.jpac.alarm.Alarm;
-import org.jpac.plc.IoDirection;
 
 /**
  * represents a boolean signal

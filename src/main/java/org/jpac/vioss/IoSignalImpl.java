@@ -26,79 +26,158 @@
 package org.jpac.vioss;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.stream.Collectors;
+
 import org.jpac.InconsistencyException;
-import org.jpac.NumberOutOfRangeException;
+import org.jpac.Signal;
 import org.jpac.SignalAccessException;
+import org.jpac.Value;
 import org.jpac.WrongUseException;
-import org.jpac.plc.Address;
-import org.jpac.plc.AddressException;
-import org.jpac.plc.Connection;
-import org.jpac.plc.IoDirection;
-import org.jpac.plc.WriteRequest;
 
 /**
  *
  * @author berndschuster
  */
 public class IoSignalImpl{
-    public URI       uri;
-    public IOHandler ioHandler;
-    public IoSignal  containingSignal;
-    public Address   address;
-
-    public IoSignalImpl(IoSignal containingSignal, URI uri) throws InconsistencyException, WrongUseException {
-        this.containingSignal = containingSignal;
-        this.uri              = uri;
-        this.address          = null;
-        switch(((IoSignal)containingSignal).getIoDirection()){
+    private URI              		uri;
+    private Object           		errorCode;
+    private IOHandler        		ioHandler;
+    private RemoteSignalInfo 		remoteSignalInfo;
+    private Signal           		containingSignal;    
+    private boolean        			changedByCheckIn;
+    private boolean          		toBePutout;
+    private Map<String, String>     parameters; 
+    
+    public IoSignalImpl(Signal containingSignal, URI uri) throws InconsistencyException, WrongUseException {
+        this.setContainingSignal(containingSignal);
+        this.setUri(uri);
+        this.parameters       = seizeParameters(uri.getQuery());
+        this.remoteSignalInfo = null;
+        switch(((Signal)containingSignal).getIoDirection()){
             case INPUT:
-                getIOHandler().registerInputSignal((IoSignal)containingSignal); 
+                getIOHandler().registerInputSignal(containingSignal); 
                 break;
             case OUTPUT:
-                getIOHandler().registerOutputSignal((IoSignal)containingSignal); 
+                getIOHandler().registerOutputSignal(containingSignal); 
                 break;
             case INOUT:
-                getIOHandler().registerInputSignal((IoSignal)containingSignal); 
-                getIOHandler().registerOutputSignal((IoSignal)containingSignal); 
-                break;
-            default:
-                throw new WrongUseException("signal '" + uri.getPath().replace("/","") + "'  must be either input or output or both: ");
+            case UNDEFINED:
+                throw new WrongUseException("signal '" + uri.getPath().replace("/","") + "'  must be either input or output");
         }                
     }
     
-    /**
+	public Map<String, String> seizeParameters(String query) {
+	    if (query == null || query.equals("")) {
+	        return Collections.emptyMap();
+	    }
+	    Map<String, String> params = Arrays.stream(query.split("&")).map(this::seizeParameter).collect(Collectors.toMap(SimpleImmutableEntry::getKey, SimpleImmutableEntry::getValue));
+	    return params;
+	}
+
+	public SimpleImmutableEntry<String, String> seizeParameter(String it) {
+	    final int idx = it.indexOf("=");
+	    final String key = idx > 0 ? it.substring(0, idx) : it;
+	    final String value = idx > 0 && it.length() > idx + 1 ? it.substring(idx + 1) : null;
+	    return new SimpleImmutableEntry<>(key.trim(), value != null ? value.trim() : "");
+	}	
+
+	/**
      * returns the IOHandler, this signal is assigned to
      * @return 
      * @throws org.jpac.InconsistencyException 
      */
     protected IOHandler getIOHandler() throws InconsistencyException{
-        if (ioHandler == null){
-            try {
-                ioHandler = IOHandlerFactory.getHandlerFor(getAddress(), getUri());
-            } catch (ClassNotFoundException ex) {
-                throw new InconsistencyException("no IOHandler found for " + uri);
-            }            
+        if (getIoHandler() == null){
+        	setIoHandler(IOHandlerFactory.getHandlerFor(getUri()));
         }
-        return ioHandler;
+        return getIoHandler();
     }
     
-    public void setUri(URI uri){
-        this.uri = uri;
-    }
-    
-    public URI getUri() {
-        return this.uri;
-    }
-    
-    public IoSignal getContainingSignal(){
+    protected Signal getContainingSignal(){
         return this.containingSignal;
     }
 
-    public void setAddress(Address address) {
-        this.address = address;
+    protected void checkIn() throws SignalAccessException {
+        //subscribed value may have changed on remote side. Take over a copy of it (copy is done by setValue() internally).
+    	Value value;
+    	RemoteSignalInfo rsi = ((IoSignal)containingSignal).getRemoteSignalInfo();
+    	synchronized (rsi) {
+        	value = rsi.getValue();			
+		}
+    	if (value.isValid()) {
+            containingSignal.setValue(value);    		
+    	} else {
+    		containingSignal.invalidate();
+    	}
+        changedByCheckIn = containingSignal.hasChanged();
     }
 
-    public Address getAddress() {
-        return this.address;
+    protected void checkOut() throws SignalAccessException {
+    	//transfer locally changed signal to remote side
+    	((IoSignal)containingSignal).getRemoteSignalInfo().getValue().copy(containingSignal.getValue());
     }
+
+    protected void setToBePutOut(boolean value) {
+    	this.toBePutout = value;
+    };
+
+    protected boolean isToBePutOut() {
+    	return this.toBePutout;
+    };
+    protected void resetToBePutOut() {
+    	this.toBePutout = false;
+    }
+    
+    protected boolean isChangedByCheckIn() {
+    	return this.changedByCheckIn;
+    }
+
+    protected void resetChangedByCheckIn() {
+    	this.changedByCheckIn  = false;
+    }
+    
+    protected Map<String,String> getParameters(){
+    	return parameters;
+    }
+    
+    protected URI getUri() {
+		return uri;
+	}
+
+	protected void setUri(URI uri) {
+		this.uri = uri;
+	}
+
+	protected Object getErrorCode() {
+		return errorCode;
+	}
+
+	protected void setErrorCode(Object errorCode) {
+		this.errorCode = errorCode;
+	}
+
+	protected IOHandler getIoHandler() {
+		return ioHandler;
+	}
+
+	protected void setIoHandler(IOHandler ioHandler) {
+		this.ioHandler = ioHandler;
+	}
+
+	protected RemoteSignalInfo getRemoteSignalInfo() {
+		return remoteSignalInfo;
+	}
+
+	protected void setRemoteSignalInfo(RemoteSignalInfo remoteSignalInfo) {
+		this.remoteSignalInfo = remoteSignalInfo;
+	}
+
+	protected void setContainingSignal(Signal containingSignal) {
+		this.containingSignal = containingSignal;
+	}
 }

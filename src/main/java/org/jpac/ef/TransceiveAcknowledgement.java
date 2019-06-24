@@ -28,6 +28,8 @@ package org.jpac.ef;
 import io.netty.buffer.ByteBuf;
 import java.util.HashMap;
 
+import org.jpac.vioss.ef.SignalTransport;
+
 /**
  *
  * @author berndschuster
@@ -43,7 +45,7 @@ public class TransceiveAcknowledgement extends Acknowledgement{
     public TransceiveAcknowledgement(HashMap<Integer, SignalTransport> listOfClientInputTransports){
         super(MessageId.AckTransceive);
         this.listOfClientInputTransports = listOfClientInputTransports;     
-        this.receivedSignalTransport     = new SignalTransport(null);
+        this.receivedSignalTransport     = new SignalTransport();
     }
     
     //server

@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.jpac.AbstractModule;
 import org.jpac.Generic;
 import org.jpac.IndexOutOfRangeException;
+import org.jpac.IoDirection;
 import org.jpac.SignalAccessException;
 import org.jpac.SignalAlreadyExistsException;
 import org.jpac.SignalInvalidException;

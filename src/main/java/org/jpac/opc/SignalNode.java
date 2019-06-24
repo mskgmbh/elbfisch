@@ -46,6 +46,7 @@ package org.jpac.opc;
 
 import com.google.common.collect.ImmutableSet;
 import org.eclipse.milo.opcua.sdk.core.AccessLevel;
+import org.eclipse.milo.opcua.sdk.server.nodes.UaNodeContext;
 import org.eclipse.milo.opcua.sdk.server.nodes.UaVariableNode;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.eclipse.milo.opcua.stack.core.types.builtin.LocalizedText;
@@ -78,8 +79,10 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
     protected       Value     signalValue;
     protected       Value     lastSignalValue;
     
-    public SignalNode(Namespace nameSpace, TreeItem signalNode) {
-        super(nameSpace.getServer().getNodeMap(), new NodeId(nameSpace.getNamespaceIndex(), signalNode.getSignal().getQualifiedIdentifier()), new QualifiedName(nameSpace.getNamespaceIndex(), signalNode.getSignal().getIdentifier()), LocalizedText.english(signalNode.getSignal().getIdentifier()));
+//    public SignalNode(NameSpace nameSpace, int namespaceIndex, TreeItem signalNode) {
+      public SignalNode(UaNodeContext context, int namespaceIndex, TreeItem signalNode) {
+//        super(nameSpace.getNodeMap(), new NodeId(nameSpace.getNamespaceIndex(), signalNode.getSignal().getQualifiedIdentifier()), new QualifiedName(nameSpace.getNamespaceIndex(), signalNode.getSignal().getIdentifier()), LocalizedText.english(signalNode.getSignal().getIdentifier()));
+        super(context, new NodeId(namespaceIndex, signalNode.getSignal().getQualifiedIdentifier()), new QualifiedName(namespaceIndex, signalNode.getSignal().getIdentifier()), LocalizedText.english(signalNode.getSignal().getIdentifier()));
         this.lock            = false;
         this.signal          = signalNode.getSignal();
         this.signalValue     = getSignalValue();
@@ -168,6 +171,7 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
     public void update(Observable o, Object o1) {
         Signal sourceSignal = (Signal)o;
         boolean isValid = sourceSignal.isValid();
+        Log.debug("SignalNode.update() : {}", sourceSignal);
         synchronized(lock){
             if(isValid){
                 lastSignalValue.copy(getSignalValue());
@@ -199,6 +203,7 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
     
     @Override
     public DataValue getValue() {
+    	Log.debug("SignalNode.getValue {}: {}", signal, getSignalValue().getValue());//TODO
         DataValue theDataValue;
         synchronized(lock){
             dataValue = new DataValue(new Variant(getSignalValue().getValue()), signalValue.isValid() ? StatusCode.GOOD : StatusCode.BAD);

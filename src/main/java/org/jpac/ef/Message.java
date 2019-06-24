@@ -45,7 +45,9 @@ public interface Message {
     
     default String decodeString(ByteBuf sourceByteBuf){
         int length = sourceByteBuf.readInt();
-        return new String(sourceByteBuf.readBytes(length).array(), StandardCharsets.UTF_8);        
+    	byte[] bytes = new byte[length];
+        sourceByteBuf.readBytes(bytes, 0, length);
+        return new String(bytes, StandardCharsets.UTF_8);        
     };
     
     default void encodeListOfMessages(List<Message> listOfMessages, ByteBuf targetByteBuf){

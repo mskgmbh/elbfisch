@@ -26,8 +26,10 @@
 package org.jpac.ef;
 
 import io.netty.buffer.ByteBuf;
+
+import org.jpac.BasicSignalType;
+import org.jpac.IoDirection;
 import org.jpac.WrongUseException;
-import org.jpac.plc.IoDirection;
 
 /**
  *

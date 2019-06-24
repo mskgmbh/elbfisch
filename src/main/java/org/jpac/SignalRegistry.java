@@ -78,7 +78,7 @@ public class SignalRegistry {
     }
     
     public Signal getSignal(String qualifiedIdentifier) throws SignalNotRegisteredException{
-        Signal signal = signals.get(getHashCode(qualifiedIdentifier));
+        Signal signal = signals.get(qualifiedIdentifier.hashCode());
         if (signal == null){
             throw new SignalNotRegisteredException(qualifiedIdentifier);
         }
@@ -91,9 +91,5 @@ public class SignalRegistry {
             throw new SignalNotRegisteredException("signal with hashcode " + hashCode);
         }        
         return signal;
-    }
-    
-    public int getHashCode(String qualifiedIdentifier){
-        return qualifiedIdentifier.hashCode();
     }
 }

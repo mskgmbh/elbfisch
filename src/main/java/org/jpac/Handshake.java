@@ -26,7 +26,6 @@
 package org.jpac;
 
 import org.slf4j.LoggerFactory;
-import org.jpac.plc.IoDirection;
 import org.slf4j.Logger;
 
 /**
@@ -64,7 +63,7 @@ public class Handshake {
         this.requestingModule         = null;
         this.servingModule            = servingModule;
         this.identifier               = identifier;
-        this.request                  = new Logical(servingModule, identifier + ".request", false, IoDirection.INPUT);
+        this.request                  = new Logical(servingModule, identifier + ".request", IoDirection.INPUT);
         this.acknowledge              = new Logical(servingModule, identifier + ".acknowledge", false, IoDirection.OUTPUT);
         this.active                   = new Logical(servingModule, identifier + ".active", false, IoDirection.OUTPUT);
         this.ready                    = new Logical(servingModule, identifier + ".ready", false, IoDirection.OUTPUT);
@@ -97,7 +96,7 @@ public class Handshake {
      * @return returns a ProcessEvent which is fired, when the handshake is requested. Can be awaited by the acknowledging module
      */
     public ProcessEvent requested(){
-        return requestedEvent;
+    	return request.isValid() ? requestedEvent : new Event(() -> request.isValid() && request.is(true));
     }
 
     /**
@@ -271,7 +270,7 @@ public class Handshake {
      * @throws SignalAccessException 
      */
     public boolean isValid() {
-    	return acknowledge.isValid() && active.isValid() && ready.isValid() && resultSig.isValid() && request.isValid();
+    	return acknowledge.isValid() && active.isValid() && ready.isValid() && resultSig.isValid();
     }
             
     /**

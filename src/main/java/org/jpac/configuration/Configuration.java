@@ -35,6 +35,7 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.jpac.ApplicationContext;
 import org.jpac.AsynchronousTask;
 import org.jpac.CyclicTask;
 import org.jpac.ProcessException;
@@ -60,8 +61,9 @@ public class Configuration extends XMLConfiguration{
     
     private Configuration() throws ConfigurationException, UnsupportedEncodingException{
         super();
-        File configFile  = new File("./cfg/org.jpac.Configuration.xml");
-        backupConfigFile = new File(configFile.getAbsolutePath() + ".bak");
+        String applicationsHomeDir = ApplicationContext.getInstance().getHomeDir();
+        File configFile            = new File(applicationsHomeDir + "/cfg/org.jpac.Configuration.xml");
+        backupConfigFile           = new File(configFile.getAbsolutePath() + ".bak");
         setFile(configFile);
         try{
             load();

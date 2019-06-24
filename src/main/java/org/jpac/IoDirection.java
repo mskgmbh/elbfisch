@@ -23,9 +23,7 @@
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jpac.plc;
-
-import io.netty.buffer.ByteBuf;
+package org.jpac;
 
 /**
  *

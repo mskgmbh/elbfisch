@@ -25,10 +25,6 @@
 
 package org.jpac;
 
-import javax.annotation.Nonnull;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-
 /**
  *
  * @author berndschuster
@@ -37,7 +33,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class Event extends ProcessEvent{
     private EventFiringSupplier eventFiringSupplier;
     
-    public Event(@Nonnull EventFiringSupplier eventFiringSupplier){
+    public Event(EventFiringSupplier eventFiringSupplier){
     	super();
         this.eventFiringSupplier = eventFiringSupplier;
     }

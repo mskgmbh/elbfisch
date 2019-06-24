@@ -42,10 +42,10 @@
 
 package org.jpac.opc;
 
-import java.util.List;
 
+import java.util.List;
 import org.eclipse.milo.opcua.sdk.core.Reference;
-import org.eclipse.milo.opcua.sdk.server.nodes.UaObjectNode;
+import org.eclipse.milo.opcua.sdk.server.nodes.UaServerNode;
 import org.eclipse.milo.opcua.sdk.server.nodes.UaVariableNode;
 import org.eclipse.milo.opcua.sdk.server.util.SubscriptionModel;
 import org.eclipse.milo.opcua.stack.core.Identifiers;
@@ -57,26 +57,19 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
 import org.eclipse.milo.opcua.stack.core.types.builtin.QualifiedName;
 import org.eclipse.milo.opcua.stack.core.types.builtin.StatusCode;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UInteger;
-import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UShort;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.TimestampsToReturn;
 import org.eclipse.milo.opcua.stack.core.types.structured.ReadValueId;
 import org.eclipse.milo.opcua.stack.core.types.structured.WriteValue;
 import static com.google.common.collect.Lists.newArrayListWithCapacity;
-import java.util.Optional;
 import java.util.StringTokenizer;
-import java.util.concurrent.CompletableFuture;
 import org.eclipse.milo.opcua.sdk.core.AccessLevel;
 import org.eclipse.milo.opcua.sdk.server.OpcUaServer;
-import org.eclipse.milo.opcua.sdk.server.api.AccessContext;
 import org.eclipse.milo.opcua.sdk.server.api.DataItem;
 import org.eclipse.milo.opcua.sdk.server.api.EventItem;
-import org.eclipse.milo.opcua.sdk.server.api.MethodInvocationHandler;
 import org.eclipse.milo.opcua.sdk.server.api.MonitoredItem;
 import org.eclipse.milo.opcua.sdk.server.nodes.AttributeContext;
-import org.eclipse.milo.opcua.sdk.server.nodes.ServerNode;
-import org.eclipse.milo.opcua.sdk.server.nodes.UaMethodNode;
-import org.eclipse.milo.opcua.stack.core.types.builtin.ExpandedNodeId;
-import org.eclipse.milo.opcua.stack.core.types.enumerated.NodeClass;
+import org.eclipse.milo.opcua.sdk.server.nodes.UaFolderNode;
+import org.eclipse.milo.opcua.sdk.server.api.ManagedNamespace;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.jpac.CharString;
@@ -87,43 +80,96 @@ import org.jpac.SignalRegistry;
 import org.jpac.SignedInteger;
 import org.jpac.alarm.Alarm;
 
-public class Namespace implements org.eclipse.milo.opcua.sdk.server.api.Namespace {
+public class Namespace extends ManagedNamespace {
     static  Logger Log = LoggerFactory.getLogger("jpac.opc");
 
-    public static final String NAMESPACE_URI = "urn:mskgmbh:elbfisch-opc-ua-server:elbfisch-namespace";
+    public static final String NAMESPACE_URI   = "urn:mskgmbh:elbfisch-opc-ua-server:elbfisch-namespace";
+    public static final int    NAMESPACE_INDEX = 2;
 
-    private final UaObjectNode        rootFolder;
+    private       UaFolderNode 		  folderNode;
     private final SubscriptionModel   subscriptionModel;
 
-    private final UShort              namespaceIndex;
+    private final int                 namespaceIndex;
     private       int                 idIndex;
     private final OpcUaServer         server;
 
-    public Namespace(OpcUaServer server, UShort namespaceIndex) {
+    public Namespace(OpcUaServer server) {
+    	super(server, NAMESPACE_URI);
         this.server         = server;
-        this.namespaceIndex = namespaceIndex;
-        this.idIndex        = 0;
+        this.namespaceIndex = NAMESPACE_INDEX;
+        this.folderNode     = null;
 
-        rootFolder = UaObjectNode.builder(server.getNodeMap())
-                .setNodeId(new NodeId(namespaceIndex, "Elbfisch"))
-                .setBrowseName(new QualifiedName(namespaceIndex, "Elbfisch"))
-                .setDisplayName(LocalizedText.english("Elbfisch"))
-                .setTypeDefinition(Identifiers.FolderType)
-                .build();
-
-        server.getNodeMap().put(rootFolder.getNodeId(), rootFolder);
-
-        server.getUaNamespace().getObjectsFolder().addReference(new Reference(
-                Identifiers.ObjectsFolder,
-                Identifiers.Organizes,
-                rootFolder.getNodeId().expanded(),
-                rootFolder.getNodeClass(),
-                true
-        ));
-        registerNodes();
         subscriptionModel = new SubscriptionModel(server, this);
     }
+
+    @Override
+    protected void onStartup() {
+        super.onStartup();
+
+        NodeId folderNodeId = newNodeId("Elbfisch");
+
+        folderNode = new UaFolderNode(
+            getNodeContext(),
+            folderNodeId,
+            newQualifiedName("Elbfisch"),
+            LocalizedText.english("Elbfisch")
+        );
+
+        getNodeManager().addNode(folderNode);
+
+        // Make sure our new folder shows up under the server's Objects folder.
+        folderNode.addReference(new Reference(
+            folderNode.getNodeId(),
+            Identifiers.Organizes,
+            Identifiers.ObjectsFolder.expanded(),
+            false
+        ));
+
+        // Add the rest of the nodes
+        registerNodes();
+
+
+//        // Set the EventNotifier bit on Server Node for Events.
+//        UaNode serverNode = getServer()
+//            .getAddressSpaceManager()
+//            .getManagedNode(Identifiers.Server)
+//            .orElse(null);
+//
+//        if (serverNode instanceof ServerNode) {
+//            ((ServerNode) serverNode).setEventNotifier(ubyte(1));
+//
+//            // Post a bogus Event every couple seconds
+//            getServer().getScheduledExecutorService().scheduleAtFixedRate(() -> {
+//                try {
+//                    BaseEventNode eventNode = getServer().getEventFactory().createEvent(
+//                        newNodeId(UUID.randomUUID()),
+//                        Identifiers.BaseEventType
+//                    );
+//
+//                    eventNode.setBrowseName(new QualifiedName(1, "foo"));
+//                    eventNode.setDisplayName(LocalizedText.english("foo"));
+//                    eventNode.setEventId(ByteString.of(new byte[]{0, 1, 2, 3}));
+//                    eventNode.setEventType(Identifiers.BaseEventType);
+//                    eventNode.setSourceNode(serverNode.getNodeId());
+//                    eventNode.setSourceName(serverNode.getDisplayName().getText());
+//                    eventNode.setTime(DateTime.now());
+//                    eventNode.setReceiveTime(DateTime.NULL_VALUE);
+//                    eventNode.setMessage(LocalizedText.english("event message!"));
+//                    eventNode.setSeverity(ushort(2));
+//
+//                    getServer().getEventBus().post(eventNode);
+//
+//                    eventNode.delete();
+//                } catch (Throwable e) {
+//                    logger.error("Error creating EventNode: {}", e.getMessage(), e);
+//                }
+//            }, 0, 2, TimeUnit.SECONDS);
+//        }
+}
     
+    
+  
+
     private void registerNodes(){
         try{
             SignalRegistry signals = SignalRegistry.getInstance();
@@ -152,7 +198,7 @@ public class Namespace implements org.eclipse.milo.opcua.sdk.server.api.Namespac
                     }
                 }
                 //recursively add UaNodes
-                registerNode(rootNode, rootFolder);
+                registerNode(rootNode, folderNode);
             }
         }
         catch(Exception ex){
@@ -174,11 +220,12 @@ public class Namespace implements org.eclipse.milo.opcua.sdk.server.api.Namespac
         return id;
     }
 
-    private void registerNode(TreeItem node, UaObjectNode folder){
+//    private void registerNode(TreeItem node, UaObjectNode folder){
+    private void registerNode(TreeItem node, UaFolderNode folder){
         for (TreeItem sn: node.getSubNodes()){
             if (sn.getSignal() == null){
                 //intermediate node 
-                UaObjectNode addedFolder = addSubFolder(folder, sn);
+                UaFolderNode addedFolder = addSubFolder(folder, sn);
                 registerNode(sn, addedFolder);
             }
             else{
@@ -189,87 +236,104 @@ public class Namespace implements org.eclipse.milo.opcua.sdk.server.api.Namespac
         }
     }
     
-    private  UaObjectNode addSubFolder(UaObjectNode folder, TreeItem signalNode){
+//	  private  UaObjectNode addSubFolder(UaObjectNode folder, TreeItem signalNode){
+    private  UaFolderNode addSubFolder(UaFolderNode folder, TreeItem signalNode){
         String partialIdentifier  = signalNode.getPartialIdentifier();
-        String identifier         = folder == rootFolder ? partialIdentifier : ((String)folder.getNodeId().getIdentifier()) + "." + partialIdentifier;
-        UaObjectNode objectFolder = UaObjectNode.builder(server.getNodeMap())
-                                    .setNodeId(new NodeId(namespaceIndex, identifier))
-                                    .setBrowseName(new QualifiedName(namespaceIndex, partialIdentifier))
-                                    .setDisplayName(LocalizedText.english(partialIdentifier))
-                                    .setTypeDefinition(Identifiers.FolderType)
-                                    .build(); 
-        server.getNodeMap().put(objectFolder.getNodeId(), objectFolder);
-        folder.addReference(new Reference(
-                    folder.getNodeId(),
-                    Identifiers.Organizes,
-                    objectFolder.getNodeId().expanded(),
-                    objectFolder.getNodeClass(),
-                    true
-            ));
-        return objectFolder;
+        String identifier         = folder == folderNode ? partialIdentifier : ((String)folder.getNodeId().getIdentifier()) + "." + partialIdentifier;
+//        UaObjectNode objectFolder = UaObjectNode.builder(getNodeManager())
+//                                    .setNodeId(new NodeId(namespaceIndex, identifier))
+//                                    .setBrowseName(new QualifiedName(namespaceIndex, partialIdentifier))
+//                                    .setDisplayName(LocalizedText.english(partialIdentifier))
+//                                    .setTypeDefinition(Identifiers.FolderType)
+//                                    .build(); 
+        UaFolderNode subFolder = new UaFolderNode(
+                getNodeContext(),
+                newNodeId(identifier),
+                newQualifiedName(new QualifiedName(namespaceIndex, partialIdentifier).toString()),
+                LocalizedText.english(new QualifiedName(namespaceIndex, partialIdentifier).toString())
+        );
+//        server.getNodeMap().put(objectFolder.getNodeId(), objectFolder);
+        getNodeManager().addNode(subFolder);        
+//        folder.addReference(new Reference(
+//                    folder.getNodeId(),
+//                    Identifiers.Organizes,
+//                    objectFolder.getNodeId().expanded(),
+//                    objectFolder.getNodeClass(),
+//                    true
+//            ));
+        folder.addOrganizes(subFolder);
+        
+        return subFolder;
     }
     
-    private UaVariableNode addSignal(UaObjectNode folder, TreeItem signalNode){
+//    private UaVariableNode addSignal(UaObjectNode folder, TreeItem signalNode){
+      private UaVariableNode addSignal(UaFolderNode folder, TreeItem signalNode){
         UaVariableNode node = null;
         if (signalNode.getSignal() instanceof Logical){
-            node = new LogicalNode(this, signalNode);
+            node = new LogicalNode(getNodeContext(), namespaceIndex, signalNode);
         } else if (signalNode.getSignal() instanceof SignedInteger){
-            node = new SignedIntegerNode(this, signalNode);           
+            node = new SignedIntegerNode(getNodeContext(), namespaceIndex, signalNode);      
         } else if (signalNode.getSignal() instanceof Decimal){
-            node = new DecimalNode(this, signalNode);           
+            node = new DecimalNode(getNodeContext(), namespaceIndex, signalNode);        
         } else if (signalNode.getSignal() instanceof CharString){
-            node = new CharStringNode(this, signalNode);           
+            node = new CharStringNode(getNodeContext(), namespaceIndex, signalNode);       
         } else if (signalNode.getSignal() instanceof Alarm){
-            node = new AlarmNode(this, signalNode);           
+            node = new AlarmNode(getNodeContext(), namespaceIndex, signalNode);        
         } 
-        server.getNodeMap().put(node.getNodeId(), node);
-        folder.addReference(new Reference(
-                folder.getNodeId(),
-                Identifiers.Organizes,
-                node.getNodeId().expanded(),
-                node.getNodeClass(),
-                true
-        ));
+//        server.getNodeMap().put(node.getNodeId(), node);
+        getNodeManager().addNode(node);
+//        folder.addReference(new Reference(
+//                folder.getNodeId(),
+//                Identifiers.Organizes,
+//                node.getNodeId().expanded(),
+//                node.getNodeClass(),
+//                true
+//        ));
+        folder.addOrganizes(node);
         
         return node;
     }
     
-    @Override
-    public UShort getNamespaceIndex() {
-        return namespaceIndex;
-    }
-
-    @Override
-    public String getNamespaceUri() {
-        return NAMESPACE_URI;
-    }
-    
-    @Override
-    public CompletableFuture<List<Reference>> browse(AccessContext context, NodeId nodeId) {
-        ServerNode node = server.getNodeMap().get(nodeId);
-
-        if (node != null) {
-            return CompletableFuture.completedFuture(node.getReferences());
-        } else {
-            CompletableFuture<List<Reference>> f = new CompletableFuture<>();
-            f.completeExceptionally(new UaException(StatusCodes.Bad_NodeIdUnknown));
-            return f;
-        }
-    }    
+//    @Override
+//    public UShort getNamespaceIndex() {
+//        return namespaceIndex;
+//    }
+//
+//    @Override
+//    public String getNamespaceUri() {
+//        return NAMESPACE_URI;
+//    }
+//    
+//    @Override
+//    public CompletableFuture<List<Reference>> browse(AccessContext context, NodeId nodeId) {
+//        ServerNode node = server.getNodeMap().get(nodeId);
+//
+//        if (node != null) {
+//            return CompletableFuture.completedFuture(node.getReferences());
+//        } else {
+//            CompletableFuture<List<Reference>> f = new CompletableFuture<>();
+//            f.completeExceptionally(new UaException(StatusCodes.Bad_NodeIdUnknown));
+//            return f;
+//        }
+//    }    
 
     @Override
     public void read(ReadContext context, Double maxAge,
                      TimestampsToReturn timestamps,
                      List<ReadValueId> readValueIds) {
+    	
 
         List<DataValue> results = newArrayListWithCapacity(readValueIds.size());
 
         for (ReadValueId id : readValueIds) {
             DataValue value;
-            ServerNode node = server.getNodeMap().get(id.getNodeId());
+//            ServerNode node = server.getNodeMap().get(id.getNodeId());
+            UaServerNode node = getNodeManager().get(id.getNodeId());
+            
             if (node != null) {
                 if (AccessLevel.fromMask(((SignalNode)node).getAccessLevel()).contains(AccessLevel.CurrentRead)){
-                    value = node.readAttribute(new AttributeContext(context), id.getAttributeId(), timestamps, id.getIndexRange());
+//                    value = node.readAttribute(new AttributeContext(context), id.getAttributeId(), timestamps, id.getIndexRange());
+                    value = node.readAttribute(new AttributeContext(context), id.getAttributeId());
                 }
                 else{
                     value = new DataValue(new StatusCode(StatusCodes.Bad_NotReadable));                    
@@ -278,28 +342,33 @@ public class Namespace implements org.eclipse.milo.opcua.sdk.server.api.Namespac
             else{
                 value = new DataValue(new StatusCode(StatusCodes.Bad_NodeIdUnknown));
             }
+            //Log.info("read {} : {}", node.getDisplayName(), value.getValue());
             results.add(value);
         }
-        context.complete(results);
+//        context.complete(results);
+        context.success(results);
     }
 
     @Override
     public void write(WriteContext context, List<WriteValue> writeValues) {
         StatusCode result = null;
-        ServerNode node   = null;
-
+//        ServerNode node   = null;
+        UaServerNode node   = null;
+        
         List<StatusCode> results = newArrayListWithCapacity(writeValues.size());
 
         for (WriteValue writeValue : writeValues) {
             NodeId nodeId = writeValue.getNodeId();
             if (nodeId != null){
-                node = server.getNodeMap().getNode(nodeId).get();
+//                node = server.getNodeMap().getNode(nodeId).get();
+                node = getNodeManager().get(nodeId);
                 if (AccessLevel.fromMask(((SignalNode)node).getAccessLevel()).contains(AccessLevel.CurrentWrite)){
                     UInteger  attributeId = writeValue.getAttributeId();
                     DataValue value       = writeValue.getValue();
                     String    indexRange  = writeValue.getIndexRange();
                     try{
                         node.writeAttribute(new AttributeContext(context), attributeId, value, indexRange);
+                        //Log.info("write {} : {}", node.getDisplayName(), value.getValue());//TODO
                         result = StatusCode.GOOD;
                     }
                     catch (UaException e) {
@@ -315,7 +384,8 @@ public class Namespace implements org.eclipse.milo.opcua.sdk.server.api.Namespac
             }
             results.add(result);
         }
-        context.complete(results);
+//        context.complete(results);
+        context.success(results);
     }
     
     @Override
@@ -361,38 +431,38 @@ public class Namespace implements org.eclipse.milo.opcua.sdk.server.api.Namespac
         eventItems.forEach(item -> server.getEventBus().unregister(item));
     }
 
-    public void addReference(NodeId sourceNodeId,
-                             NodeId referenceTypeId,
-                             boolean forward,
-                             ExpandedNodeId targetNodeId,
-                             NodeClass targetNodeClass) throws UaException {
+//    public void addReference(NodeId sourceNodeId,
+//                             NodeId referenceTypeId,
+//                             boolean forward,
+//                             ExpandedNodeId targetNodeId,
+//                             NodeClass targetNodeClass) throws UaException {
+//
+//        ServerNode node = server.getNodeMap().get(sourceNodeId);
+//
+//        if (node != null) {
+//            Reference reference = new Reference(
+//                sourceNodeId,
+//                referenceTypeId,
+//                targetNodeId,
+//                targetNodeClass,
+//                forward);
+//
+//            node.addReference(reference);
+//        } else {
+//            throw new UaException(StatusCodes.Bad_NodeIdUnknown);
+//        }
+//    }
 
-        ServerNode node = server.getNodeMap().get(sourceNodeId);
-
-        if (node != null) {
-            Reference reference = new Reference(
-                sourceNodeId,
-                referenceTypeId,
-                targetNodeId,
-                targetNodeClass,
-                forward);
-
-            node.addReference(reference);
-        } else {
-            throw new UaException(StatusCodes.Bad_NodeIdUnknown);
-        }
-    }
-
-    @Override
-    public Optional<MethodInvocationHandler> getInvocationHandler(NodeId methodId) {
-        return Optional.ofNullable(server.getNodeMap().get(methodId))
-            .filter(n -> n instanceof UaMethodNode)
-            .map(n -> {
-                UaMethodNode m = (UaMethodNode) n;
-                return m.getInvocationHandler()
-                    .orElse(new MethodInvocationHandler.NotImplementedHandler());
-            });
-    }
+//    @Override
+//    public Optional<MethodInvocationHandler> getInvocationHandler(NodeId methodId) {
+//        return Optional.ofNullable(server.getNodeMap().get(methodId))
+//            .filter(n -> n instanceof UaMethodNode)
+//            .map(n -> {
+//                UaMethodNode m = (UaMethodNode) n;
+//                return m.getInvocationHandler()
+//                    .orElse(new MethodInvocationHandler.NotImplementedHandler());
+//            });
+//    }
     
     
     public OpcUaServer getServer(){

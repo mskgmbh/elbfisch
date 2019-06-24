@@ -25,15 +25,69 @@
 
 package org.jpac.ef;
 
+import org.jpac.BasicSignalType;
+import org.jpac.Signal;
+
+import io.netty.buffer.ByteBuf;
+
 /**
  *
  * @author berndschuster
  */
-public class GetHandleAcknowledgement extends SignalInfo{
-    public GetHandleAcknowledgement(){
-        super();
+public class GetHandleAcknowledgement extends Acknowledgement{
+    private String          signalIdentifier;
+    private int             handle;
+    private BasicSignalType signalType;
+
+	public GetHandleAcknowledgement(){
+        super(MessageId.AckGetHandle);
     }       
-    public GetHandleAcknowledgement(String signalIdentifier, BasicSignalType signalType){
-        super(signalIdentifier, signalType);
-    }    
+
+    public GetHandleAcknowledgement(String signalIdentifier, int handle, BasicSignalType signalType){
+    	this();
+        this.signalIdentifier = signalIdentifier;
+        this.handle           = handle;
+        this.signalType		  = signalType;
+    }
+		
+	public GetHandleAcknowledgement(Signal signal){
+    	this(signal.getQualifiedIdentifier(), signal.getHandle(), BasicSignalType.fromSignal(signal));
+    }
+    
+   //server side
+    @Override
+    public void encode(ByteBuf byteBuf){
+        super.encode(byteBuf);
+        encodeString(signalIdentifier, byteBuf);
+        byteBuf.writeInt(handle);
+        byteBuf.writeInt(signalType.toInt());
+    }
+
+    //client side
+    @Override
+    public void decode(ByteBuf byteBuf){
+        super.decode(byteBuf);
+        signalIdentifier = decodeString(byteBuf);
+        handle           = byteBuf.readInt();
+        signalType       = BasicSignalType.fromInt(byteBuf.readInt());
+    }
+    
+	public String getSignalIdentifier() {
+		return signalIdentifier;
+	}
+	public void setSignalIdentifier(String signalIdentifier) {
+		this.signalIdentifier = signalIdentifier;
+	}
+	public int getHandle() {
+		return handle;
+	}
+	public void setHandle(int handle) {
+		this.handle = handle;
+	}
+	public BasicSignalType getSignalType() {
+		return signalType;
+	}
+	public void setSignalType(BasicSignalType signalType) {
+		this.signalType = signalType;
+	}    
 }

@@ -28,6 +28,8 @@ package org.jpac.ef;
 import io.netty.buffer.ByteBuf;
 import java.util.HashMap;
 
+import org.jpac.vioss.ef.SignalTransport;
+
 /**
  *
  * @author berndschuster
@@ -43,7 +45,7 @@ public class Transceive extends Command{
         super(MessageId.CmdTransceive);
         this.listOfClientOutputTransports  = listOfClientOutputTransports;
         this.acknowledgement               = new TransceiveAcknowledgement(listOfClientInputTransports);
-        this.receivedSignalTransport       = new SignalTransport(null);
+        this.receivedSignalTransport       = new SignalTransport();
     }
     
     //client

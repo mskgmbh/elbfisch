@@ -39,7 +39,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import org.apache.commons.configuration.ConfigurationException;
@@ -795,7 +798,8 @@ public class JPac extends Thread {
     /**
      * used to propagate signal states to connected signal instances
      */
-    private void handleDeferredTasks() throws SignalAlreadyConnectedException, SignalInvalidException, ConfigurationException, RemoteSignalException {
+    @SuppressWarnings("deprecation")
+	private void handleDeferredTasks() throws SignalAlreadyConnectedException, SignalInvalidException, ConfigurationException, RemoteSignalException {
         synchronized(synchronizedTasks){
             for(Runnable r: synchronizedTasks){
                 //run synchronized task
@@ -921,7 +925,7 @@ public class JPac extends Thread {
     public void invokeImmediateShutdown(int exitCode) {
         immediateShutdownRequested = true;
         shutdownRequestTime        = System.nanoTime();
-        exitCode                   = exitCode; 
+        this.exitCode              = exitCode; 
     }
 
     public void startCycling() {
@@ -1205,7 +1209,8 @@ public class JPac extends Thread {
         }
     }
     
-    protected void prepareRemoteConnections() throws ConfigurationException, RemoteException, RemoteSignalException{
+    @SuppressWarnings("deprecation")
+	protected void prepareRemoteConnections() throws ConfigurationException, RemoteException, RemoteSignalException{
         if (remoteSignalsEnabled){
             //start serving incoming remote signal requests
             RemoteSignalServer.start(remoteSignalPort);
@@ -1217,7 +1222,8 @@ public class JPac extends Thread {
         }
     }
     
-    protected void closeRemoteConnections(){
+    @SuppressWarnings("deprecation")
+	protected void closeRemoteConnections(){
         final long CLOSECONNECTIONTIMEOUT = 3000000000L; // 3 sec
         try{
             if (remoteSignalsEnabled){
@@ -1299,7 +1305,11 @@ public class JPac extends Thread {
         if (opcUaService != null){
             Log.info("stopping opc ua service ...");
             if (opcUaService.getServer() != null){
-                opcUaService.getServer().shutdown();
+            	try {
+            		opcUaService.getServer().shutdown().get(5000, TimeUnit.MILLISECONDS);
+            	} catch(InterruptedException | ExecutionException | TimeoutException exc) {
+            		Log.error("Error: Failed to properly stop opc ua service", exc);
+            	}
                 Stack.releaseSharedResources();
             }
             Log.info("opc ua service stopped");
@@ -1351,7 +1361,8 @@ public class JPac extends Thread {
         return done;
     }
     
-    protected void pushSignalsOverRemoteConnections() throws ConfigurationException, RemoteSignalException{
+    @SuppressWarnings("deprecation")
+	protected void pushSignalsOverRemoteConnections() throws ConfigurationException, RemoteSignalException{
         if (remoteSignalsEnabled){
             ConcurrentHashMap<String, RemoteSignalConnection> remoteHosts = RemoteSignalRegistry.getInstance().getRemoteHosts();
             //remoteHosts.entrySet().iterator()
@@ -1397,9 +1408,9 @@ public class JPac extends Thread {
         return cycleStartTime - expansionTime;
     }
     
-    public AbstractModule getModule(int i){
-        return moduleList.get(i);
-    }
+//    public AbstractModule getModule(int i){
+//        return moduleList.get(i);
+//    }
 
     public Hashtable<String, AbstractModule> getModules(){
         return moduleList;

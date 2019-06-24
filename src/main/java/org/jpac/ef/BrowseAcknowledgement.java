@@ -34,28 +34,28 @@ import java.util.List;
  * @author berndschuster
  */
 public class BrowseAcknowledgement extends Acknowledgement{
-    protected List<SignalInfo> listOfSignalInfos;
+    protected List<GetHandleAcknowledgement> listOfGetHandleAcks;
     
     public BrowseAcknowledgement(){
         super(MessageId.AckBrowse);
-        listOfSignalInfos = null;
+        listOfGetHandleAcks = null;
     }
 
-    public BrowseAcknowledgement(List<SignalInfo> listOfSignalInfos){
+    public BrowseAcknowledgement(List<GetHandleAcknowledgement> listOfGetHandleAcks){
         this();
-        this.listOfSignalInfos = listOfSignalInfos;
+        this.listOfGetHandleAcks = listOfGetHandleAcks;
     }
     
-    public List<SignalInfo> getListOfSignalInfos(){
-        return this.listOfSignalInfos;
+    public List<GetHandleAcknowledgement> getListOfGetHandleAcks(){
+        return this.listOfGetHandleAcks;
     }
         
     //server side
     @Override
     public void encode(ByteBuf byteBuf){
         super.encode(byteBuf);
-        byteBuf.writeInt(listOfSignalInfos.size());
-        listOfSignalInfos.forEach((gha) -> gha.encode(byteBuf));
+        byteBuf.writeInt(listOfGetHandleAcks.size());
+        listOfGetHandleAcks.forEach((gha) -> gha.encode(byteBuf));
     }
 
     //client side
@@ -63,16 +63,16 @@ public class BrowseAcknowledgement extends Acknowledgement{
     public void decode(ByteBuf byteBuf){
         super.decode(byteBuf);
         int length = byteBuf.readInt();
-        listOfSignalInfos = new ArrayList<SignalInfo>(length);
+        listOfGetHandleAcks = new ArrayList<GetHandleAcknowledgement>(length);
         for(int i = 0; i < length; i++){
             GetHandleAcknowledgement gha = (GetHandleAcknowledgement)MessageFactory.getMessage(byteBuf);
-            listOfSignalInfos.add(gha);
+            listOfGetHandleAcks.add(gha);
             //Log.error(i + ": BrowseAcknowledgement: " + gha.signalIdentifier);
         }
     }
     
  @Override
     public String toString(){
-        return super.toString() + (listOfSignalInfos != null ? ", " +  listOfSignalInfos.size() : "") + ")";
-    }    
+        return super.toString() + (listOfGetHandleAcks != null ? ", " +  listOfGetHandleAcks.size() : "") + ")";
+    } 
 }

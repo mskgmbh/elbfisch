@@ -26,26 +26,27 @@
 package org.jpac.vioss;
 
 import java.net.URI;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
+import java.util.Map;
+
 import org.jpac.AbstractModule;
+import org.jpac.CharString;
 import org.jpac.InconsistencyException;
+import org.jpac.IoDirection;
+import org.jpac.NumberOutOfRangeException;
+import org.jpac.SignalAccessException;
 import org.jpac.SignalAlreadyExistsException;
+import org.jpac.SignalInvalidException;
 import org.jpac.WrongUseException;
-import org.jpac.plc.IoDirection;
-import org.jpac.plc.StringLengthException;
 
 /**
  *
  * @author berndschuster
  */
-abstract public class IoCharString extends org.jpac.plc.IoCharString implements IoSignal{
-    static public Logger Log = LoggerFactory.getLogger("jpac.Signal");
-
+public class IoCharString extends CharString implements IoSignal{
     private IoSignalImpl ioSignalImpl;
     
     /**
-     * constructs a logical input signal
+     * constructs a string input signal
      * @param containingModule: module, this signal is contained in
      * @param identifier: identifier of the signal
      * @param uri: unified resource identifier of the input signal
@@ -54,17 +55,77 @@ abstract public class IoCharString extends org.jpac.plc.IoCharString implements 
      * @throws InconsistencyException: an IOHandler for the given URI cannot be instantiated
      * @throws org.jpac.WrongUseException
      */
-    public IoCharString(AbstractModule containingModule, String identifier, URI uri, IoDirection ioDirection) throws SignalAlreadyExistsException, InconsistencyException, WrongUseException, StringLengthException{
-        super(containingModule, identifier, null, null, ioDirection);
+    public IoCharString(AbstractModule containingModule, String identifier, URI uri, IoDirection ioDirection) throws SignalAlreadyExistsException, InconsistencyException, WrongUseException{
+        super(containingModule, identifier, ioDirection);
         this.ioSignalImpl = new IoSignalImpl(this, uri);
     }  
 
     @Override
+    public void propagate() throws SignalInvalidException{
+    	try {
+    		//tag signal to be to be put out if it has been changed in this cycle but 
+    		//avoid writing back a signal to an external device which caused the change itself 
+    		if (hasChanged() && !ioSignalImpl.isChangedByCheckIn()) {
+    			//touch toBePutOut only in cycles in which changes occured. Will be reset asynchronously in IOHandler
+    			ioSignalImpl.setToBePutOut(true);
+    		}
+	        super.propagate();
+    	} finally {
+    		ioSignalImpl.resetChangedByCheckIn();
+    	}
+    }
+    
+    @Override
     public URI getUri(){
-        return this.ioSignalImpl.uri;
+        return this.ioSignalImpl.getUri();
     }
     
     public IOHandler getIOHandler(){
-        return this.ioSignalImpl.ioHandler;
+        return this.ioSignalImpl.getIoHandler();
     }
+
+	@Override
+	public Object getErrorCode() {
+		return ioSignalImpl.getErrorCode();
+	}
+
+	@Override
+	public void setErrorCode(Object errorCode) {
+		ioSignalImpl.setErrorCode(errorCode);
+	}
+
+	@Override
+	public RemoteSignalInfo getRemoteSignalInfo() {
+		return ioSignalImpl.getRemoteSignalInfo();
+	}
+
+	@Override
+	public void checkIn() throws SignalAccessException, NumberOutOfRangeException {
+		ioSignalImpl.checkIn();
+	}
+
+	@Override
+	public void checkOut() throws SignalAccessException, NumberOutOfRangeException {
+		ioSignalImpl.checkOut();
+	}
+
+	@Override
+	public boolean isToBePutOut() {
+		return ioSignalImpl.isToBePutOut();
+	}
+
+	@Override
+	public void resetToBePutOut() {
+		ioSignalImpl.resetToBePutOut();		
+	}
+
+	@Override
+	public void setRemoteSignalInfo(RemoteSignalInfo remoteSignalInfo) {
+		ioSignalImpl.setRemoteSignalInfo(remoteSignalInfo);
+	}
+
+	@Override	
+	public Map<String, String> getParameters(){
+		return ioSignalImpl.getParameters();
+	}
 }

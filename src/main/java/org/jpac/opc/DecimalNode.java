@@ -42,6 +42,7 @@
 
 package org.jpac.opc;
 
+import org.eclipse.milo.opcua.sdk.server.nodes.UaNodeContext;
 import org.eclipse.milo.opcua.stack.core.Identifiers;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
@@ -55,9 +56,10 @@ import org.jpac.Value;
  */
 public class DecimalNode extends SignalNode{
 
-    public DecimalNode(Namespace nameSpace, TreeItem signalNode) {
-        super(nameSpace, signalNode);
+    public DecimalNode(UaNodeContext context, int namespaceIndex, TreeItem signalNode) {
+        super(context, namespaceIndex, signalNode);
     }
+    
     @Override
     protected Value getSignalValue() {
         if (signalValue == null){

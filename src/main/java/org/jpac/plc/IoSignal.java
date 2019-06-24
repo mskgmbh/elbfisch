@@ -24,6 +24,7 @@
  */
 package org.jpac.plc;
 
+import org.jpac.IoDirection;
 import org.jpac.NumberOutOfRangeException;
 import org.jpac.SignalAccessException;
 
@@ -31,7 +32,7 @@ import org.jpac.SignalAccessException;
  *
  * @author berndschuster
  */
-public interface IoSignal {
+public interface IoSignal extends org.jpac.IoSignal{
     public void setAddress(Address address);
     public void checkIn() throws SignalAccessException, AddressException, NumberOutOfRangeException;
     public void checkOut() throws SignalAccessException, AddressException, NumberOutOfRangeException;

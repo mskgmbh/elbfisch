@@ -28,6 +28,9 @@ package org.jpac.ef;
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.jpac.BasicSignalType;
+import org.jpac.CharString;
 import org.jpac.Signal;
 import org.jpac.SignalNotRegisteredException;
 import org.jpac.SignalRegistry;
@@ -83,23 +86,24 @@ public class Subscribe extends Command{
                 Signal signal = SignalRegistry.getInstance().getSignal(st.getHandle());//check availability of requested signal
                 if (BasicSignalType.fromSignal(signal) != st.getSignalType()){
                     result = Result.SignalTypeMismatched; 
-                }
-                switch(st.getIoDirection()){
-                    case INPUT://input from clients point of view   
-                        commandHandler.registerClientInputSignal(st.getHandle());
-                        result = Result.NoFault;
-                        break;
-                    case OUTPUT://output from clients point of view
-                        if (signal.isConnectedAsTarget()){
-                            result = Result.SignalAlreadyConnectedAsTarget; 
-                        }
-                        else{
-                            commandHandler.registerClientOutputSignal(st.getHandle());
-                            result = Result.NoFault;
-                        }
-                        break;
-                    default:
-                        result = Result.IoDirectionMustBeInOrOut;
+                } else {
+	                switch(st.getIoDirection()){
+	                    case INPUT://input from clients point of view   
+	                        commandHandler.registerClientInputSignal(st.getHandle());
+	                        result = Result.NoFault;
+	                        break;
+	                    case OUTPUT://output from clients point of view
+	                        if (signal.isConnectedAsTarget()){
+	                            result = Result.SignalAlreadyConnectedAsTarget; 
+	                        }
+	                        else{
+	                            commandHandler.registerClientOutputSignal(st.getHandle());
+	                            result = Result.NoFault;
+	                        }
+	                        break;
+	                    default:
+	                        result = Result.IoDirectionMustBeInOrOut;
+	                }
                 }
             } 
             catch(SignalNotRegisteredException exc){

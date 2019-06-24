@@ -26,8 +26,6 @@ package org.jpac;
 
 import java.util.function.Supplier;
 
-import org.jpac.plc.IoDirection;
-
 /**
  * class template for generic objects used as signals, where ValueImpl is a class 
  * implementing the org.jpac.Value interface

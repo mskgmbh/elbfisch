@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import org.jpac.Signal;
 import org.jpac.SignalRegistry;
+import org.jpac.vioss.ef.SignalTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +64,6 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
         this.remoteSocketAddress                 = remoteSocketAddress;
         this.listOfClientInputTransports         = new HashMap<>();
         this.listOfClientOutputTransports        = new HashMap<>();
-        
         this.firstSignalValueTransmission        = true;
         
         this.messageFactory                      = new MessageFactory(this);
@@ -144,16 +144,16 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
     }
 
     protected void registerClientInputSignal(int handle) {
-        Signal signal = SignalRegistry.getInstance().getSignal(handle);
-        SignalTransport st = new SignalTransport(signal);
+        Signal          signal = SignalRegistry.getInstance().getSignal(handle);
+        SignalTransport st     = new SignalTransport(signal);
         synchronized(listOfClientOutputTransports){
         	listOfClientInputTransports.put(handle, st);
         }
     }
    
     protected void registerClientOutputSignal(int handle) {
-        Signal signal = SignalRegistry.getInstance().getSignal(handle);        
-        SignalTransport st = new SignalTransport(signal);
+        Signal          signal = SignalRegistry.getInstance().getSignal(handle);        
+        SignalTransport st     = new SignalTransport(signal);
         signal.setConnectedAsTarget(true);
         synchronized(listOfClientOutputTransports){
         	listOfClientOutputTransports.put(handle, st);

@@ -127,44 +127,6 @@ public class Namespace extends ManagedNamespace {
 
         // Add the rest of the nodes
         registerNodes();
-
-
-//        // Set the EventNotifier bit on Server Node for Events.
-//        UaNode serverNode = getServer()
-//            .getAddressSpaceManager()
-//            .getManagedNode(Identifiers.Server)
-//            .orElse(null);
-//
-//        if (serverNode instanceof ServerNode) {
-//            ((ServerNode) serverNode).setEventNotifier(ubyte(1));
-//
-//            // Post a bogus Event every couple seconds
-//            getServer().getScheduledExecutorService().scheduleAtFixedRate(() -> {
-//                try {
-//                    BaseEventNode eventNode = getServer().getEventFactory().createEvent(
-//                        newNodeId(UUID.randomUUID()),
-//                        Identifiers.BaseEventType
-//                    );
-//
-//                    eventNode.setBrowseName(new QualifiedName(1, "foo"));
-//                    eventNode.setDisplayName(LocalizedText.english("foo"));
-//                    eventNode.setEventId(ByteString.of(new byte[]{0, 1, 2, 3}));
-//                    eventNode.setEventType(Identifiers.BaseEventType);
-//                    eventNode.setSourceNode(serverNode.getNodeId());
-//                    eventNode.setSourceName(serverNode.getDisplayName().getText());
-//                    eventNode.setTime(DateTime.now());
-//                    eventNode.setReceiveTime(DateTime.NULL_VALUE);
-//                    eventNode.setMessage(LocalizedText.english("event message!"));
-//                    eventNode.setSeverity(ushort(2));
-//
-//                    getServer().getEventBus().post(eventNode);
-//
-//                    eventNode.delete();
-//                } catch (Throwable e) {
-//                    logger.error("Error creating EventNode: {}", e.getMessage(), e);
-//                }
-//            }, 0, 2, TimeUnit.SECONDS);
-//        }
 }
     
     
@@ -181,7 +143,6 @@ public class Namespace extends ManagedNamespace {
                     if (signal instanceof Logical || signal instanceof SignedInteger || signal instanceof Decimal || signal instanceof CharString || signal instanceof Alarm){//TODO other signal types will be added later
                         StringTokenizer partialIdentifiers  = new StringTokenizer(signal.getQualifiedIdentifier(),".");
                         TreeItem  currentNode = rootNode;
-                        // partialIdentifiers.nextToken();//skip "main module"
                         int numberOfPartialIdentifiers = partialIdentifiers.countTokens();
                         for (int i = 0; i < numberOfPartialIdentifiers; i++){
                             TreeItem nextNode = new TreeItem(partialIdentifiers.nextToken());
@@ -220,7 +181,6 @@ public class Namespace extends ManagedNamespace {
         return id;
     }
 
-//    private void registerNode(TreeItem node, UaObjectNode folder){
     private void registerNode(TreeItem node, UaFolderNode folder){
         for (TreeItem sn: node.getSubNodes()){
             if (sn.getSignal() == null){
@@ -236,37 +196,23 @@ public class Namespace extends ManagedNamespace {
         }
     }
     
-//	  private  UaObjectNode addSubFolder(UaObjectNode folder, TreeItem signalNode){
     private  UaFolderNode addSubFolder(UaFolderNode folder, TreeItem signalNode){
         String partialIdentifier  = signalNode.getPartialIdentifier();
         String identifier         = folder == folderNode ? partialIdentifier : ((String)folder.getNodeId().getIdentifier()) + "." + partialIdentifier;
-//        UaObjectNode objectFolder = UaObjectNode.builder(getNodeManager())
-//                                    .setNodeId(new NodeId(namespaceIndex, identifier))
-//                                    .setBrowseName(new QualifiedName(namespaceIndex, partialIdentifier))
-//                                    .setDisplayName(LocalizedText.english(partialIdentifier))
-//                                    .setTypeDefinition(Identifiers.FolderType)
-//                                    .build(); 
+ 
         UaFolderNode subFolder = new UaFolderNode(
                 getNodeContext(),
                 newNodeId(identifier),
                 newQualifiedName(new QualifiedName(namespaceIndex, partialIdentifier).toString()),
                 LocalizedText.english(new QualifiedName(namespaceIndex, partialIdentifier).toString())
         );
-//        server.getNodeMap().put(objectFolder.getNodeId(), objectFolder);
         getNodeManager().addNode(subFolder);        
-//        folder.addReference(new Reference(
-//                    folder.getNodeId(),
-//                    Identifiers.Organizes,
-//                    objectFolder.getNodeId().expanded(),
-//                    objectFolder.getNodeClass(),
-//                    true
-//            ));
+
         folder.addOrganizes(subFolder);
         
         return subFolder;
     }
     
-//    private UaVariableNode addSignal(UaObjectNode folder, TreeItem signalNode){
       private UaVariableNode addSignal(UaFolderNode folder, TreeItem signalNode){
         UaVariableNode node = null;
         if (signalNode.getSignal() instanceof Logical){
@@ -280,42 +226,12 @@ public class Namespace extends ManagedNamespace {
         } else if (signalNode.getSignal() instanceof Alarm){
             node = new AlarmNode(getNodeContext(), namespaceIndex, signalNode);        
         } 
-//        server.getNodeMap().put(node.getNodeId(), node);
         getNodeManager().addNode(node);
-//        folder.addReference(new Reference(
-//                folder.getNodeId(),
-//                Identifiers.Organizes,
-//                node.getNodeId().expanded(),
-//                node.getNodeClass(),
-//                true
-//        ));
+
         folder.addOrganizes(node);
         
         return node;
-    }
-    
-//    @Override
-//    public UShort getNamespaceIndex() {
-//        return namespaceIndex;
-//    }
-//
-//    @Override
-//    public String getNamespaceUri() {
-//        return NAMESPACE_URI;
-//    }
-//    
-//    @Override
-//    public CompletableFuture<List<Reference>> browse(AccessContext context, NodeId nodeId) {
-//        ServerNode node = server.getNodeMap().get(nodeId);
-//
-//        if (node != null) {
-//            return CompletableFuture.completedFuture(node.getReferences());
-//        } else {
-//            CompletableFuture<List<Reference>> f = new CompletableFuture<>();
-//            f.completeExceptionally(new UaException(StatusCodes.Bad_NodeIdUnknown));
-//            return f;
-//        }
-//    }    
+    }   
 
     @Override
     public void read(ReadContext context, Double maxAge,
@@ -327,12 +243,10 @@ public class Namespace extends ManagedNamespace {
 
         for (ReadValueId id : readValueIds) {
             DataValue value;
-//            ServerNode node = server.getNodeMap().get(id.getNodeId());
             UaServerNode node = getNodeManager().get(id.getNodeId());
             
             if (node != null) {
                 if (AccessLevel.fromMask(((SignalNode)node).getAccessLevel()).contains(AccessLevel.CurrentRead)){
-//                    value = node.readAttribute(new AttributeContext(context), id.getAttributeId(), timestamps, id.getIndexRange());
                     value = node.readAttribute(new AttributeContext(context), id.getAttributeId());
                 }
                 else{
@@ -345,14 +259,12 @@ public class Namespace extends ManagedNamespace {
             //Log.info("read {} : {}", node.getDisplayName(), value.getValue());
             results.add(value);
         }
-//        context.complete(results);
         context.success(results);
     }
 
     @Override
     public void write(WriteContext context, List<WriteValue> writeValues) {
         StatusCode result = null;
-//        ServerNode node   = null;
         UaServerNode node   = null;
         
         List<StatusCode> results = newArrayListWithCapacity(writeValues.size());
@@ -360,7 +272,6 @@ public class Namespace extends ManagedNamespace {
         for (WriteValue writeValue : writeValues) {
             NodeId nodeId = writeValue.getNodeId();
             if (nodeId != null){
-//                node = server.getNodeMap().getNode(nodeId).get();
                 node = getNodeManager().get(nodeId);
                 if (AccessLevel.fromMask(((SignalNode)node).getAccessLevel()).contains(AccessLevel.CurrentWrite)){
                     UInteger  attributeId = writeValue.getAttributeId();
@@ -384,7 +295,6 @@ public class Namespace extends ManagedNamespace {
             }
             results.add(result);
         }
-//        context.complete(results);
         context.success(results);
     }
     
@@ -430,41 +340,7 @@ public class Namespace extends ManagedNamespace {
     public void onEventItemsDeleted(List<EventItem> eventItems) {
         eventItems.forEach(item -> server.getEventBus().unregister(item));
     }
-
-//    public void addReference(NodeId sourceNodeId,
-//                             NodeId referenceTypeId,
-//                             boolean forward,
-//                             ExpandedNodeId targetNodeId,
-//                             NodeClass targetNodeClass) throws UaException {
-//
-//        ServerNode node = server.getNodeMap().get(sourceNodeId);
-//
-//        if (node != null) {
-//            Reference reference = new Reference(
-//                sourceNodeId,
-//                referenceTypeId,
-//                targetNodeId,
-//                targetNodeClass,
-//                forward);
-//
-//            node.addReference(reference);
-//        } else {
-//            throw new UaException(StatusCodes.Bad_NodeIdUnknown);
-//        }
-//    }
-
-//    @Override
-//    public Optional<MethodInvocationHandler> getInvocationHandler(NodeId methodId) {
-//        return Optional.ofNullable(server.getNodeMap().get(methodId))
-//            .filter(n -> n instanceof UaMethodNode)
-//            .map(n -> {
-//                UaMethodNode m = (UaMethodNode) n;
-//                return m.getInvocationHandler()
-//                    .orElse(new MethodInvocationHandler.NotImplementedHandler());
-//            });
-//    }
-    
-    
+       
     public OpcUaServer getServer(){
         return this.server;
     }

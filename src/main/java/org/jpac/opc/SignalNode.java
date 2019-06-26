@@ -79,9 +79,7 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
     protected       Value     signalValue;
     protected       Value     lastSignalValue;
     
-//    public SignalNode(NameSpace nameSpace, int namespaceIndex, TreeItem signalNode) {
       public SignalNode(UaNodeContext context, int namespaceIndex, TreeItem signalNode) {
-//        super(nameSpace.getNodeMap(), new NodeId(nameSpace.getNamespaceIndex(), signalNode.getSignal().getQualifiedIdentifier()), new QualifiedName(nameSpace.getNamespaceIndex(), signalNode.getSignal().getIdentifier()), LocalizedText.english(signalNode.getSignal().getIdentifier()));
         super(context, new NodeId(namespaceIndex, signalNode.getSignal().getQualifiedIdentifier()), new QualifiedName(namespaceIndex, signalNode.getSignal().getIdentifier()), LocalizedText.english(signalNode.getSignal().getIdentifier()));
         this.lock            = false;
         this.signal          = signalNode.getSignal();
@@ -91,7 +89,6 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
         
         setDataType(getSignalDataType());
         dataValue = new DataValue(new Variant(getSignalValue().getValue()), StatusCode.BAD);
-        //setValue(dataValue);
         ImmutableSet<AccessLevel> accessLevels = AccessLevel.NONE;
         Opc.AccessLevel opcAccessLevel = retrieveOpcAccessLevel(signal);
         switch(opcAccessLevel){

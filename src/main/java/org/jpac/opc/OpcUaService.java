@@ -203,31 +203,10 @@ public class OpcUaService implements Runnable{
     public void run() {
     	try {
 	    	Set<EndpointConfiguration> endpointConfigurations = new LinkedHashSet<>();
-	//        CertificateManager certificateManager = new DefaultCertificateManager();
 	        CertificateManager certificateManager = new DefaultCertificateManager();
-	//        CertificateValidator certificateValidator = new DefaultCertificateValidator(new File("./cfg/security"));
 	        DefaultTrustListManager trustListManager = new DefaultTrustListManager(new File("./cfg/security"));
 	        CertificateValidator certificateValidator = new DefaultCertificateValidator(trustListManager);
-	        
-	//        OpcUaServerConfigLimits limits = new OpcUaServerConfigLimits().setMinSupportedSampleRate(minSupportedSampleInterval);
-	//        OpcUaServerConfigBuilder cb = OpcUaServerConfig.builder();
-	//        OpcUaServerConfig serverConfig = cb
-	//                .setApplicationName(getApplicationName())
-	//                .setApplicationUri(getApplicationUri())
-	//                .setBindAddresses(bindAddresses)
-	//                .setBindPort(port)
-	//                .setBuildInfo(getBuildInfo())
-	//                .setCertificateManager(certificateManager)
-	//                .setCertificateValidator(certificateValidator)
-	//                .setHostname(getDefaultHostname())
-	//                .setProductUri(getProductUri())
-	//                .setSecurityPolicies(EnumSet.allOf(SecurityPolicy.class))
-	//                .setServerName(getServerName())
-	//                .setUserTokenPolicies(newArrayList(OpcUaServerConfig.USER_TOKEN_POLICY_ANONYMOUS))
-	//                .setLimits(limits)
-	//                .build();
-	//        server = new OpcUaServer(serverConfig);
-	//        server.getNamespaceManager().registerAndAdd(Namespace.NAMESPACE_URI, (namespaceIndex) -> new Namespace(server, namespaceIndex));      
+
 	        endpointConfigurations = createEndpointConfigurations();
 	        OpcUaServerConfig serverConfig = OpcUaServerConfig.builder()
 	            .setApplicationUri(getApplicationUri())
@@ -240,17 +219,9 @@ public class OpcUaService implements Runnable{
 	                    "eclipse milo example server",
 	                    OpcUaServer.SDK_VERSION,
 	                    "", DateTime.now()))
-	//            .setCertificateManager(certificateManager)
-	//            .setTrustListManager(trustListManager)
-	//            .setCertificateValidator(certificateValidator)
-	//            .setHttpsKeyPair(httpsKeyPair)
-	//            .setHttpsCertificate(httpsCertificate)
-	//            .setIdentityValidator(new CompositeValidator(identityValidator, x509IdentityValidator))
 	            .setProductUri("urn:eclipse:milo:example-server")
 	            .build();
 	        server = new OpcUaServer(serverConfig);
-	//        server.getNamespaceManager().registerAndAdd(Namespace.NAMESPACE_URI, (namespaceIndex) -> new Namespace(server, namespaceIndex));      
-	//        server.startup();
 	        Namespace namespace = new Namespace(server);
 	        namespace.startup();
 	        server.startup().get();

@@ -1,6 +1,6 @@
 /**
  * PROJECT   : Elbfisch - java process automation controller (jPac)
- * MODULE    : InputSignal.java (versatile input output subsystem)
+ * MODULE    : ApplicationContext.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -23,19 +23,28 @@
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jpac.vioss;
+package org.jpac;
 
-import org.jpac.Address;
-import org.jpac.SignalAccessException;
-import org.jpac.plc.AddressException;
+public class ApplicationContext {//TODO Android
+    private static ApplicationContext context;
+    private static String homeDir = ".";
 
-/**
- *
- * @author berndschuster
- */
-public interface InputSignal {
-    public void    setAddress(Address address);
-    public Address getAddress();
-    public void    fetch() throws SignalAccessException, AddressException;
-//    public void    invalidate() throws SignalAccessException;
+    private ApplicationContext(){
+
+    }
+
+    public static ApplicationContext getInstance(){
+        if (context == null){
+            context = new ApplicationContext();
+        }
+        return context;
+    }
+
+    public static void setHomeDir(String dir){
+        homeDir = dir;
+    }
+
+    public static String getHomeDir(){
+        return homeDir;
+    }
 }

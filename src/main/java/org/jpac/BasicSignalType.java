@@ -22,7 +22,7 @@
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  */
-package org.jpac.ef;
+package org.jpac;
 
 import io.netty.buffer.ByteBuf;
 import org.jpac.CharString;
@@ -86,5 +86,24 @@ public enum BasicSignalType {
            retValue = BasicSignalType.CharString; 
         } 
         return retValue;
-    }    
+    }  
+    
+    public Value newValue() {
+    	Value value = null;
+    	switch (this) {
+    		case Logical:
+    			value = new LogicalValue();
+    			break;
+    		case Decimal:
+    			value = new DecimalValue();
+    			break;
+    		case SignedInteger:
+    			value = new SignedIntegerValue();
+    			break;
+    		case CharString:
+    			value = new CharStringValue();
+    			break;
+    	}
+    	return value;
+    }
 }

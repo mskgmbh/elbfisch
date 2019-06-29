@@ -1,6 +1,6 @@
 /**
- * PROJECT   : Elbfisch - java process automation controller (jPac) 
- * MODULE    : IoSignal.java (versatile input output subsystem)
+ * PROJECT   : Elbfisch - java process automation controller (jPac)
+ * MODULE    : IoSignal.java
  * VERSION   : -
  * DATE      : -
  * PURPOSE   : 
@@ -22,18 +22,14 @@
  * You should have received a copy of the GNU General Public License
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  */
-package org.jpac.vioss.ef;
-
-import org.jpac.ef.SignalInfo;
-import org.jpac.ef.SignalTransport;
+package org.jpac;
 
 /**
  *
  * @author berndschuster
+ * 
+ * all IoSignal interfaces in the elbfisch project refer to (extend) this interface
  */
-public interface IoSignal extends org.jpac.vioss.IoSignal{
-    public void            setSignalTransport(SignalTransport signalTransport);
-    public SignalTransport getSignalTransport();
-    public void            setSignalInfo(SignalInfo signalInfo);
-    public SignalInfo      getSignalInfo();
+public interface IoSignal {
+  
 }

@@ -23,13 +23,12 @@
  * along with the jPac If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jpac.ef;
+package org.jpac.vioss.ef;
 
 import io.netty.buffer.ByteBuf;
 import java.util.Observable;
 
-import javax.annotation.Nonnull;
-
+import org.jpac.BasicSignalType;
 import org.jpac.CharStringValue;
 import org.jpac.DecimalValue;
 import org.jpac.LogicalValue;
@@ -53,22 +52,37 @@ public class SignalTransport implements SignalObserver {
     protected boolean           changed;
     protected BasicSignalType   signalType;
     
-    public SignalTransport(Signal signal){
-        try{
-            if (signal != null){
-                this.handle          = signal.getQualifiedIdentifier().hashCode();
-                this.value           = signal.getValue().clone();
-                this.changed         = true;
-                this.signalType      = BasicSignalType.fromSignal(signal);
-                this.connected       = false;
-                this.connectedSignal = signal;
-            }
-        }
-        catch(Exception exc){
-            Log.error("Error: ", exc);
-        }
+    public SignalTransport(){
+        this.handle          = 0;
+        this.value           = null;
+        this.changed         = true;
+        this.signalType      = BasicSignalType.Unknown;
+        this.connected       = false;
+        this.connectedSignal = null;
     }
     
+    public SignalTransport(int handle, BasicSignalType signalType){
+        this.handle          = handle;
+        this.value           = getValueFromSignalType(signalType);
+        this.changed         = true;
+        this.signalType      = signalType;
+        this.connected       = false;
+        this.connectedSignal = null;
+    }
+
+    public SignalTransport(Signal signal){
+    	try {
+        this.handle          = signal.getHandle();
+        this.value           = signal.getValue().clone();
+        this.changed         = true;
+        this.signalType      = BasicSignalType.fromSignal(signal);
+        this.connected       = false;//connected state must be assigned by the calling method if need be
+        this.connectedSignal = signal;
+    	} catch(CloneNotSupportedException exc) {
+    		/*cannot happen*/
+    	}
+    }
+
     protected static Value getValueFromSignalType(BasicSignalType sigType){
         Value value;
         switch(sigType){
@@ -124,7 +138,7 @@ public class SignalTransport implements SignalObserver {
         return value;
     }
 
-    public void setValue(@Nonnull Value value) {
+    public void setValue(Value value) {
     	if (this.value == null) {
     		try{this.value = value.clone();}catch(CloneNotSupportedException exc) {/*cannot happen*/}
         	setChanged(true);

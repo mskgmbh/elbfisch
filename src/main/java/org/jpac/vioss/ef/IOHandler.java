@@ -32,6 +32,8 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.TimeoutException;
+
+import org.apache.commons.configuration.SubnodeConfiguration;
 import org.jpac.AsynchronousTask;
 import org.jpac.InconsistencyException;
 import org.jpac.ProcessException;
@@ -78,8 +80,8 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
     
     private Transceive transceive;
     
-    public IOHandler(URI uri) throws IllegalUriException {
-        super(uri);
+    public IOHandler(URI uri, SubnodeConfiguration subnodeConfiguration) throws IllegalUriException {
+        super(uri, subnodeConfiguration);
         if (!getHandledScheme().equals(uri.getScheme().toUpperCase())){
             throw new IllegalUriException("scheme '" + uri.getScheme() + "' not handled by " + toString());
         }

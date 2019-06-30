@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.apache.commons.configuration.SubnodeConfiguration;
 import org.jpac.CyclicTask;
 import org.jpac.IoDirection;
 import org.jpac.JPac;
@@ -45,19 +46,21 @@ import org.jpac.WrongUseException;
 abstract public class IOHandler implements CyclicTask{
     static public Logger Log = LoggerFactory.getLogger("jpac.vioss.IOHandler");
     
-    private URI            uri; 
-    private List<Signal> inputSignals;
-    private List<Signal> outputSignals;
-    private boolean       processingStarted;
-    private boolean       processingAborted;
+    private URI                  uri; 
+    private List<Signal>         inputSignals;
+    private List<Signal>         outputSignals;
+    private boolean              processingStarted;
+    private boolean              processingAborted;
+    private SubnodeConfiguration subnodeConfiguration;
     
     private String        toString;
     
-    public IOHandler(URI uri)  throws IllegalUriException {
-        this.inputSignals       = Collections.synchronizedList(new ArrayList<Signal>());
-        this.outputSignals      = Collections.synchronizedList(new ArrayList<Signal>());
-        this.uri                = uri;
-        this.processingStarted  = false;
+    public IOHandler(URI uri, SubnodeConfiguration subnodeConfiguration)  throws IllegalUriException {
+        this.inputSignals         = Collections.synchronizedList(new ArrayList<Signal>());
+        this.outputSignals        = Collections.synchronizedList(new ArrayList<Signal>());
+        this.uri                  = uri;
+        this.subnodeConfiguration = subnodeConfiguration;
+        this.processingStarted    = false;
         try{JPac.getInstance().registerCyclicTask(this);}catch(WrongUseException exc){/*cannot happen*/};
     }
     

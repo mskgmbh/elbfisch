@@ -45,6 +45,8 @@ import org.jpac.configuration.Configuration;
 public class IOHandlerFactory {
     final  static String IOHANDLERPATH = "org..jpac..vioss.IOHandler";
     final  static String EFSCHEME      = "ef";
+    final  static String CLASS         = "class";
+    final  static String PARAMETER     = "parameter";
     static public Logger Log = LoggerFactory.getLogger("jpac.vioss.IOHandler");    
     static List<IOHandler> instances;
     
@@ -75,10 +77,10 @@ public class IOHandlerFactory {
                 String scheme = uri.getScheme().replace(".","..");
                 if (scheme.equals(EFSCHEME)) {
                 	//instantiate io handler for elbfisch scheme directly
-                	ioHandler = new org.jpac.vioss.ef.IOHandler(uri);
+                	ioHandler = new org.jpac.vioss.ef.IOHandler(uri, null);
                 } else {
                 	//look for matching io handler inside the configuration
-	                cyclicInputHandlerClass = (String)Configuration.getInstance().getProperty(IOHANDLERPATH + "." + scheme);
+	                cyclicInputHandlerClass = (String)Configuration.getInstance().getProperty(IOHANDLERPATH + "." + scheme + "." + CLASS);
 	                if (cyclicInputHandlerClass == null){
 	                    throw new InconsistencyException("IOHandler for " + uri + " not specified in configuration.");
 	                }
@@ -86,7 +88,7 @@ public class IOHandlerFactory {
 	                Class<IOHandler>       clazz = (Class<IOHandler>) Class.forName(cyclicInputHandlerClass);
 	                Constructor<IOHandler> c     = clazz.getConstructor(URI.class);
 	                //... and instantiate it using the uri provided.
-	                ioHandler = (IOHandler) c.newInstance(uri);
+	                ioHandler = (IOHandler) c.newInstance(uri, Configuration.getInstance().configurationAt(IOHANDLERPATH + "." + scheme + "." + PARAMETER));
                 }
                 //... and finally add it to the list of io handlers
                 instances.add(ioHandler);

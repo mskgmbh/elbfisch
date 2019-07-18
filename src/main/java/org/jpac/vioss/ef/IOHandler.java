@@ -36,6 +36,7 @@ import java.util.concurrent.TimeoutException;
 import org.apache.commons.configuration.SubnodeConfiguration;
 import org.jpac.AsynchronousTask;
 import org.jpac.InconsistencyException;
+import org.jpac.IoDirection;
 import org.jpac.ProcessException;
 import org.jpac.Signal;
 import org.jpac.SignalAccessException;
@@ -80,8 +81,8 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
     
     private Transceive transceive;
     
-    public IOHandler(URI uri, SubnodeConfiguration subnodeConfiguration) throws IllegalUriException {
-        super(uri, subnodeConfiguration);
+    public IOHandler(URI uri, SubnodeConfiguration parameterConfiguration) throws IllegalUriException {
+        super(uri, parameterConfiguration);
         if (!getHandledScheme().equals(uri.getScheme().toUpperCase())){
             throw new IllegalUriException("scheme '" + uri.getScheme() + "' not handled by " + toString());
         }
@@ -485,7 +486,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
     }
     
     @Override
-    public boolean handles(URI uri) {
+    public boolean handles(URI uri, IoDirection ioDirection) {
         boolean isHandledByThisInstance = false;
         try{
             isHandledByThisInstance  = uri != null;
@@ -507,8 +508,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
     @Override
     public boolean isFinished() {
         return state == State.STOPPING;
-    }
-    
+    }    
     
     class ConnectionRunner extends AsynchronousTask{ 
         private boolean     connected;

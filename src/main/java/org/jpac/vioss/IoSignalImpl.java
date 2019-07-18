@@ -28,7 +28,6 @@ package org.jpac.vioss;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.stream.Collectors;
@@ -93,7 +92,7 @@ public class IoSignalImpl{
      */
     protected IOHandler getIOHandler() throws InconsistencyException{
         if (getIoHandler() == null){
-        	setIoHandler(IOHandlerFactory.getHandlerFor(getUri()));
+        	setIoHandler(IOHandlerFactory.getHandlerFor(getUri(), ((Signal)containingSignal).getIoDirection()));
         }
         return getIoHandler();
     }

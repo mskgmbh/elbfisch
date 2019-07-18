@@ -51,16 +51,16 @@ abstract public class IOHandler implements CyclicTask{
     private List<Signal>         outputSignals;
     private boolean              processingStarted;
     private boolean              processingAborted;
-    private SubnodeConfiguration subnodeConfiguration;
+    private SubnodeConfiguration parameterConfiguration;
     
-    private String        toString;
+    private String               toString;
     
-    public IOHandler(URI uri, SubnodeConfiguration subnodeConfiguration)  throws IllegalUriException {
-        this.inputSignals         = Collections.synchronizedList(new ArrayList<Signal>());
-        this.outputSignals        = Collections.synchronizedList(new ArrayList<Signal>());
-        this.uri                  = uri;
-        this.subnodeConfiguration = subnodeConfiguration;
-        this.processingStarted    = false;
+    public IOHandler(URI uri, SubnodeConfiguration parameterConfiguration)  throws IllegalUriException {
+        this.inputSignals             = Collections.synchronizedList(new ArrayList<Signal>());
+        this.outputSignals            = Collections.synchronizedList(new ArrayList<Signal>());
+        this.uri                      = uri;
+        this.parameterConfiguration   = parameterConfiguration;
+        this.processingStarted        = false;
         try{JPac.getInstance().registerCyclicTask(this);}catch(WrongUseException exc){/*cannot happen*/};
     }
     
@@ -139,7 +139,7 @@ abstract public class IOHandler implements CyclicTask{
     @Override
     public String toString(){
         if (toString == null){
-            toString = getClass().getCanonicalName() + "(" + getTargetInstance()     + ")";
+            toString = getClass().getCanonicalName() + "(" + getTargetInstance() + ")";
         }
         return toString;
     }
@@ -168,14 +168,18 @@ abstract public class IOHandler implements CyclicTask{
     public String getTargetInstance(){
     	String ti = uri.getScheme();
     	if (uri.getHost() != null) {
-    		ti = ti + "//" + uri.getHost();
+    		ti = ti + "://" + uri.getHost();
     	}
     	if (uri.getPort() != -1) {
     		ti = ti + ":" + uri.getPort();
     	} 	
         return ti;
     }
-
+    
+    public SubnodeConfiguration getParameterConfiguration() {
+    	return parameterConfiguration;
+    }    
+    
     /**
      * @param processingAborted the processingStopped to set
      */
@@ -193,11 +197,11 @@ abstract public class IOHandler implements CyclicTask{
     abstract public void run();
 
     /**
-     * used to checkIn, if this IOHandler handles the data item with the given address
-     * @param uri     uri to checkIn
+     * used to check, if this IOHandler handles the data item with the given address
+     * @param uri          uri to check
      * @return true : this IOHandler handles this data item 
      */
-    abstract public boolean handles(URI uri);
+    abstract public boolean handles(URI uri, IoDirection ioDirection);
     
     /**
      * used to do some initializing after all InputSignal's and OutputSignal's are registered for this

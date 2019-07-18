@@ -34,8 +34,10 @@ import java.util.List;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.SubnodeConfiguration;
 import org.jpac.Address;
 import org.jpac.InconsistencyException;
+import org.jpac.IoDirection;
 import org.jpac.configuration.Configuration;
 
 /**
@@ -56,7 +58,7 @@ public class IOHandlerFactory {
      * @return 
      * @throws java.lang.ClassNotFoundException 
      */
-    static public IOHandler getHandlerFor(URI uri) throws InconsistencyException {
+    static public IOHandler getHandlerFor(URI uri, IoDirection ioDirection) throws InconsistencyException {
         IOHandler ioHandler = null;
         String    cyclicInputHandlerClass;  
         
@@ -65,7 +67,7 @@ public class IOHandlerFactory {
         }
         //check,if the desired handler is already instantiated
         for (IOHandler cip: instances){
-            if (cip.handles(uri)){
+            if (cip.handles(uri, ioDirection)){
                 ioHandler = cip;
             }
         }
@@ -84,16 +86,20 @@ public class IOHandlerFactory {
 	                if (cyclicInputHandlerClass == null){
 	                    throw new InconsistencyException("IOHandler for " + uri + " not specified in configuration.");
 	                }
-	                @SuppressWarnings("unchecked")
-	                Class<IOHandler>       clazz = (Class<IOHandler>) Class.forName(cyclicInputHandlerClass);
-	                Constructor<IOHandler> c     = clazz.getConstructor(URI.class);
-	                //... and instantiate it using the uri provided.
-	                ioHandler = (IOHandler) c.newInstance(uri, Configuration.getInstance().configurationAt(IOHANDLERPATH + "." + scheme + "." + PARAMETER));
+	                try {
+		                @SuppressWarnings("unchecked")
+		                Class<IOHandler>       clazz = (Class<IOHandler>) Class.forName(cyclicInputHandlerClass);
+		                Constructor<IOHandler> c     = clazz.getConstructor(URI.class, SubnodeConfiguration.class);
+		                //... and instantiate it using the uri provided.
+		                ioHandler = (IOHandler) c.newInstance(uri, Configuration.getInstance().configurationAt(IOHANDLERPATH + "." + scheme + "." + PARAMETER));
+	                } catch(InvocationTargetException exc) {
+	                	throw new InconsistencyException("Error: failed to instantiate IOHandler '" + cyclicInputHandlerClass + "' because of " + exc.getCause().getMessage());
+	                }
                 }
                 //... and finally add it to the list of io handlers
                 instances.add(ioHandler);
             }
-            catch(InvocationTargetException | NoSuchMethodException | IllegalAccessException | InstantiationException | ClassNotFoundException exc){
+            catch(NoSuchMethodException | IllegalAccessException | InstantiationException | ClassNotFoundException exc){
             	Log.error("Error:", exc);
             	throw new InconsistencyException("IOHandler " + cyclicInputHandlerClass + " cannot be instantiated");
             }

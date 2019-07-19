@@ -34,6 +34,7 @@ import java.util.List;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
 import org.jpac.Address;
 import org.jpac.InconsistencyException;
@@ -91,7 +92,14 @@ public class IOHandlerFactory {
 		                Class<IOHandler>       clazz = (Class<IOHandler>) Class.forName(cyclicInputHandlerClass);
 		                Constructor<IOHandler> c     = clazz.getConstructor(URI.class, SubnodeConfiguration.class);
 		                //... and instantiate it using the uri provided.
-		                ioHandler = (IOHandler) c.newInstance(uri, Configuration.getInstance().configurationAt(IOHANDLERPATH + "." + scheme + "." + PARAMETER));
+		                HierarchicalConfiguration parameters = null;
+		                try{
+		                	parameters = Configuration.getInstance().configurationAt(IOHANDLERPATH + "." + scheme + "." + PARAMETER);
+		                
+		                } catch(IllegalArgumentException exc) {
+		                	throw new InconsistencyException("Error: failed to instantiate IOHandler '" + cyclicInputHandlerClass + "' because of missing or corrupt parameters");
+		                }
+		                ioHandler = (IOHandler) c.newInstance(uri, parameters);
 	                } catch(InvocationTargetException exc) {
 	                	throw new InconsistencyException("Error: failed to instantiate IOHandler '" + cyclicInputHandlerClass + "' because of " + exc.getCause().getMessage());
 	                }

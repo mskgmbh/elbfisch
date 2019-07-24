@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.function.Supplier;
 import org.slf4j.LoggerFactory;
+import org.jpac.alarm.Alarm;
 import org.jpac.vioss.IoCharString;
 import org.jpac.vioss.IoDecimal;
 import org.jpac.vioss.IoLogical;
@@ -136,6 +137,8 @@ public abstract class Signal extends Observable implements Observer {
     		value = new DecimalValue();
     	} else if (this instanceof CharString) {
     		value = new CharStringValue();
+    	} else if (this instanceof Alarm) {
+    		value = new LogicalValue();
     	} else {
     		throw new UnsupportedOperationException("signal type " + this.getClass().getCanonicalName() + " not supported");
     	}

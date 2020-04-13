@@ -31,14 +31,15 @@ import io.netty.buffer.ByteBuf;
  * @author berndschuster
  */
 public enum Result {
-    NoFault                        (  0),
-    SignalNotRegistered            (  1),
-    SignalTypeMismatched           (  2),
-    IoDirectionMustBeInOrOut       (  3),
-    SignalAlreadyConnectedAsTarget (  4),
-    SignalNotSubscribed            (  5),
-    GeneralFailure                 ( 99),
-    Unknown                        ( -1);
+    NoFault                          (  0),
+    SignalNotRegistered              (  1),
+    SignalTypeMismatched             (  2),
+    IoDirectionMustBeInOrOut         (  3),
+    SignalAlreadyConnectedAsTarget   (  4),
+    SignalNotSubscribed              (  5),
+    ElbfischInstanceAlreadyConnected (  6),
+    GeneralFailure                   ( 99),
+    Unknown                          ( -1);
     
     int value;
     

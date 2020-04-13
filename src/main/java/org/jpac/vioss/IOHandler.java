@@ -190,12 +190,12 @@ abstract public class IOHandler implements CyclicTask{
     /**
      * is called by jPac on every cycle. Performs the phyiscal input/output processing and the
      * transfer to the corresponding ProcessSignal's
-     * Hint: This method must be implemented must be short, fast and robust because it effects the
+     * Hint: This method must be implemented short, fast and robust because it effects the
      *       jPac cycle directly
      */
     @Override
     abstract public void run();
-
+    
     /**
      * used to check, if this IOHandler handles the data item with the given address
      * @param uri          uri to check

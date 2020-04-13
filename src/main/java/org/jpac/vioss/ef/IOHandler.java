@@ -37,10 +37,13 @@ import org.apache.commons.configuration.SubnodeConfiguration;
 import org.jpac.AsynchronousTask;
 import org.jpac.InconsistencyException;
 import org.jpac.IoDirection;
+import org.jpac.JPac;
 import org.jpac.ProcessException;
 import org.jpac.Signal;
 import org.jpac.SignalAccessException;
 import org.jpac.WrongUseException;
+import org.jpac.ef.Apply;
+import org.jpac.ef.ApplyAcknowledgement;
 import org.jpac.ef.Browse;
 import org.jpac.ef.BrowseAcknowledgement;
 import org.jpac.ef.Result;
@@ -74,6 +77,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
     private boolean               connectionClosed;
     private boolean               operationPending;
     private boolean               justEnteredState;
+    private boolean               connectionRefused;
     
     private HashMap<String, RemoteSignalInfo> listOfRemoteSignalInfos;
     private HashMap<Integer, SignalTransport> listOfClientInputTransports; 
@@ -103,6 +107,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                     connected            = false;
                     subscribed           = false;
                     connectionClosed     = false;
+                    connectionRefused    = false;
                     justEnteredState     = true;
                     state                = State.CONNECTING;
                     //connect right away
@@ -110,14 +115,20 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                     operationPending = connecting(justEnteredState);
                     justEnteredState = false;
                     if (!operationPending){
-                        if (connected){
-                            state            = State.SUBSCRIBING;
-                            justEnteredState = true;
-                        }
-                        else{
-                            state            = State.STOPPING;
-                            justEnteredState = true;
-                        }
+                    	if (connectionRefused) {
+                    		//remote instance rejects application
+                    		state            = State.STOPPING;
+                    		justEnteredState = true;
+                    	} else {
+	                        if (connected){
+	                            state            = State.SUBSCRIBING;
+	                            justEnteredState = true;
+	                        }
+	                        else{
+	                            state            = State.STOPPING;
+	                            justEnteredState = true;
+	                        }
+                    	}
                     }
                     break;
                 case SUBSCRIBING:
@@ -147,11 +158,6 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                         state            = State.IDLE;
                         justEnteredState = true;                            
                     }
-//                    catch(Exception exc){
-//                        Log.error("Error: ", exc);
-//                        state            = State.CLOSINGCONNECTION;
-//                        justEnteredState = true;                            
-//                    }
                     break;
                 case CLOSINGCONNECTION:
                     invalidateInputSignals();
@@ -178,10 +184,14 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                         if (connectionRunner.isRunning()){
                             connectionRunner.terminate();
                         }
-                        if (connected){
-                           unsubscribeSignals();
-                           closeConnection();
-                        }   
+                        if (connectionRefused) {
+                        	closeConnection();
+                        } else {
+	                        if (connected){
+	                           unsubscribeSignals();
+	                           closeConnection();
+	                        }   
+                        }
                     }
                     catch(Exception exc){
                         Log.error("Error: " + exc);
@@ -225,14 +235,14 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
 
     @Override
     public void stop() {
-        Log.info("shutting down " + this);
-        connectionRunner.terminate();
-        subscriptionRunner.terminate();
-        if (currentlyActiveRunner != null){
-            currentlyActiveRunner.terminate();
-        }
-        closeConnection();
-        state = State.STOPPING;
+    	if (state != State.STOPPED) {
+	        Log.info("shutting down " + this);
+	        if (currentlyActiveRunner != null){
+	            currentlyActiveRunner.terminate();
+	        }
+	        closeConnection();
+	        state = State.STOPPED;
+    	}
     }
 
     /**
@@ -247,13 +257,14 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
             else{
                 //connect to plc in progress 
                 if (connectionRunner.isFinished()){
+                    connection = connectionRunner.getConnection();
                     if(connectionRunner.isConnectionEstablished()){
-                       connection = connectionRunner.getConnection();
                        connectionRunner.terminate();
                        connected  = true;
                     }
                     else{
                        connected  = false;
+                       connectionRefused = connectionRunner.getResult() == Result.ElbfischInstanceAlreadyConnected;
                     }
                     pending = false;
                 }
@@ -463,7 +474,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
         try{
             if (connection != null ){
                 unsubscribeSignals();
-               //TODO connection.close();
+                connection.close();
                 done = true;
             }
         }
@@ -507,7 +518,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
     
     @Override
     public boolean isFinished() {
-        return state == State.STOPPING;
+        return state == State.STOPPED;
     }    
     
     class ConnectionRunner extends AsynchronousTask{ 
@@ -515,6 +526,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
         private Connection  connection;
         private boolean     running;
         private int         browseAttempts;
+        private Result      result;
         
         public ConnectionRunner(String identifier){
             super(identifier);
@@ -535,6 +547,7 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                 }
                 Log.info("establishing connection for " + getInputSignals().size() + " input and " + getOutputSignals().size() + " output signals ...");
                 browseAttempts = 0;
+                result = Result.NoFault;
                 do{
                                  	
                     do{
@@ -550,34 +563,52 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
                     }
                     while(!connected && !isTerminated());
                     if (connected && !isTerminated()){
-                        //try to retrieve variable handles
-                        try{
-                            //retrieve index of remote signals
-                        	browseAttempts++;
-                            Browse                browse    = new Browse();
-                            BrowseAcknowledgement browseAck = (BrowseAcknowledgement)connection.getClientHandler().transact(browse);
-                            listOfRemoteSignalInfos         = new HashMap<>(browseAck.getListOfGetHandleAcks().size());
-                            browseAck.getListOfGetHandleAcks().forEach((gha) ->	listOfRemoteSignalInfos.put(gha.getSignalIdentifier(), new RemoteSignalInfo(gha.getSignalIdentifier(), gha.getSignalType(), gha.getHandle(), new SignalTransport(gha.getHandle(), gha.getSignalType()))));
-                            prepareSignalsForTransfer();
-                            //log signals which failed to connect
-                            logIoSignalsWhichFailedToConnect();        
+                    	//get application for this connection
+                    	try{
+                            Apply                     apply = new Apply(JPac.getInstance().getEfBindAddress(), JPac.getInstance().getEfServicePort());
+                            ApplyAcknowledgement   applyAck = (ApplyAcknowledgement)connection.getClientHandler().transact(apply);
+                            result = applyAck.getResult();
+                            if (result != Result.NoFault) {
+                               Log.error("Error: Failed to connect. Result : " + result);
+                               connected        = false;
+                               exceptionOccured = true;
+                            }
                         }
                         catch(Exception exc){
-                            //close connection
-                            //TODO try{closeConnection();}catch(Exception ex){};
-                            //TODO exceptionOccured = true;
                             if (Log.isDebugEnabled()){Log.error("Error:", exc);};
-                            connected = false;
-                            try{Thread.sleep(CONNECTIONRETRYTIME);}catch(InterruptedException ex){/*cannot happen*/};//TODO                                                        
+                            connected        = false;
+                            exceptionOccured = true;
                         }
+                    	if (connected) {
+	                    	//try to retrieve variable handles
+	                        try{
+	                            //retrieve index of remote signals
+	                        	browseAttempts++;
+	                            Browse                browse    = new Browse();
+	                            BrowseAcknowledgement browseAck = (BrowseAcknowledgement)connection.getClientHandler().transact(browse);
+	                            listOfRemoteSignalInfos         = new HashMap<>(browseAck.getListOfGetHandleAcks().size());
+	                            browseAck.getListOfGetHandleAcks().forEach((gha) ->	listOfRemoteSignalInfos.put(gha.getSignalIdentifier(), new RemoteSignalInfo(gha.getSignalIdentifier(), gha.getSignalType(), gha.getHandle(), new SignalTransport(gha.getHandle(), gha.getSignalType()))));
+	                            prepareSignalsForTransfer();
+	                            //log signals which failed to connect
+	                            logIoSignalsWhichFailedToConnect();        
+	                        }
+	                        catch(Exception exc){
+	                            //close connection
+	                            try{closeConnection();}catch(Exception ex){};
+	                            if (Log.isDebugEnabled()){Log.error("Error:", exc);};
+	                            connected = false;
+	                            try{Thread.sleep(CONNECTIONRETRYTIME);}catch(InterruptedException ex){/*ignore*/};                                                        
+	                        }
+                    	}
                     }
                     else {
-                        try{Thread.sleep(CONNECTIONRETRYTIME);}catch(InterruptedException ex){/*cannot happen*/};
+                        try{Thread.sleep(CONNECTIONRETRYTIME);}catch(InterruptedException ex){/*ignore*/};
                     }
                 }
                 while(!connected && !isTerminated() && !exceptionOccured);
                 if (connected){
-                    Log.info("... connection established. " + browseAttempts + " attempts made to get signal dictionary");            
+                    Log.info("... connection established. " + browseAttempts + " attempts made to get signal dictionary"); 
+                    result = Result.NoFault;
                 }
             }
             finally{
@@ -596,6 +627,10 @@ public class IOHandler extends org.jpac.vioss.IOHandler{
 
         public boolean isRunning(){
             return running;
+        }
+        
+        public Result getResult() {
+        	return result;
         }
     }    
     

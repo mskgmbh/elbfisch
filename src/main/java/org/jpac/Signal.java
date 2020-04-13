@@ -99,78 +99,59 @@ public abstract class Signal extends Observable implements Observer {
         this.value              		      = getTypedValue();
         this.propagatedValue    			  = getTypedValue(); 
 
-        if (!containingModule.isRunLocally() && !(this instanceof IoSignal) && (getIoDirection() == IoDirection.INPUT || getIoDirection() == IoDirection.OUTPUT)) {
+        if (!containingModule.isRunLocally() && (getIoDirection() == IoDirection.INPUT || getIoDirection() == IoDirection.OUTPUT)) {
         	//the containing module will be run on a separate elbfisch instance and 
-        	//this signal is not an io signal and 
         	//this signal is explicitly designated as being either INPUT or OUTPUT:
         	this.intrinsicFunction = null; //disable intrinsicFunction on this instance
         	//The containing module is either proxy or inactive
             if (containingModule.isProxy()) {
 	        	//instantiate an io signal as a proxy used to access the remote counterpart of this signal
 	        	//and connect it to this signal according to the desired io direction
-	        	Signal ioSig = getTypedProxyIoSignal(containingModule.getEffectiveElbfischInstance(), invert(getIoDirection()));
-	        	switch(getIoDirection()) {
-	        	case INPUT:
-	        		//pass incoming signal through to remote counterpart
-	        		this.connect(ioSig);
-	        		break;
-	        	case OUTPUT:
-	        		//pass incoming signal from remote counterpart to this
-	        		ioSig.connect(this);
-	        		break;
-	        	case INOUT:
-	        	case UNDEFINED:
-	        		//INOUTs and UNDEFINEDs are not handled
-	        	}
+            	if (this instanceof IoSignal) {
+            		if (!this.isProxyIoSignal()) {
+		            	Signal ioSig = getTypedProxyIoSignal(containingModule.getEffectiveElbfischInstance(), getIoDirection());
+			        	switch(getIoDirection()) {
+			        	case INPUT:
+			        		//pass incoming io signal from remote counterpart to this
+			        		ioSig.connect(this);
+			        		break;
+			        	case OUTPUT:
+			        		//pass outgoing io signal through to remote counterpart
+			        		this.connect(ioSig);
+			        		break;
+			        	case INOUT:
+			        	case UNDEFINED:
+			        		//INOUTs and UNDEFINEDs are not handled
+			        	}
+            		}
+            	} else {
+            		//direction of internal signals are inverse
+	            	Signal ioSig = getTypedProxyIoSignal(containingModule.getEffectiveElbfischInstance(), invert(getIoDirection()));
+		        	switch(getIoDirection()) {
+		        	case INPUT:
+		        		//pass incoming signal through to remote counterpart
+		        		this.connect(ioSig);
+		        		break;
+		        	case OUTPUT:
+		        		//pass incoming signal from remote counterpart to this
+		        		ioSig.connect(this);
+		        		break;
+		        	case INOUT:
+		        	case UNDEFINED:
+		        		//INOUTs and UNDEFINEDs are not handled
+		        	}            		
+            	}
         	}
         }
         SignalRegistry.getInstance().add(this);
     }
-    
-    protected Value getTypedValue() {
-    	Value value = null;
-    	if (this instanceof Logical) {
-    		value = new LogicalValue();
-    	} else if (this instanceof SignedInteger) {
-    		value = new SignedIntegerValue();
-    	} else if (this instanceof Decimal) {
-    		value = new DecimalValue();
-    	} else if (this instanceof CharString) {
-    		value = new CharStringValue();
-    	} else if (this instanceof Alarm) {
-    		value = new LogicalValue();
-    	} else {
-    		throw new UnsupportedOperationException("signal type " + this.getClass().getCanonicalName() + " not supported");
-    	}
-    	return value;
-    }
-    
-    protected Signal getTypedProxyIoSignal(URI remoteElbfischInstance, IoDirection ioDirection) {
-    	Signal signal = null;
-    	
-    	try{
-        	String sigIdentifier = identifier + PROXYQUALIFIER;
-    		URI   sigUri         = new URI(remoteElbfischInstance + "/" + getQualifiedIdentifier());
-    	
-	    	if (this instanceof Logical) {
-	    		signal = new IoLogical(containingModule, sigIdentifier, sigUri, ioDirection);
-	    	} else if (this instanceof SignedInteger) {
-	    		signal = new IoSignedInteger(containingModule, sigIdentifier, sigUri, ioDirection);
-	    	} else if (this instanceof Decimal) {
-	    		signal = new IoDecimal(containingModule, sigIdentifier, sigUri, ioDirection);
-	    	} else if (this instanceof CharString) {
-	    		signal = new IoCharString(containingModule, sigIdentifier, sigUri, ioDirection);
-	    	} else {
-	    		throw new UnsupportedOperationException("signal type " + this.getClass().getCanonicalName() + " not supported as proxy");
-	    	}
-    	} catch(URISyntaxException exc) {
-    		throw new RuntimeException("failed to instantiate proxy signal: ", exc);
-    	}
-    	return signal;
-    }
-    
+        
     protected IoDirection invert(IoDirection ioDirection) {
     	return ioDirection == IoDirection.INPUT ? IoDirection.OUTPUT : IoDirection.INPUT;
+    }
+    
+    protected boolean isProxyIoSignal() {
+    	return this.getIdentifier().endsWith(PROXYQUALIFIER);
     }
     
     /**
@@ -186,13 +167,9 @@ public abstract class Signal extends Observable implements Observer {
         //propagate changes occured during the last cycle
         //avoid propagation of changes occured during the actual propagation phase
         if (hasChanged()){
-            setPropagatedSignalValid(value.isValid());//propagate valid state of the signal
             propagatedLastChangeCycleNumber = JPac.getInstance().getCycleNumber();
-            if (value.isValid()){
-                //if signal valid, then propagate its value, too
-                if (Log.isDebugEnabled()) Log.debug ("propagate signal " + this);
-                propagateSignalInternally();
-            }
+            if (Log.isDebugEnabled()) Log.debug ("propagate signal " + this);
+            propagateSignalInternally();
             notifyObservers();
         }
     }
@@ -251,8 +228,6 @@ public abstract class Signal extends Observable implements Observer {
             catch(Exception exc){
                 Log.error("Error: ", exc);
             }
-            //invoke propagation of the state of this signal to the new target
-            setJustConnectedAsSource(true);
         }
     }
     
@@ -286,6 +261,9 @@ public abstract class Signal extends Observable implements Observer {
         addObserver(targetSignal);
         targetSignal.setConnectedAsTarget(true);
         observingSignals.add(targetSignal);
+        //invoke propagation of the state of this signal to the new target
+        setJustConnectedAsSource(true);
+        
     }
     
     protected void deferredDisconnect(Signal targetSignal){
@@ -386,8 +364,6 @@ public abstract class Signal extends Observable implements Observer {
             catch(Exception exc){
                 Log.error("Error: ", exc);
             }
-            //invoke propagation of the state of this signal to the new target
-            setJustConnectedAsSource(true);
         }
     }
     
@@ -417,6 +393,8 @@ public abstract class Signal extends Observable implements Observer {
         }
         addObserver(targetObserver);
         targetObserver.setConnectedAsTarget(true);
+        //invoke propagation of the state of this signal to the new target
+        setJustConnectedAsSource(true);
     }
     
     protected void deferredDisconnect(SignalObserver targetObserver){
@@ -557,10 +535,10 @@ public abstract class Signal extends Observable implements Observer {
         }
     }
     
-    protected void setPropagatedSignalValid(boolean valid){
-        if (Log.isDebugEnabled() && (propagatedValue.isValid() != valid)) Log.debug ("propagate change of valid state for signal " + this + " : " + valid);
-        propagatedValue.setValid(valid);
-    }
+//    protected void setPropagatedSignalValid(boolean valid){
+//        if (Log.isDebugEnabled() && (propagatedValue.isValid() != valid)) Log.debug ("propagate change of valid state for signal " + this + " : " + valid);
+//        propagatedValue.setValid(valid);
+//    }
     
     /**
      * used to invalidate a signal in cases in which a module cannot guarantee the signals integrity
@@ -736,6 +714,8 @@ public abstract class Signal extends Observable implements Observer {
     abstract protected void updateValue(Object o, Object arg) throws SignalAccessException;
     abstract protected void propagateSignalInternally() throws SignalInvalidException;    
     abstract protected void applyTypedIntrinsicFunction() throws Exception;
+    abstract protected Value getTypedValue();
+    abstract protected Signal getTypedProxyIoSignal(URI remoteElbfischInstance, IoDirection ioDirection);
 
     private class ConnectionTask{
         private ConnTask task;

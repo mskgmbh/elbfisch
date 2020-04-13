@@ -175,7 +175,7 @@ public class Configuration extends XMLConfiguration{
                 try{runner.start();}catch(WrongUseException exc){/*cannot happen*/}
                 invokeSaveOperation = false;
             }
-        }
+        }            
 
         @Override
         public void prepare() {

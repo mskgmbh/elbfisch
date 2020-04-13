@@ -58,18 +58,15 @@ public class IoCharString extends CharString implements IoSignal{
     public IoCharString(AbstractModule containingModule, String identifier, URI uri, IoDirection ioDirection) throws SignalAlreadyExistsException, InconsistencyException, WrongUseException{
         super(containingModule, identifier, ioDirection);
         this.ioSignalImpl = new IoSignalImpl(this, uri);
-    }  
+    }   
 
     @Override
     public void propagate() throws SignalInvalidException{
     	try {
-    		//tag signal to be to be put out if it has been changed in this cycle but 
+    		//tag signal to be to be put out if it is for output and has been changed in this cycle but 
     		//avoid writing back a signal to an external device which caused the change itself 
-    		if (hasChanged() && !ioSignalImpl.isChangedByCheckIn()) {
-    			//touch toBePutOut only in cycles in which changes occured. Will be reset asynchronously in IOHandler
-    			ioSignalImpl.setToBePutOut(true);
-    		}
-	        super.propagate();
+    		ioSignalImpl.markAsToBePutOut(hasChanged() && !ioSignalImpl.isChangedByCheckIn() && ioDirection != IoDirection.INPUT);
+    		super.propagate();
     	} finally {
     		ioSignalImpl.resetChangedByCheckIn();
     	}

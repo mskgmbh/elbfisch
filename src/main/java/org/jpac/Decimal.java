@@ -25,7 +25,11 @@
 
 package org.jpac;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.function.Supplier;
+
+import org.jpac.vioss.IoDecimal;
 
 /**
  * represents a decimal signal
@@ -529,4 +533,24 @@ public class Decimal extends Signal{
            set((Double)intrinsicFunction.get()); 
         }
     }
+
+    @Override
+    protected Value getTypedValue() {
+  	  return new DecimalValue();
+    }
+
+    @Override
+    protected Signal getTypedProxyIoSignal(URI remoteElbfischInstance, IoDirection ioDirection) {
+  		Signal signal = null;
+  		
+  		try{
+  	    	String sigIdentifier = getIdentifier() + PROXYQUALIFIER;
+  			URI  sigUri = new URI(remoteElbfischInstance + "/" + getQualifiedIdentifier());
+  			signal = new IoDecimal(containingModule, sigIdentifier, sigUri, ioDirection);
+  		} catch(URISyntaxException exc) {
+  			throw new RuntimeException("failed to instantiate proxy signal: ", exc);
+  		}
+  		return signal;
+    }
+    
 }

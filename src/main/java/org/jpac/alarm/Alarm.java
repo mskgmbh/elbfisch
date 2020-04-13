@@ -25,6 +25,7 @@
 
 package org.jpac.alarm;
 
+import java.net.URI;
 import java.util.function.Supplier;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -38,6 +39,7 @@ import org.jpac.Signal;
 import org.jpac.SignalAccessException;
 import org.jpac.SignalAlreadyExistsException;
 import org.jpac.SignalInvalidException;
+import org.jpac.Value;
 
 
 /**
@@ -311,6 +313,28 @@ public class Alarm extends Signal{
             set((Boolean)intrinsicFunction.get());
         }
     }
+    
+    @Override
+    protected Value getTypedValue() {
+    	throw new UnsupportedOperationException("getTypedValue not implemented for " + this.getClass());
+    	//return new <AlarmValue()>;
+    }
+
+    @Override
+    protected Signal getTypedProxyIoSignal(URI remoteElbfischInstance, IoDirection ioDirection) {
+    	throw new UnsupportedOperationException("getTypedValue not implemented for " + this.getClass());
+//		Signal signal = null;
+//		
+//		try{
+//	    	String sigIdentifier = getIdentifier() + PROXYQUALIFIER;
+//			URI  sigUri = new URI(remoteElbfischInstance + "/" + getQualifiedIdentifier());
+//			signal = <new IoAlarm(containingModule, sigIdentifier, sigUri, ioDirection)>;
+//		} catch(URISyntaxException exc) {
+//			throw new RuntimeException("failed to instantiate proxy signal: ", exc);
+//		}
+//		return signal;
+	}
+    
         
     /**
      * @return process event indicatimg, that an alarm has gone 

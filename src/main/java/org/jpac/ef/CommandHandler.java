@@ -58,7 +58,8 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
     protected MessageFactory                    messageFactory;
 	protected SignalTransport                   target;
 	protected int                               index;     
-	protected boolean                           signalsAddedOrRemoved;				
+	protected boolean                           signalsAddedOrRemoved;	
+	protected long                              elbfischInstanceHash;
     
     public CommandHandler(InetSocketAddress remoteSocketAddress){
         this.remoteSocketAddress                 = remoteSocketAddress;
@@ -68,6 +69,7 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
         
         this.messageFactory                      = new MessageFactory(this);
         this.signalsAddedOrRemoved               = false;
+        this.elbfischInstanceHash                = 0;
         
         synchronized(listOfActiveCommandHandlers) {
         	listOfActiveCommandHandlers.add(this);
@@ -93,7 +95,7 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
             Log.debug("{} acknowledged with {}", command, acknowledgement);
             out.clear();
             acknowledgement.encode(out);
-            out.retain();//"out" should be reused for all acknowledgements until context ist closed
+            out.retain();//"out" should be reused for all acknowledgements until context is closed
             ctx.writeAndFlush(out);
             in.release();
         } catch(Exception exc){
@@ -105,11 +107,13 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
     public void channelInactive(ChannelHandlerContext ctx) throws Exception{
         super.channelInactive(ctx);
         //disconnect all received signals, and invalidate them
-        listOfClientOutputTransports.keySet().forEach(
-                (h)-> {Signal signal = SignalRegistry.getInstance().getSignal(h);
-                signal.setConnectedAsTarget(false);
-                signal.invalidateDeferred();
-        });
+        synchronized(listOfClientOutputTransports) {
+	        listOfClientOutputTransports.keySet().forEach(
+	                (h)-> {Signal signal = SignalRegistry.getInstance().getSignal(h);
+	                signal.setConnectedAsTarget(false);
+	                signal.invalidateDeferred();
+	                });
+        }
         synchronized (listOfActiveCommandHandlers) {			
 	        if (listOfActiveCommandHandlers.contains(this)){
 	            listOfActiveCommandHandlers.remove(this);
@@ -128,8 +132,10 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception{
         super.channelActive(ctx);
-        if (listOfActiveCommandHandlers.contains(this)){
-            listOfActiveCommandHandlers.remove(this);
+        synchronized (listOfActiveCommandHandlers) {			
+	        if (listOfActiveCommandHandlers.contains(this)){
+	            listOfActiveCommandHandlers.remove(this);
+	        }
         }
     }
     
@@ -146,7 +152,7 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
     protected void registerClientInputSignal(int handle) {
         Signal          signal = SignalRegistry.getInstance().getSignal(handle);
         SignalTransport st     = new SignalTransport(signal);
-        synchronized(listOfClientOutputTransports){
+        synchronized(listOfClientInputTransports){
         	listOfClientInputTransports.put(handle, st);
         }
     }
@@ -164,7 +170,7 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
     protected void unregisterClientInputSignal(int handle) {
     	SignalTransport st = listOfClientInputTransports.get(handle);
     	st.getConnectedSignal().disconnect(st);
-        synchronized(listOfClientOutputTransports){
+        synchronized(listOfClientInputTransports){
         	listOfClientInputTransports.remove(handle);
         }
     }
@@ -208,5 +214,13 @@ public class CommandHandler extends ChannelInboundHandlerAdapter {
      */
     public HashMap<Integer, SignalTransport> getListOfClientOutputTransports() {
         return listOfClientOutputTransports;
+    }
+    
+    public void setElbfischInstanceHash(long hash) {
+    	this.elbfischInstanceHash = hash;
+    }
+
+    public long getElbfischInstanceHash() {
+    	return this.elbfischInstanceHash;
     }
 }

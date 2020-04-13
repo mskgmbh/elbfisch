@@ -36,7 +36,7 @@ package org.jpac;
  */
 public interface CyclicTask {
     /**
-     * is called by jPac on every cycle.
+     * is called by jPac on every cycle before modules are invoked.
      * Hint: This method must be implemented short, fast and robust because it effects the
      *       jPac cycle directly
      */

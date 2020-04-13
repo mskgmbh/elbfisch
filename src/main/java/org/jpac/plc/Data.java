@@ -98,7 +98,7 @@ public class Data {
     }
     
     /**
-     * used to read a byte. The value is treated as signed -128 .. 127
+     * used to read a byte. The value is treated as an unsigned integer 0..255
      * @param byteIndex byte offset inside the data buffer
      * @return the byte value
      * @throws AddressException
@@ -231,7 +231,7 @@ public class Data {
         }
         return value;
     }
-
+    
     /**
      * used to set a dword value. The value is treated as an unsigned 32 bit value: 4,294,967,295
      * @param byteIndex byte offset inside the data buffer
@@ -304,6 +304,71 @@ public class Data {
             bytes[byteIndex + 2] = (byte)(value >> 16);
             bytes[byteIndex + 1] = (byte)(value >>  8);
             bytes[byteIndex]     = (byte)value;            
+        }
+    }
+
+    /**
+     * used to read a lint value. The value is treated as an signed 64 bit value
+     * @param byteIndex byte offset inside the data buffer
+     * @return the value
+     * @throws AddressException
+     */
+    public int getLINT(int byteIndex) throws AddressException {
+        int value;
+        if (byteIndex < 0 || byteIndex + 3 >= getBytes().length){
+            throw new AddressException("byte index " + byteIndex + " invalid");
+        }
+        if (endianness == Endianness.BIGENDIAN){
+            value =                (bytes[byteIndex]     & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 1] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 2] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 3] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 4] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 5] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 6] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 7] & 0x000000FF);
+        }
+        else{
+            value =                (bytes[byteIndex + 7] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 6] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 5] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 4] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 3] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 2] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex + 1] & 0x000000FF);
+            value = (value << 8) + (bytes[byteIndex]     & 0x000000FF);            
+        }
+        return value;
+    }
+
+    /**
+     * used to set a lint value. The value is treated as an signed 64 bit value
+     * @param byteIndex byte offset inside the data buffer
+     * @throws AddressException
+     */
+    public void setLINT(int byteIndex, long value) throws AddressException {
+        if (byteIndex < 0 || byteIndex + 7 >= getBytes().length){
+            throw new AddressException("byte index " + byteIndex + " invalid");
+        }
+        if (endianness == Endianness.BIGENDIAN){
+            bytes[byteIndex]     = (byte)(value >> 56);
+            bytes[byteIndex + 1] = (byte)(value >> 48);
+            bytes[byteIndex + 2] = (byte)(value >> 40);
+            bytes[byteIndex + 3] = (byte)(value >> 32);
+            bytes[byteIndex + 4] = (byte)(value >> 24);
+            bytes[byteIndex + 5] = (byte)(value >> 16);
+            bytes[byteIndex + 6] = (byte)(value >>  8);
+            bytes[byteIndex + 7] = (byte) value;
+        }
+        else{
+            bytes[byteIndex + 7] = (byte)(value >> 56);
+            bytes[byteIndex + 6] = (byte)(value >> 48);
+            bytes[byteIndex + 5] = (byte)(value >> 40);
+            bytes[byteIndex + 4] = (byte)(value >> 32);
+            bytes[byteIndex + 3] = (byte)(value >> 24);
+            bytes[byteIndex + 2] = (byte)(value >> 16);
+            bytes[byteIndex + 1] = (byte)(value >>  8);
+            bytes[byteIndex]     = (byte) value;
         }
     }
 

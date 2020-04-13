@@ -39,6 +39,7 @@ public enum MessageId {
     CmdBrowse       ( 05),
     CmdSubscribe    ( 06),
     CmdUnsubscribe  ( 07),
+    CmdApply        (  8),
     AckUndefined    (-99),
     AckPing         (-01),
     AckGetHandles   (-02),
@@ -46,7 +47,8 @@ public enum MessageId {
     AckTransceive   (-04),
     AckBrowse       (-05),
     AckSubscribe    (-06),
-    AckUnsubscribe  (-07);
+    AckUnsubscribe  (-07),
+    AckApply        (- 8);
 
     private short id;
 

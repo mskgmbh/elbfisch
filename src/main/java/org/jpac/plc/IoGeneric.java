@@ -34,13 +34,14 @@ import org.jpac.IoDirection;
 import org.jpac.SignalAccessException;
 import org.jpac.SignalAlreadyExistsException;
 import org.jpac.SignalInvalidException;
+import org.jpac.Value;
 
 /**
  *
  * @author berndschuster
  * @param <ValueImpl> class must implement Value interface
  */
-abstract public class IoGeneric<ValueImpl> extends Generic<ValueImpl> implements IoSignal{
+abstract public class IoGeneric<ValueImpl extends Value> extends Generic<ValueImpl> implements IoSignal{
     static  Logger  Log = LoggerFactory.getLogger("jpac.Signal");      
 
     private org.jpac.plc.Address    address;

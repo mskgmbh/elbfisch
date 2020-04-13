@@ -25,7 +25,10 @@
 
 package org.jpac;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.function.Supplier;
+import org.jpac.vioss.IoCharString;
 
 /**
  * represents a char string signal
@@ -215,4 +218,23 @@ public class CharString extends Signal{
            set((String)intrinsicFunction.get()); 
         }
     }
+    
+    @Override
+	protected Value getTypedValue() {
+		return new CharStringValue();
+	}
+
+    @Override
+	protected Signal getTypedProxyIoSignal(URI remoteElbfischInstance, IoDirection ioDirection) {
+		Signal signal = null;
+		
+		try{
+	    	String sigIdentifier = getIdentifier() + PROXYQUALIFIER;
+			URI  sigUri = new URI(remoteElbfischInstance + "/" + getQualifiedIdentifier());
+			signal = new IoCharString(containingModule, sigIdentifier, sigUri, ioDirection);
+		} catch(URISyntaxException exc) {
+			throw new RuntimeException("failed to instantiate proxy signal: ", exc);
+		}
+		return signal;
+	}    
 }

@@ -25,8 +25,11 @@
 
 package org.jpac;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.function.Supplier;
 import org.jpac.alarm.Alarm;
+import org.jpac.vioss.IoLogical;
 
 /**
  * represents a boolean signal
@@ -309,4 +312,24 @@ public class Logical extends Signal{
             set((Boolean)intrinsicFunction.get());
         }
     }
+    
+    @Override
+    protected Value getTypedValue() {
+    	return new LogicalValue();
+    }
+
+    @Override
+	protected Signal getTypedProxyIoSignal(URI remoteElbfischInstance, IoDirection ioDirection) {
+		Signal signal = null;
+		
+		try{
+	    	String sigIdentifier = getIdentifier() + PROXYQUALIFIER;
+			URI  sigUri = new URI(remoteElbfischInstance + "/" + getQualifiedIdentifier());
+			signal = new IoLogical(containingModule, sigIdentifier, sigUri, ioDirection);
+		} catch(URISyntaxException exc) {
+			throw new RuntimeException("failed to instantiate proxy signal: ", exc);
+		}
+		return signal;
+	}
+    
 }

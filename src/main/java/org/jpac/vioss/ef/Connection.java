@@ -93,6 +93,7 @@ public class Connection{
      */
     public synchronized void close(){
         try{
+        	//Log.info(this + ".close()");
             workerGroup.shutdownGracefully();
             // Wait until the connection is closed.
             channelFuture.channel().closeFuture().sync();

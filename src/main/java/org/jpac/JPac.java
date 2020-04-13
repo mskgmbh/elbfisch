@@ -808,18 +808,7 @@ public class JPac extends Thread {
             //everything done. Prepare list for next cycle
             synchronizedTasks.clear();
         }
-        
-        synchronized(cyclicTasks){
-            for(CyclicTask ct: cyclicTasks){
-                //run cyclic task
-                ct.run();
-            }            
-        }
-        
-        if (efServiceEnabled){
-            efService.exchangeChangedSignals();
-        }
-                
+
         ConcurrentHashMap<Integer, Signal> signals = SignalRegistry.getInstance().getSignals();
         synchronized(signals){
             for(Signal s: signals.values()){
@@ -831,7 +820,26 @@ public class JPac extends Thread {
                 s.propagate();
             }
         }
-        pushSignalsOverRemoteConnections();        
+        
+        synchronized(cyclicTasks){
+            for(CyclicTask ct: cyclicTasks){
+                //run cyclic task
+                ct.run();
+            }            
+        }
+        
+        if (efServiceEnabled){
+            efService.exchangeChangedSignals();
+        }
+
+        pushSignalsOverRemoteConnections();                 
+
+        //propagate signals altered due to I/O operations 
+        synchronized(signals){
+            for(Signal s: signals.values()){
+                s.propagate();
+            }
+        }
     }
     
     /*

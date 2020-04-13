@@ -99,6 +99,9 @@ public class MessageFactory {
         case CmdTransceive:
             message = null;//Transceive command can only be used as a recylced instance      		
             break;
+        case CmdApply:
+            message = new Apply();      		
+            break;
         case AckPing:
             message = new PingAcknowledgement();
             break;
@@ -119,6 +122,9 @@ public class MessageFactory {
             break;
         case AckTransceive:
             message = null;//Transceive command can only be used as a recylced instance   
+            break;
+        case AckApply:
+            message = new ApplyAcknowledgement();
             break;
          default:
         }

@@ -24,7 +24,9 @@
  */
 package org.jpac;
 
+import java.net.URI;
 import java.util.function.Supplier;
+
 
 /**
  * class template for generic objects used as signals, where ValueImpl is a class 
@@ -35,6 +37,29 @@ import java.util.function.Supplier;
 public class Generic<ValueImpl> extends Signal{    
 
     /**
+     * constructs a generic signal
+     * @param containingModule: module, this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param intrinsicFunction: intrinsic function which will be applied in every cycle to calculate the actual value
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public Generic(AbstractModule containingModule, String identifier, Supplier<ValueImpl> intrinsicFunction, IoDirection ioDirection) throws SignalAlreadyExistsException{
+        super(containingModule, identifier, intrinsicFunction, ioDirection);
+    }
+	
+    /**
+     * constructs a generic signal
+     * @param containingModule: module, this signal is contained in
+     * @param identifier: identifier of the signal
+     * @param ioDirection: defines the signal as being either an INPUT or OUTPUT signal. (Relevant in distributed applications)
+     * @throws org.jpac.SignalAlreadyExistsException
+     */
+    public Generic(AbstractModule containingModule, String identifier, IoDirection ioDirection) throws SignalAlreadyExistsException{
+        this(containingModule, identifier, null, ioDirection);
+    }
+
+    /**
      * constructs a Generic signal
      * @param containingModule: module, this signal is contained in
      * @param identifier: identifier of the signal
@@ -42,7 +67,7 @@ public class Generic<ValueImpl> extends Signal{
      * @throws org.jpac.SignalAlreadyExistsException
      */    
     public Generic(AbstractModule containingModule, String identifier, Supplier<ValueImpl> intrinsicFunction) throws SignalAlreadyExistsException{
-    	super(containingModule, identifier, intrinsicFunction, IoDirection.UNDEFINED);
+    	this(containingModule, identifier, intrinsicFunction, IoDirection.UNDEFINED);
     }
 
     /**
@@ -99,7 +124,8 @@ public class Generic<ValueImpl> extends Signal{
      * @return see above
      * @throws org.jpac.SignalInvalidException
      */
-    public ValueImpl get() throws SignalInvalidException{
+    @SuppressWarnings("unchecked")
+	public ValueImpl get() throws SignalInvalidException{
         return (ValueImpl)getValidatedValue();
     }
     
@@ -111,7 +137,8 @@ public class Generic<ValueImpl> extends Signal{
         setIntrinsicFct(intrinsicFunction);
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     protected void updateValue(Object o, Object arg) throws SignalAccessException {
         try{
             set(((Generic<ValueImpl>)o).get());
@@ -140,10 +167,33 @@ public class Generic<ValueImpl> extends Signal{
         }
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     protected void applyTypedIntrinsicFunction() throws Exception {
         if (intrinsicFunction != null){
            set((ValueImpl)intrinsicFunction.get()); 
         }
     }
+    
+    @Override
+    protected Value getTypedValue() {
+    	throw new UnsupportedOperationException("method getTypedValue() must be implemented by concrete Generic<ValueImpl>");
+    	//return new <Generic<ValueImpl>()>;
+    }
+
+    @Override
+    protected Signal getTypedProxyIoSignal(URI remoteElbfischInstance, IoDirection ioDirection) {
+    	throw new UnsupportedOperationException("method getTypedProxyIoSignal() must be implemented by concrete Generic<ValueImpl>");
+  		// Signal signal = null;
+  		//
+  		//try{
+  	    //	String sigIdentifier = getIdentifier() + PROXYQUALIFIER;
+  		//	URI  sigUri = new URI(remoteElbfischInstance + "/" + getQualifiedIdentifier());
+  		//	signal = new <IoGeneric>(containingModule, sigIdentifier, sigUri, ioDirection);
+  		//} catch(URISyntaxException exc) {
+  		//	throw new RuntimeException("failed to instantiate proxy signal: ", exc);
+  		//}
+  		//return signal;
+    }
+    
 }

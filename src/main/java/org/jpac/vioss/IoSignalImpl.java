@@ -33,6 +33,7 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.stream.Collectors;
 
 import org.jpac.InconsistencyException;
+import org.jpac.IoDirection;
 import org.jpac.Signal;
 import org.jpac.SignalAccessException;
 import org.jpac.Value;
@@ -119,6 +120,13 @@ public class IoSignalImpl{
     protected void checkOut() throws SignalAccessException {
     	//transfer locally changed signal to remote side
     	((IoSignal)containingSignal).getRemoteSignalInfo().getValue().copy(containingSignal.getValue());
+    }
+    
+    protected void markAsToBePutOut(boolean signalChangedLocally) {
+ 		//avoid writing back a signal to an external device which caused the change itself 
+    	if (signalChangedLocally) {
+    		setToBePutOut(true);
+    	}
     }
 
     protected void setToBePutOut(boolean value) {

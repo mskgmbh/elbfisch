@@ -25,7 +25,11 @@
 
 package org.jpac;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.function.Supplier;
+
+import org.jpac.vioss.IoSignedInteger;
 
 /**
  * represents a signed integer signal
@@ -525,4 +529,24 @@ public class SignedInteger extends Signal{
            set((Integer)intrinsicFunction.get()); 
         }
     }
+
+    @Override
+    protected Value getTypedValue() {
+    	  return new SignedIntegerValue();
+    }
+
+    @Override
+    protected Signal getTypedProxyIoSignal(URI remoteElbfischInstance, IoDirection ioDirection) {
+		Signal signal = null;
+		
+		try{
+	    	String sigIdentifier = getIdentifier() + PROXYQUALIFIER;
+			URI  sigUri = new URI(remoteElbfischInstance + "/" + getQualifiedIdentifier());
+			signal = new IoSignedInteger(containingModule, sigIdentifier, sigUri, ioDirection);
+		} catch(URISyntaxException exc) {
+			throw new RuntimeException("failed to instantiate proxy signal: ", exc);
+		}
+		return signal;
+	}
+    
 }

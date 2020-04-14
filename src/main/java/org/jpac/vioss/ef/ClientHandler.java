@@ -65,10 +65,6 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
         context   = ctx;
-        if (txByteBuf != null) {
-        	txByteBuf.release();
-        }
-        txByteBuf = ctx.alloc().buffer(32000);
     }
 
     @Override
@@ -93,27 +89,26 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         } finally {
             //tell transact()ing thread, that an acknowledgement arrived
             serverResponded.release();
+            //release communication buffers
             rxByteBuf.release();
         }
     }
-    
-//    @Override
-//    public void channelInactive(ChannelHandlerContext ctx) {
-//    
-//    }    
     
     public Acknowledgement transact(Command command) throws InterruptedException, InconsistencyException, TimeoutException{
         boolean done = false;
         startAsynchronously(command);
         try{
             //wait until server responses (serverResponded released by channelRead())
-            done = serverResponded.tryAcquire(3000, TimeUnit.MILLISECONDS);
-            if(!done){
-                throw new TimeoutException("server did not respond in time");
-            }
-            if (!transactionSucceeded) {
-            	throw new InconsistencyException("transaction failed: " + command);
-            }
+           done = serverResponded.tryAcquire(3000, TimeUnit.MILLISECONDS);
+		   if(!done){
+		       throw new TimeoutException("server did not respond in time");
+		   }
+		   if (!transactionSucceeded) {
+		    	throw new InconsistencyException("transaction failed: " + command);
+		   }
+        }
+        catch(Exception exc) {
+        	Log.error("Error: ", exc);
         }
         finally{
             serverResponded.release();
@@ -126,8 +121,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         if (transactionInProgress){
             throw new InconsistencyException("Nested transaction not allowed. Command : " + command + " ignored");
         }
-        txByteBuf.retain();//increment reference count to avoid destruction of buffer
-        txByteBuf.clear();
+        txByteBuf     = context.alloc().buffer(32000);//will be released by 
         actualCommand = command;
         actualCommand.encode(txByteBuf);
         Log.debug("sending " + command + " to server ...");

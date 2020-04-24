@@ -518,8 +518,8 @@ public class SignedInteger extends Signal{
             }
         }
         catch(Exception exc){
-            Log.error("Error: ", exc);
-            throw new SignalAccessException(exc.getMessage());
+        	if (Log.isDebugEnabled()) Log.error(this + " : " + exc.getMessage());
+        	invalidate();
         }
     }
 

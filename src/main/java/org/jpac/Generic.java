@@ -106,6 +106,7 @@ public class Generic<ValueImpl> extends Signal{
      */
     public void set(ValueImpl value) throws SignalAccessException{
         setValue((Value)value);
+        setValid(true);
     }
 
     /**

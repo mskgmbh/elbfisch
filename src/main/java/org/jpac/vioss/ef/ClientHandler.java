@@ -121,7 +121,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         if (transactionInProgress){
             throw new InconsistencyException("Nested transaction not allowed. Command : " + command + " ignored");
         }
-        txByteBuf     = context.alloc().buffer(32000);//will be released by 
+        txByteBuf     = context.alloc().buffer(32000);//will be released by last handler in channel
         actualCommand = command;
         actualCommand.encode(txByteBuf);
         Log.debug("sending " + command + " to server ...");

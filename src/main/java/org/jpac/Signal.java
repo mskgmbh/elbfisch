@@ -212,22 +212,28 @@ public abstract class Signal extends Observable implements Observer {
      */
     public void connect(Signal targetSignal) throws SignalAlreadyConnectedException{
         synchronized(this){
-            if (Log.isDebugEnabled()) Log.debug(this + ".connect(" + targetSignal + ")");
-            if (targetSignal.isConnectedAsTarget()){
-                throw new SignalAlreadyConnectedException(targetSignal);
-            }
-            if (targetSignal.getIntrinsicFunction() != null){
-                throw new SignalAccessException("cannot connect to signal with initrinsic function set: " + targetSignal);
-            }
-            try{
-                connectionTasks.add(new ConnectionTask(ConnTask.CONNECT, targetSignal));
-            }
-            catch(IllegalStateException exc){
-                Log.error("Error connectionTask queue full: ", exc);
-            }
-            catch(Exception exc){
-                Log.error("Error: ", exc);
-            }
+        	if (containingModule.isRunLocally() || (containingModule.isProxy() && (this.isProxyIoSignal() || targetSignal.isProxyIoSignal()))) {
+        		//owning module is run locally or this or the target signal is a proxy signal: perform connection
+	            if (Log.isDebugEnabled()) Log.debug(this + ".connect(" + targetSignal + ")");
+	            if (targetSignal.isConnectedAsTarget()){
+	                throw new SignalAlreadyConnectedException(targetSignal);
+	            }
+	            if (targetSignal.getIntrinsicFunction() != null){
+	                throw new SignalAccessException("cannot connect to signal with initrinsic function set: " + targetSignal);
+	            }
+	            try{
+	                connectionTasks.add(new ConnectionTask(ConnTask.CONNECT, targetSignal));
+	                targetSignal.setConnectedAsTarget(true);
+	            }
+	            catch(IllegalStateException exc){
+	                Log.error("Error connectionTask queue full: ", exc);
+	            }
+	            catch(Exception exc){
+	                Log.error("Error: ", exc);
+	            }
+        	} else {
+	            if (Log.isDebugEnabled()) Log.debug(this + ".connect(" + targetSignal + "): Connection omitted because the owning module does not run on this instance");        		
+        	}
         }
     }
     
@@ -252,18 +258,16 @@ public abstract class Signal extends Observable implements Observer {
 
     protected void deferredConnect(Signal targetSignal) throws SignalAlreadyConnectedException{
         if (Log.isDebugEnabled()) Log.debug(this + ".deferredConnect(" + targetSignal + ")");
-        if (targetSignal.isConnectedAsTarget()){
-            throw new SignalAlreadyConnectedException(targetSignal);
-        }
+//        if (targetSignal.isConnectedAsTarget()){
+//            throw new SignalAlreadyConnectedException(targetSignal);
+//        }
         if (targetSignal.getIntrinsicFunction() != null){
             throw new SignalAccessException("cannot connect to signal with initrinsic function set: " + targetSignal);
         }
         addObserver(targetSignal);
-        targetSignal.setConnectedAsTarget(true);
         observingSignals.add(targetSignal);
         //invoke propagation of the state of this signal to the new target
-        setJustConnectedAsSource(true);
-        
+        setJustConnectedAsSource(true);       
     }
     
     protected void deferredDisconnect(Signal targetSignal){
@@ -286,11 +290,12 @@ public abstract class Signal extends Observable implements Observer {
 	public void connect(RemoteSignalOutput targetSignal) throws SignalAlreadyConnectedException{
         synchronized(this){
             if (Log.isDebugEnabled()) Log.debug(this + ".connect(" + targetSignal + ")");
-            if (targetSignal.isConnectedAsTarget()){
-                throw new SignalAlreadyConnectedException(targetSignal);
-            }
+//            if (targetSignal.isConnectedAsTarget()){
+//                throw new SignalAlreadyConnectedException(targetSignal);
+//            }
             try{
                 connectionTasks.add(new ConnectionTask(ConnTask.REMOTECONNECT, targetSignal));
+                targetSignal.setConnectedAsTarget(true);
             }
             catch(IllegalStateException exc){
                 Log.error("Error connectionTask queue full: ", exc);
@@ -330,7 +335,6 @@ public abstract class Signal extends Observable implements Observer {
             throw new SignalAlreadyConnectedException(targetSignal);
         }
         addObserver(targetSignal);
-        targetSignal.setConnectedAsTarget(true);
         observingRemoteSignalOutputs.add(targetSignal);
     }
     
@@ -357,6 +361,7 @@ public abstract class Signal extends Observable implements Observer {
             }
             try{
                 connectionTasks.add(new ConnectionTask(ConnTask.SIGNALOBSERVERCONNECT, targetObserver));
+                targetObserver.setConnectedAsTarget(true);
             }
             catch(IllegalStateException exc){
                 Log.error("Error connectionTask queue full: ", exc);
@@ -388,11 +393,10 @@ public abstract class Signal extends Observable implements Observer {
 
     protected void deferredConnect(SignalObserver targetObserver) throws SignalAlreadyConnectedException{
         if (Log.isDebugEnabled()) Log.debug(this + ".deferredConnect(" + targetObserver + ")");
-        if (targetObserver.isConnectedAsTarget()){
-            throw new SignalAlreadyConnectedException(targetObserver);
-        }
+//        if (targetObserver.isConnectedAsTarget()){
+//            throw new SignalAlreadyConnectedException(targetObserver);
+//        }
         addObserver(targetObserver);
-        targetObserver.setConnectedAsTarget(true);
         //invoke propagation of the state of this signal to the new target
         setJustConnectedAsSource(true);
     }

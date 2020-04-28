@@ -29,13 +29,13 @@ package org.jpac;
  * used to map a signed integer signal to another signed integer signal.
  */
 public class SignedIntegerMapper{
-    protected int  minSourceValue;
-    protected int  maxSourceValue;
-    protected int  minTargetValue;
-    protected int  maxTargetValue;
-    protected int  scale;
-    protected int  sourceSpan;
-    protected int  targetSpan;
+    protected int    minSourceValue;
+    protected int    maxSourceValue;
+    protected int    minTargetValue;
+    protected int    maxTargetValue;
+    protected double scale;
+    protected double sourceSpan;
+    protected double targetSpan;
 
     public SignedIntegerMapper() {
     }
@@ -81,7 +81,7 @@ public class SignedIntegerMapper{
         if (sourceValue < minSourceValue || sourceValue > maxSourceValue){
             throw new NumberOutOfRangeException(sourceValue, minSourceValue, maxSourceValue);
         }
-        int targetValue = (scale * (sourceValue - minSourceValue)) + minTargetValue;
+        int targetValue = (int)Math.round((scale * (double)(sourceValue - minSourceValue)) + (double)minTargetValue);
         return targetValue;
     }
 
@@ -91,11 +91,10 @@ public class SignedIntegerMapper{
      * @throws NumberOutOfRangeException
      */
     public int map(double sourceValue) throws NumberOutOfRangeException{
-        int intSourceValue = (int)sourceValue;
-        if (intSourceValue < minSourceValue || intSourceValue > maxSourceValue){
+        if ((int)sourceValue < minSourceValue || (int)sourceValue > maxSourceValue){
             throw new NumberOutOfRangeException(sourceValue, minSourceValue, maxSourceValue);
         }
-        int targetValue = (scale * (intSourceValue - minSourceValue)) + minTargetValue;
+        int targetValue = (int)Math.round((scale * (sourceValue - (double)minSourceValue)) + (double)minTargetValue);
         return targetValue;
     }
 }

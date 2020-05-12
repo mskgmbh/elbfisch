@@ -309,20 +309,19 @@ public class Alarm extends Signal{
 
     @Override
     protected void applyTypedIntrinsicFunction() throws ProcessException {
-        if (intrinsicFunction != null){
+       if (intrinsicFunction != null){
             set((Boolean)intrinsicFunction.get());
         }
     }
     
     @Override
     protected Value getTypedValue() {
-    	throw new UnsupportedOperationException("getTypedValue not implemented for " + this.getClass());
-    	//return new <AlarmValue()>;
+    	return new LogicalValue();
     }
 
     @Override
     protected Signal getTypedProxyIoSignal(URI remoteElbfischInstance, IoDirection ioDirection) {
-    	throw new UnsupportedOperationException("getTypedValue not implemented for " + this.getClass());
+    	throw new UnsupportedOperationException("getTypedProxyIoSignal not implemented for " + this.getClass());
 //		Signal signal = null;
 //		
 //		try{

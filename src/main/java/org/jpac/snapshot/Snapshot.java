@@ -39,7 +39,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.jpac.JPac;
@@ -79,7 +78,6 @@ public class Snapshot {
         if (!dataDir.exists()){
             dataDir.mkdir();
         }
-        XMLStreamWriter xmlSW    = null;
         StaxDriver staxDriver = new StaxDriver();
         XStream xstream = new XStream(new PureJavaReflectionProvider(), staxDriver);
         xstream.useAttributeFor(SnapshotModule.class, "qualifiedName");

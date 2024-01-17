@@ -87,6 +87,7 @@ public abstract class Property {
         }
     }
     
+    @SuppressWarnings("unused")
     private void assertKey(String key) throws ConfigurationException{
         if (key.contains(".")){
             throw new ConfigurationException("a period ('.') is not allowed as part of the key");

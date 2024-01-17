@@ -90,7 +90,6 @@ public class Namespace extends ManagedNamespace {
     private final SubscriptionModel   subscriptionModel;
 
     private final int                 namespaceIndex;
-    private       int                 idIndex;
     private final OpcUaServer         server;
 
     public Namespace(OpcUaServer server) {

@@ -12,8 +12,6 @@
 
 package org.jpac;
 
-import org.jpac.ProcessException;
-
 /**
  *
  * @author berndschuster

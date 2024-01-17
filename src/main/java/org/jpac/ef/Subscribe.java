@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jpac.BasicSignalType;
-import org.jpac.CharString;
 import org.jpac.Signal;
 import org.jpac.SignalNotRegisteredException;
 import org.jpac.SignalRegistry;

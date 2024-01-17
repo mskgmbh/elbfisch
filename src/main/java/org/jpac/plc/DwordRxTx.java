@@ -89,7 +89,7 @@ public class DwordRxTx extends RxTx{
     public String toString(){
         String str = null;
         try{
-            str = new Long(get()).toString();
+            str = Long.valueOf(get()).toString();
         }
         catch(AddressException exc)
         {

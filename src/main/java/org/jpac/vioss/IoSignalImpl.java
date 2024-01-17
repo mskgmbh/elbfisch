@@ -33,7 +33,6 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.stream.Collectors;
 
 import org.jpac.InconsistencyException;
-import org.jpac.IoDirection;
 import org.jpac.Signal;
 import org.jpac.SignalAccessException;
 import org.jpac.Value;

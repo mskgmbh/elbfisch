@@ -34,7 +34,6 @@ package org.jpac.statistics;
 public class Histogram{
     private long[]   histogramm;
     private long     scale;
-    private long     cycleTime;
     private String   identifier;
 
     public Histogram(String identifier, long cycleTime){

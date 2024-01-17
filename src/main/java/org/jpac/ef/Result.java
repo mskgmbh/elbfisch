@@ -65,7 +65,6 @@ public enum Result {
 
     public static Result fromInt(int result){
         Result  retValue = Result.Unknown;
-        int     idx   = 0;
         for (Result res: Result.values()){
             if (res.value == result){
                 retValue = res;

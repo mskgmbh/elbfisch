@@ -25,7 +25,6 @@
 
 package org.jpac;
 
-import java.util.Iterator;
 import java.util.ArrayList;
 
 /**
@@ -48,7 +47,8 @@ abstract public class InterlockException extends ProcessException {
     public String getMessage() {
         if (message == null){
             StringBuffer signalList = new StringBuffer();
-            for (Iterator i = signals.iterator(); i.hasNext();){
+            var i = signals.iterator();
+            while (i.hasNext()){
                 signalList.append(i.next());signalList.append("; ");
             }
             message = "interlock detected by module " + ((AbstractModule)Thread.currentThread()).getName() + " :" + signalList;

@@ -62,7 +62,6 @@ public class ConjunctiveEvent extends ProcessEvent{
     @Override
     public boolean fire() throws ProcessException {
         boolean IamFired = true;
-        ProcessEvent processEvent;
         eventIterator = combinedEvents.iterator();
         while(eventIterator.hasNext() && IamFired){
             IamFired = IamFired && eventIterator.next().evaluateFiredCondition();

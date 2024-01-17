@@ -30,7 +30,6 @@ import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Stack;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -45,7 +44,7 @@ public abstract class AbstractModule extends Thread{
 
     public class StatusStack{
 
-        private Stack<Object>   stack   = new Stack();
+        private Stack<Object>   stack   = new Stack<>();
         private boolean overrun = false;
 
         public int enter(Object subState){
@@ -89,7 +88,8 @@ public abstract class AbstractModule extends Thread{
         public String toString(){
             StringBuffer qs = new StringBuffer();
             synchronized(this){
-                for(Iterator is = stack.iterator(); is.hasNext();){
+                var is = stack.iterator();
+                while(is.hasNext()){
                     qs.append((is.next()).toString());
                     if (is.hasNext()){
                         qs.append('-');

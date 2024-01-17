@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author berndschuster
  */
+@SuppressWarnings("unused")
 public class EfService implements Runnable{
     public static final  int DEFAULTPORT              = 13685;
     public static final  int DEFAULTRECEIVEBUFFERSIZE = 32000;

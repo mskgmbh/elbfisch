@@ -34,6 +34,7 @@ import java.util.List;
  * @author berndschuster
  */
 @Deprecated
+@SuppressWarnings("unused")
 public class RemoteSignalConnection {
     private String                         host;
     private int                            port;

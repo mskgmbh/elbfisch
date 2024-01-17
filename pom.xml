@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <name>elbfisch</name>
+    <groupId>elbfisch</groupId>    
     <artifactId>elbfisch.core</artifactId>
     <version>4.0.0</version>
     <packaging>jar</packaging>
@@ -30,12 +32,17 @@
 		    <artifactId>sdk-server</artifactId>
 		    <version>0.3.1</version>
 		</dependency>
+		<dependency>
+			<groupId>naturalcli</groupId>
+			<artifactId>naturalcli</artifactId>
+			<version>1.2.3</version>
+			<scope>system</scope>
+			<systemPath>/Users/berndschuster/projects/javalibs/naturalcli-1.2.3.jar</systemPath>
+		</dependency>        
     </dependencies>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
     </properties>
-    <name>elbfisch</name>
-    <groupId>elbfisch</groupId>
 </project>

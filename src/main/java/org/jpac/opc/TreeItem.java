@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Objects;
 import org.jpac.AbstractModule;
 import org.jpac.Signal;
-import static org.jpac.opc.Namespace.Log;
 
 /**
  *

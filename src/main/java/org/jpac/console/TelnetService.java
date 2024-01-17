@@ -35,8 +35,6 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
-import io.netty.util.internal.logging.InternalLoggerFactory;
-import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +63,6 @@ public final class TelnetService {
                         
                         bossGroup = new NioEventLoopGroup(1);
                         workerGroup = new NioEventLoopGroup();
-                        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
                         try {
                             ServerBootstrap b = new ServerBootstrap();
                             b.group(bossGroup, workerGroup)

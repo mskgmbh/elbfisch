@@ -11,7 +11,6 @@ import org.jpac.NumberOutOfRangeException;
 import org.jpac.SignalAccessException;
 import org.jpac.SignalAlreadyExistsException;
 import org.jpac.SignalInvalidException;
-import org.jpac.Value;
 import org.jpac.WrongUseException;
 
 public class IoGeneric<ValueImpl> extends Generic<ValueImpl> implements IoSignal{

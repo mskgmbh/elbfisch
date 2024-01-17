@@ -39,6 +39,7 @@ import org.slf4j.Logger;
  * @author berndschuster
  */
 @Deprecated
+@SuppressWarnings("unused")
 public class RemoteSignalOutputDaemon extends Thread{
     static       Logger Log                = LoggerFactory.getLogger("jpac.Remote");
     static final long   STOPTDAEMONTIMEOUT = 3000000000L;// 3 sec.

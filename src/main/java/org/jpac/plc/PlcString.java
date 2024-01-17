@@ -41,17 +41,13 @@ public class PlcString {
      * @throws StringLengthException
      */
     public PlcString(String string, int maxLength) throws StringLengthException{
-        this.stringBytes = new byte[maxLength];
+        this.stringBytes  = new byte[maxLength];
+        this.actualLength = 0;
         if (maxLength > 256 || string.length() > 256 || string.length() > maxLength){
             throw new StringLengthException("maximum string length > 256");
         }
         this.maxLength = maxLength;
-        if (string != null){
-           setStringBytes(string);
-        }
-        else{
-            this.actualLength = 0;
-        }
+        setStringBytes(string);
     }
 
     /**
@@ -64,17 +60,11 @@ public class PlcString {
         if (actualLength > 256 || string.length > 256 || actualLength > string.length){
             throw new StringLengthException("actual string length > 256");
         }
-        if (string != null){
-            if (string.length > 256){
-                throw new StringLengthException("maximum string length > 256");
-            }
-            this.maxLength    = string.length;
-            this.actualLength = actualLength;
+        if (string.length > 256){
+            throw new StringLengthException("maximum string length > 256");
         }
-        else{
-            this.actualLength = 0;
-            this.maxLength    = 0;
-        }
+        this.maxLength    = string.length;
+        this.actualLength = actualLength;
     }
 
     /**

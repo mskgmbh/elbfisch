@@ -36,7 +36,6 @@ import org.slf4j.Logger;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
-import org.jpac.Address;
 import org.jpac.InconsistencyException;
 import org.jpac.IoDirection;
 import org.jpac.configuration.Configuration;

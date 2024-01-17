@@ -41,6 +41,7 @@ import org.jpac.Value;
  * @author berndschuster
  * @param <ValueImpl> class must implement Value interface
  */
+@SuppressWarnings("unused")
 abstract public class IoGeneric<ValueImpl extends Value> extends Generic<ValueImpl> implements IoSignal{
     static  Logger  Log = LoggerFactory.getLogger("jpac.Signal");      
 

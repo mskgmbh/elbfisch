@@ -25,11 +25,6 @@
 package org.jpac;
 
 import io.netty.buffer.ByteBuf;
-import org.jpac.CharString;
-import org.jpac.Decimal;
-import org.jpac.Logical;
-import org.jpac.Signal;
-import org.jpac.SignedInteger;
 
 /**
  *
@@ -103,6 +98,8 @@ public enum BasicSignalType {
     		case CharString:
     			value = new CharStringValue();
     			break;
+            case Unknown:
+                break;
     	}
     	return value;
     }

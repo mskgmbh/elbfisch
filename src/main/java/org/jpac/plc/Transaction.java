@@ -40,7 +40,7 @@ public abstract class Transaction {
     protected final int          REQUESTQUEUECAPACITY = 100;
     
     private   Connection         connection;
-    protected ArrayBlockingQueue requestQueue;
+    protected ArrayBlockingQueue<Request> requestQueue;
 
     public Transaction(Connection conn) {
         this.connection = conn;

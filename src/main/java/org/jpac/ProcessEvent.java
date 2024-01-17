@@ -30,6 +30,7 @@ import java.util.ArrayList;
 /**
  * base class for all process events which can be await()ed by modules
  */
+@SuppressWarnings("unused")
 public abstract class ProcessEvent extends Fireable{
     final static int                   STACKTRACEOFFSET = 3;
     

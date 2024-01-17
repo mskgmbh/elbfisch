@@ -104,6 +104,8 @@ public class Timer {
                  lastPollCycle = JPac.getInstance().getCycleNumber();
                  running       = lastPollCycle < timeoutCycle;
                  break;
+            case OneCycle:
+                 break;
         }
         return running;
     }

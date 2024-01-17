@@ -47,6 +47,7 @@ public class PeriodOfTime extends ProcessEvent{
         this.cycleMode = JPac.getInstance().getCycleMode();
         switch(this.cycleMode){
             case FreeRunning: 
+            case OneCycle:
                 break;
             case Bound:
             case LazyBound:
@@ -72,7 +73,8 @@ public class PeriodOfTime extends ProcessEvent{
         this.periodOfTime = Math.round(periodOfTime);
         this.cycleMode    = JPac.getInstance().getCycleMode();
         switch(this.cycleMode){
-            case FreeRunning: 
+            case FreeRunning:
+            case OneCycle: 
                 break;
             case Bound:
             case LazyBound:
@@ -99,6 +101,9 @@ public class PeriodOfTime extends ProcessEvent{
             case LazyBound:
                 localFired = nthCycle.fire();
                 break;
+            case OneCycle:
+                //never fire 
+                break;
         }
        return localFired;
     }
@@ -113,6 +118,8 @@ public class PeriodOfTime extends ProcessEvent{
             case LazyBound:
                 nthCycle.reset();
                 break;
+            case OneCycle:
+                break;                
         }
         super.reset();
     }    

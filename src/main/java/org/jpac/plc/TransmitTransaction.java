@@ -37,7 +37,7 @@ public abstract class TransmitTransaction extends Transaction {
 
     public TransmitTransaction(Connection conn) {
         super(conn);
-        requestQueue = new ArrayBlockingQueue<WriteRequest>(REQUESTQUEUECAPACITY);
+        requestQueue = new ArrayBlockingQueue<Request>(REQUESTQUEUECAPACITY);
     }
     
     public abstract void transact() throws IOException;

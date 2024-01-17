@@ -64,7 +64,7 @@ public class SignalRegistry {
 
     public void remove(Signal signal) throws SignalNotRegisteredException{
         if (signals.contains(signal)){
-           signals.remove(signal);
+           signals.remove(signal.getQualifiedIdentifier().hashCode());
         }
         else{
             throw new SignalNotRegisteredException(signal.getQualifiedIdentifier());

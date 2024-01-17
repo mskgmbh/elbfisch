@@ -151,7 +151,7 @@ public class BitRxTx extends RxTx{
     public String toString(){
         String str = null;
         try{
-            str = new Boolean(is(true)).toString();
+            str = Boolean.valueOf(is(true)).toString();
         }
         catch(AddressException exc)
         {

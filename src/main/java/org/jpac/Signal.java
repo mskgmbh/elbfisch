@@ -27,7 +27,6 @@ package org.jpac;
 
 import java.lang.Thread.State;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Observable;
@@ -37,11 +36,6 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.function.Supplier;
 import org.slf4j.LoggerFactory;
-import org.jpac.alarm.Alarm;
-import org.jpac.vioss.IoCharString;
-import org.jpac.vioss.IoDecimal;
-import org.jpac.vioss.IoLogical;
-import org.jpac.vioss.IoSignedInteger;
 import org.slf4j.Logger;
 
 /**

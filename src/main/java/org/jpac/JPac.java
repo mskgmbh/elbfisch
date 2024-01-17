@@ -55,7 +55,6 @@ import org.jpac.configuration.IntProperty;
 import org.jpac.configuration.LongProperty;
 import org.jpac.configuration.StringProperty;
 import org.jpac.console.TelnetService;
-import org.jpac.ef.CommandHandler;
 import org.jpac.ef.EfService;
 import org.jpac.opc.Opc;
 import org.jpac.opc.Opc.AccessLevel;
@@ -67,6 +66,7 @@ import org.jpac.statistics.Histogram;
  * central runtime engine of JPac
  * @author berndschuster
  */
+@SuppressWarnings("unused")
 public class JPac extends Thread {
     static Logger Log = LoggerFactory.getLogger("jpac.JPac");
 

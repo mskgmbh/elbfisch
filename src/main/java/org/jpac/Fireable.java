@@ -185,7 +185,7 @@ public abstract class Fireable{
         if(!fireableAlreadyRegistered){
             //I'm not monitored by this module yet
             //register myself as an active waiting event
-            if (module.getMonitoredEvents().size() >= module.MAXNUMBEROFMONITORS){
+            if (module.getMonitoredEvents().size() >= AbstractModule.MAXNUMBEROFMONITORS){
                 throw new InconsistencyException("maximum number of monitors reached. Use unmonitor() for monitors which are no longer used");
             }
             module.getMonitoredEvents().add(this);

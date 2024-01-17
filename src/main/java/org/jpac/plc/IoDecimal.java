@@ -39,6 +39,7 @@ import org.jpac.SignalInvalidException;
  *
  * @author berndschuster
  */
+@SuppressWarnings("unused")
 public class IoDecimal extends Decimal implements IoSignal{
     static  Logger           Log         = LoggerFactory.getLogger("jpac.Signal");      
     private final static int DEFAULTSIZE = 6;

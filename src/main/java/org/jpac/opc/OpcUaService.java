@@ -44,7 +44,6 @@
 package org.jpac.opc;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.EnumSet;
@@ -72,10 +71,10 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.collect.Lists.newArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.MessageSecurityMode;
 
+@SuppressWarnings("unused")
 public class OpcUaService implements Runnable{
 
 //    public static void main(String[] args) throws Exception {

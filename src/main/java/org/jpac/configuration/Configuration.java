@@ -27,10 +27,13 @@ package org.jpac.configuration;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
-import java.net.URLDecoder;
 import java.util.HashSet;
 import java.util.Iterator;
+
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.slf4j.LoggerFactory;
@@ -46,6 +49,7 @@ import org.jpac.WrongUseException;
  * Will be automatically instantiated on the first instantiation of a property by any module
  * @author berndschuster
  */
+@SuppressWarnings("unused")
 public class Configuration extends XMLConfiguration{
     static Logger Log = LoggerFactory.getLogger("jpac.JPac");
     
@@ -61,7 +65,7 @@ public class Configuration extends XMLConfiguration{
     
     private Configuration() throws ConfigurationException, UnsupportedEncodingException{
         super();
-        String applicationsHomeDir = ApplicationContext.getInstance().getHomeDir();
+        String applicationsHomeDir = ApplicationContext.getHomeDir();
         File configFile            = new File(applicationsHomeDir + "/cfg/org.jpac.Configuration.xml");
         backupConfigFile           = new File(configFile.getAbsolutePath() + ".bak");
         setFile(configFile);
@@ -99,6 +103,25 @@ public class Configuration extends XMLConfiguration{
             }
         }
     }
+
+    @Override    
+    protected Transformer createTransformer() throws TransformerException{
+        TransformerFactory    tf = TransformerFactory.newInstance();
+        Transformer  transformer = tf.newTransformer();
+        // Transformer transformer = tf.newTransformer(new StreamSource(new StringReader(
+        //         "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">\n" + //
+        //         "    <xsl:strip-space elements=\"*\"/>\n"                                               + //
+        //         "    <xsl:output method=\"xml\" encoding=\"UTF-8\"/>\n"                                 + //
+        //         "\n"                                                                                    + //
+        //         "    <xsl:template match=\"@*|node()\">\n"                                              + //
+        //         "        <xsl:copy>\n"                                                                  + //
+        //         "            <xsl:apply-templates select=\"@*|node()\"/>\n"                             + //
+        //         "        </xsl:copy>\n"                                                                 + //
+        //         "    </xsl:template>\n"                                                                 + //
+        //         "\n"                                                                                    + //
+        //         "</xsl:stylesheet>")));;
+        return transformer;
+    }
     
     public static Configuration getInstance() throws ConfigurationException{
         if (instance == null){
@@ -120,8 +143,9 @@ public class Configuration extends XMLConfiguration{
     }
     
     public void cleanUp(){
-        for(Iterator<String> keys = getKeys(); keys.hasNext();){
-            String key = keys.next();
+        var keys = getKeys();
+        while(keys.hasNext()){
+            String key = (String)keys.next();
             if (!getTouchedProperties().contains(key)){
                 Log.info("key:" + key);
                 clearTree(key);

@@ -37,7 +37,7 @@ public abstract class ReceiveTransaction extends Transaction {
 
     public ReceiveTransaction(Connection conn) {
         super(conn);
-        requestQueue = new ArrayBlockingQueue<ReadRequest>(REQUESTQUEUECAPACITY);
+        requestQueue = new ArrayBlockingQueue<Request>(REQUESTQUEUECAPACITY);
     }
     
     public abstract void transact() throws IOException;

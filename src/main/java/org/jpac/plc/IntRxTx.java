@@ -89,7 +89,7 @@ public class IntRxTx extends RxTx{
     public String toString(){
         String str = null;
         try{
-            str = new Integer(get()).toString();
+            str = Integer.valueOf(get()).toString();
         }
         catch(AddressException exc)
         {

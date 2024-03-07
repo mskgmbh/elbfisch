@@ -33,10 +33,6 @@ public class SignalAlreadyConnectedException extends ProcessException{
     public SignalAlreadyConnectedException(Signal signal){
         super(signal.toString());
     }
-    @SuppressWarnings("deprecation")
-	public SignalAlreadyConnectedException(RemoteSignalOutput signal){
-        super(signal.toString());
-    }
     public SignalAlreadyConnectedException(SignalObserver signalObserver){
         super(signalObserver.toString());
     }    

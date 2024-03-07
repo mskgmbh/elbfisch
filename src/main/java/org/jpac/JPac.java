@@ -28,6 +28,7 @@ package org.jpac;
 import org.eclipse.milo.opcua.stack.core.Stack;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -82,7 +83,7 @@ public class JPac extends Thread {
     private     final String    OPCACCESSLEVELREADONLY               = "READ_ONLY";
     private     final String    OPCACCESSLEVELREADWRITE              = "READ_WRITE";
     private     final int       CONSOLESERVICEDEFAULTPORT            = 8023;
-    private     final String    DEFAULTSERVICEBINDADDRESS     = "localhost";
+    private     final String    DEFAULTSERVICEBINDADDRESS            = "localhost";
     
     private     final String    CFGDIR                               = "./cfg";
     private     final String    DATADIR                              = "./data";
@@ -128,8 +129,6 @@ public class JPac extends Thread {
     private BooleanProperty propEnableTrace;
     private BooleanProperty propPauseOnBreakPoint;
     private IntProperty     propTraceTimeMinutes;
-    private BooleanProperty propRemoteSignalsEnabled;
-    private IntProperty     propRemoteSignalPort;
     private StringProperty  propHistogramFile;
     private LongProperty    propCyclicTaskShutdownTimeoutTime;
     private LongProperty    propMaxShutdownTime;
@@ -212,8 +211,6 @@ public class JPac extends Thread {
     //    private ArrayList<AbstractModule> moduleList;
     private Hashtable<String, AbstractModule> moduleList;
 
-
-    @SuppressWarnings("unchecked")
 	protected JPac(){
         super();
         setName(getClass().getSimpleName());
@@ -274,8 +271,6 @@ public class JPac extends Thread {
             propEnableTrace                     = new BooleanProperty(this,"EnableTrace",false,"enables tracing of the module activity",true);
             propTraceTimeMinutes                = new IntProperty(this,"TraceTimeMinutes",0,"used to estimate the length of the trace buffer [min]",true);
             propPauseOnBreakPoint               = new BooleanProperty(this,"pauseOnBreakPoint", false, "cycle is paused, until all modules enter waiting state", true);
-            propRemoteSignalsEnabled            = new BooleanProperty(this,"RemoteSignalsEnabled", false, "enable connections to/from remote JPac instances", true);
-            propRemoteSignalPort                = new IntProperty(this,"RemoteSignalPort",10002,"server port for remote signal access",true);
             propHistogramFile                   = new StringProperty(this,"HistogramFile","./data/histogram.csv","file in which the histograms are stored", true);
             propCyclicTaskShutdownTimeoutTime   = new LongProperty(this,"CyclicTaskShutdownTimeoutTime",DEFAULTSHUTDOWNTIMEOUTTIME,"Timeout for all cyclic tasks to stop on shutdown [ns]",true);
             propMaxShutdownTime                 = new LongProperty(this,"MaxShutdownTime",DEFAULTSHUTDOWNTIMEOUTTIME,"period of time in which all modules must have been terminated in case of a shutdown [ns]",true);
@@ -294,7 +289,7 @@ public class JPac extends Thread {
             propConsoleBindAddress              = new StringProperty(this,"Console.BindAddress",DEFAULTSERVICEBINDADDRESS,"address the console service is bound to", true);
             propGenerateSnapshotOnShutdown      = new BooleanProperty(this,"GenerateSnapShotOnShutdown",false,"used to enable the generation of a snapshot on shutdown", true);
             
-            instanceIdentifier              = InetAddress.getLocalHost().getHostName() + ":" + propRemoteSignalPort.get();
+            instanceIdentifier              = InetAddress.getLocalHost().getHostName();
             cycleTime                       = propCycleTime.get();
             cycleTimeoutTime                = propCycleTimeoutTime.get();
             cycleMode                       = CycleMode.valueOf(propCycleMode.get());
@@ -302,8 +297,6 @@ public class JPac extends Thread {
             enableTrace                     = propEnableTrace.get();
             traceTimeMinutes                = propTraceTimeMinutes.get();
             pauseOnBreakPoint               = propPauseOnBreakPoint.get();
-            remoteSignalsEnabled            = propRemoteSignalsEnabled.get();
-            remoteSignalPort                = propRemoteSignalPort.get();
             histogramFile                   = propHistogramFile.get();
             cyclicTaskShutdownTimeoutTime   = propCyclicTaskShutdownTimeoutTime.get();
             maxShutdownTime                 = propMaxShutdownTime.get();
@@ -313,7 +306,8 @@ public class JPac extends Thread {
             opcUaServiceName                = propOpcUaServiceName.get();
             opcUaMinSupportedSampleInterval = propOpcUaMinSupportedSampleInterval.get();
             opcUaDefaultAccessLevel         = AccessLevel.valueOf(propOpcUaDefaultAccessLevel.get());
-            opcUaBindAddresses              = (List<String>)Configuration.getInstance().getList("org..jpac..JPac.OpcUa.BindAddresses.BindAddress");
+            opcUaBindAddresses              = new ArrayList<>();
+            Configuration.getInstance().getList("org..jpac..JPac.OpcUa.BindAddresses.BindAddress").forEach(o -> opcUaBindAddresses.add((String)o));
             if (opcUaBindAddresses.isEmpty()) {
             	//if bind addresses not specified add one default address to the list
             	StringProperty defaultBindAddress = new StringProperty(this,"OpcUa.BindAddresses.BindAddress",DEFAULTSERVICEBINDADDRESS,"address the opc ua service is bound to", true);
@@ -354,9 +348,8 @@ public class JPac extends Thread {
             }
             try{
                 //get version.number, build.number and build.date
-                Class clazz = JPac.class;
-                String className = clazz.getSimpleName() + ".class";
-                String classPath = clazz.getResource(className).toString();
+                String className = getClass().getSimpleName() + ".class";
+                String classPath = getClass().getResource(className).toString();
                 String manifestPath = "";
                 if(classPath.endsWith("org.jpac/build/classes/org/jpac/JPac.class")){
                     //instantiated inside IDE
@@ -366,7 +359,7 @@ public class JPac extends Thread {
                     //contained in org.jpac.jar
                     manifestPath = classPath.substring(0, classPath.lastIndexOf("!") + 1) + "/META-INF/MANIFEST.MF";
                 }
-                Manifest manifest = new Manifest(new URL(manifestPath).openStream());
+                Manifest manifest = new Manifest(new URI(manifestPath).toURL().openStream());
                 Attributes attr = manifest.getMainAttributes();
                 versionNumber = attr.getValue("Bundle-Version");
                 buildNumber   = attr.getValue("Bundle-Build");
@@ -427,7 +420,6 @@ public class JPac extends Thread {
                 prepareOpcUaService();
                 prepareEfService();
                 prepareConsoleService();
-                prepareRemoteConnections(); 
                 prepareCyclicTasks();
             }
             catch(Exception exc){
@@ -530,8 +522,6 @@ public class JPac extends Thread {
             if (!allModulesShutdown()){
                 getModules().values().stream().forEach((m)-> {if(m.getState() != State.TERMINATED) Log.error("failed to shutdown module '{}' in time.", m.getQualifiedName());});
             }
-            //shutdown RemoteSignalConnection's
-            closeRemoteConnections();
             //stop opc ua service, if running
             stopOpcUaService();
             //stop elbdfisch communication service, if running
@@ -830,9 +820,7 @@ public class JPac extends Thread {
         
         if (efServiceEnabled){
             efService.exchangeChangedSignals();
-        }
-
-        pushSignalsOverRemoteConnections();                 
+        }       
 
         //propagate signals altered due to I/O operations 
         synchronized(signals){
@@ -1216,50 +1204,6 @@ public class JPac extends Thread {
            traceQueue = new TraceQueue(numberOfEntries);
         }
     }
-    
-    @SuppressWarnings("deprecation")
-	protected void prepareRemoteConnections() throws ConfigurationException, RemoteException, RemoteSignalException{
-        if (remoteSignalsEnabled){
-            //start serving incoming remote signal requests
-            RemoteSignalServer.start(remoteSignalPort);
-            //instantiate outgoing remote signals
-            ConcurrentHashMap<String, RemoteSignalConnection> remoteHosts = RemoteSignalRegistry.getInstance().getRemoteHosts();
-            for (Entry<String, RemoteSignalConnection> entry: remoteHosts.entrySet()){
-                entry.getValue().open();
-            }
-        }
-    }
-    
-    @SuppressWarnings("deprecation")
-	protected void closeRemoteConnections(){
-        final long CLOSECONNECTIONTIMEOUT = 3000000000L; // 3 sec
-        try{
-            if (remoteSignalsEnabled){
-                if (Log.isInfoEnabled()) Log.info("closing remote connections ...");
-                //invoke closure of all open remote connections
-                ConcurrentHashMap<String, RemoteSignalConnection> remoteHosts = RemoteSignalRegistry.getInstance().getRemoteHosts();
-                for (Entry<String, RemoteSignalConnection> entry: remoteHosts.entrySet()){
-                    entry.getValue().close();
-                }
-                //wait for all connections to close
-                for (Entry<String, RemoteSignalConnection> entry: remoteHosts.entrySet()){
-                    long timeoutTime = System.nanoTime() + CLOSECONNECTIONTIMEOUT;
-                    while(!entry.getValue().isClosed() && System.nanoTime() < timeoutTime);
-                    if (!entry.getValue().isClosed()){
-                        Log.error("   failed to close remote connection to " + entry.getValue().getRemoteJPacInstance());
-                    }
-                }                    
-                RemoteSignalRegistry.getInstance().stopWatchdog();
-                if (Log.isInfoEnabled()) Log.info("... closing of remote connections done");
-            }
-        }
-        catch(Exception exc){
-            Log.error("Error:", exc);
-        }
-        catch(Error exc){
-            Log.error("Error:", exc);
-        }
-    }
 
     protected void prepareCyclicTasks(){
          synchronized(cyclicTasks){
@@ -1303,7 +1247,7 @@ public class JPac extends Thread {
     protected void prepareOpcUaService() throws Exception{
         if (opcUaServiceEnabled){
             opcUaService = new OpcUaService(opcUaServiceName, opcUaBindAddresses, opcUaServicePort, opcUaMinSupportedSampleInterval);
-            opcUaService.start();
+            opcUaService.startup();
             Log.info("OPC UA service started");
         }
     }
@@ -1343,8 +1287,10 @@ public class JPac extends Thread {
 
     protected void prepareConsoleService() throws Exception{
         if (consoleServiceEnabled){
-            consoleService = new TelnetService(false, consoleBindAddress, consoleServicePort);
-            Log.info("console service started");            
+            //TODO: implement console service
+            Log.warn("console service not yet implemented ...");            
+            // consoleService = new TelnetService(false, consoleBindAddress, consoleServicePort);
+            // Log.info("console service started");            
         }
     }
 
@@ -1367,17 +1313,6 @@ public class JPac extends Thread {
             Log.error("Error:", exc);
         }
         return done;
-    }
-    
-    @SuppressWarnings("deprecation")
-	protected void pushSignalsOverRemoteConnections() throws ConfigurationException, RemoteSignalException{
-        if (remoteSignalsEnabled){
-            ConcurrentHashMap<String, RemoteSignalConnection> remoteHosts = RemoteSignalRegistry.getInstance().getRemoteHosts();
-            //remoteHosts.entrySet().iterator()
-            for (Entry<String, RemoteSignalConnection> entry: remoteHosts.entrySet()){
-                entry.getValue().pushSignals(cycleNumber);
-            }
-        }        
     }
     
     /**

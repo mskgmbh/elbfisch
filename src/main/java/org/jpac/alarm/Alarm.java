@@ -289,7 +289,7 @@ public class Alarm extends Signal{
     }
 
     @Override
-    protected void updateValue(Object o, Object arg) throws SignalAccessException {
+    protected void updateValue(Signal o) throws SignalAccessException {
         //((LogicalValue)getValue()).copy(((LogicalValue)((Logical)o).getValue()));
         try{
             set(((Logical)o).is(invertOnUpdate ? false: true));

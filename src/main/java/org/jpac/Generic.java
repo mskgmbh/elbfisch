@@ -140,7 +140,7 @@ public class Generic<ValueImpl> extends Signal{
 
     @SuppressWarnings("unchecked")
 	@Override
-    protected void updateValue(Object o, Object arg) throws SignalAccessException {
+    protected void updateValue(Signal o) throws SignalAccessException {
         try{
             set(((Generic<ValueImpl>)o).get());
         }

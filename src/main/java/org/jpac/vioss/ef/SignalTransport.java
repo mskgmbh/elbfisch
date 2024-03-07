@@ -26,7 +26,6 @@
 package org.jpac.vioss.ef;
 
 import io.netty.buffer.ByteBuf;
-import java.util.Observable;
 
 import org.jpac.BasicSignalType;
 import org.jpac.CharStringValue;
@@ -175,8 +174,8 @@ public class SignalTransport implements SignalObserver {
     }
 
     @Override
-    public void update(Observable o, Object arg) {
-        value.copy(((Signal)o).getValue());
+    public void update(Signal o) {
+        value.copy(o.getValue());
         setChanged(true);
     }
     

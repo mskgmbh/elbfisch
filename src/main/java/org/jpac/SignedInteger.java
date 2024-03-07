@@ -502,7 +502,7 @@ public class SignedInteger extends Signal{
     }
 
     @Override
-    protected void updateValue(Object o, Object arg) throws SignalAccessException {
+    protected void updateValue(Signal o) throws SignalAccessException {
         try{
             if (o instanceof Decimal){
                 //this instance must supply a mapper

@@ -506,7 +506,7 @@ public class Decimal extends Signal{
     }
 
     @Override
-    protected void updateValue(Object o, Object arg) throws SignalAccessException {
+    protected void updateValue(Signal o) throws SignalAccessException {
         try{
             if (o instanceof Decimal){
                 if (getMapper() != null){

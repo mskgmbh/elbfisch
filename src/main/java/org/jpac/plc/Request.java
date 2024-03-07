@@ -85,7 +85,7 @@ public abstract class Request {
 
     protected Data             data;
     protected DATATYPE         dataType;
-    protected Enum             result;
+    protected Enum<?>          result;
     protected Address          address;
     protected int              dataOffset;
 
@@ -173,14 +173,14 @@ public abstract class Request {
     /**
      * @return the result
      */
-    public Enum getResult() {
+    public Enum<?> getResult() {
         return result;
     }
 
     /**
      * @param result the result to set
      */
-    public void setResult(Enum result) {
+    public void setResult(Enum<?> result) {
         this.result = result;
     }
 

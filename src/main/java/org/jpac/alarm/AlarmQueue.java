@@ -28,21 +28,21 @@ package org.jpac.alarm;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.jpac.ProcessEvent;
 import org.jpac.ProcessException;
+import org.jpac.Observable;
+import org.jpac.Observer;
 
 /**
  * central registry for all alarms instantiated inside an application
  * implemented as singleton
  * @author berndschuster
  */
-public class AlarmQueue extends Observable implements Observer{
+public class AlarmQueue extends Observable implements Observer<Alarm>{
     static  Logger Log = LoggerFactory.getLogger("jpac.Alarm");    
     
     private static final int                    QUEUESIZE = 2000;
@@ -52,7 +52,7 @@ public class AlarmQueue extends Observable implements Observer{
     private ConcurrentHashMap<String,Integer>   alarmIndices;
     private int                                 lastIndex;
     private ArrayBlockingQueue<AlarmQueueEntry> queue;  
-    private Observer                            observer;
+    private Observer<?>                         observer;
     
     protected Integer                           pendingAlarmsCountForSeverityAlarm;
     protected Integer                           pendingAlarmsCountForSeverityWarning;
@@ -111,18 +111,17 @@ public class AlarmQueue extends Observable implements Observer{
     /*
      * @return the ArrayList of registered alarms
      */
-    public List getAlarms(){
+    public List<Alarm> getAlarms(){
         return alarms;
     }
     
     public Alarm getAlarm(String identifier){
-        Integer index = alarmIndices.get(identifier);
         return alarms.get(alarmIndices.get(identifier));
        
     }
 
     @Override
-    public void update(Observable o, Object o1) {
+    public void update(Alarm o) {
         if (o instanceof Alarm){
            //queue changed alarm
            boolean succeeded = queue.offer(new AlarmQueueEntry((Alarm)o));
@@ -131,7 +130,7 @@ public class AlarmQueue extends Observable implements Observer{
                if (!hasChanged()){
                    //inform it about a new queued alarm to be handled by it
                    setChanged();
-                   notifyObservers(o);
+                   notifyObservers();
                }               
            }
            else
@@ -145,7 +144,7 @@ public class AlarmQueue extends Observable implements Observer{
      * @param observer 
      */
     @Override
-    public void addObserver(Observer observer){
+    public void addObserver(Observer<?> observer){
         if (this.observer == null){
             super.addObserver(observer);
             this.observer = observer;
@@ -162,21 +161,21 @@ public class AlarmQueue extends Observable implements Observer{
     void incrementPendingAlarmsCount(Alarm.Severity severity){
         switch(severity){
             case ALARM:
-                synchronized(pendingAlarmsCountForSeverityAlarm){
+                synchronized(this){
                     pendingAlarmsCountForSeverityAlarm++;
                     if(Log.isDebugEnabled()) { Log.debug("pendingAlarmsCountForSeverityAlarm incremented to " + pendingAlarmsCountForSeverityAlarm); }
                     alarmCountIncremented = true;
                 }
                 break;                
             case WARNING:
-                synchronized(pendingAlarmsCountForSeverityWarning){
+                synchronized(this){
                     pendingAlarmsCountForSeverityWarning++;
                     if(Log.isDebugEnabled()) { Log.debug("pendingAlarmsCountForSeverityWarning incremented to " + pendingAlarmsCountForSeverityWarning); }
                     warningCountIncremented = true;
                 }
                 break;                
             case MESSAGE:
-                synchronized(pendingAlarmsCountForSeverityMessage){
+                synchronized(this){
                     pendingAlarmsCountForSeverityMessage++;
                     if(Log.isDebugEnabled()) { Log.debug("pendingAlarmsCountForSeverityMessage incremented to " + pendingAlarmsCountForSeverityMessage); }
                     messageCountIncremented = true;
@@ -189,7 +188,7 @@ public class AlarmQueue extends Observable implements Observer{
         boolean inconsistent = false;
         switch(severity){
             case ALARM:
-                synchronized(pendingAlarmsCountForSeverityAlarm){
+                synchronized(this){
                     pendingAlarmsCountForSeverityAlarm--;
                     if(Log.isDebugEnabled()) { Log.debug("pendingAlarmsCountForSeverityAlarm decremented to " + pendingAlarmsCountForSeverityAlarm); }
                     if (pendingAlarmsCountForSeverityAlarm < 0){
@@ -202,7 +201,7 @@ public class AlarmQueue extends Observable implements Observer{
                 }
                 break;                
             case WARNING:
-                synchronized(pendingAlarmsCountForSeverityWarning){
+                synchronized(this){
                     pendingAlarmsCountForSeverityWarning--;
                     if(Log.isDebugEnabled()) { Log.debug("pendingAlarmsCountForSeverityWarning decremented to " + pendingAlarmsCountForSeverityWarning); }
                     if (pendingAlarmsCountForSeverityWarning < 0){
@@ -215,7 +214,7 @@ public class AlarmQueue extends Observable implements Observer{
                 }
                 break;                
             case MESSAGE:
-                synchronized(pendingAlarmsCountForSeverityMessage){
+                synchronized(this){
                     pendingAlarmsCountForSeverityMessage--;
                     if(Log.isDebugEnabled()) { Log.debug("pendingAlarmsCountForSeverityMessage decremented to " + pendingAlarmsCountForSeverityMessage); }
                     if (pendingAlarmsCountForSeverityMessage < 0){
@@ -233,21 +232,21 @@ public class AlarmQueue extends Observable implements Observer{
     void incrementOpenAlarmsCount(Alarm.Severity severity){
         switch(severity){
             case ALARM:
-                synchronized(openAlarmsCountForSeverityAlarm){
+                synchronized(this){
                     openAlarmsCountForSeverityAlarm++;
                     if(Log.isDebugEnabled()) { Log.debug("openAlarmsCountForSeverityAlarm incremented to " + openAlarmsCountForSeverityAlarm); }
                     alarmCountIncremented = true;
                 }
                 break;                
             case WARNING:
-                synchronized(openAlarmsCountForSeverityWarning){
+                synchronized(this){
                     openAlarmsCountForSeverityWarning++;
                     if(Log.isDebugEnabled()) { Log.debug("openAlarmsCountForSeverityWarning incremented to " + openAlarmsCountForSeverityWarning); }
                     warningCountIncremented = true;
                 }
                 break;                
             case MESSAGE:
-                synchronized(openAlarmsCountForSeverityMessage){
+                synchronized(this){
                     openAlarmsCountForSeverityMessage++;
                     if(Log.isDebugEnabled()) { Log.debug("openAlarmsCountForSeverityMessage incremented to " + openAlarmsCountForSeverityMessage); }
                     messageCountIncremented = true;
@@ -260,7 +259,7 @@ public class AlarmQueue extends Observable implements Observer{
         boolean inconsistent = false;
         switch(severity){
             case ALARM:
-                synchronized(openAlarmsCountForSeverityAlarm){//sync on pendingAla...
+                synchronized(this){//sync on pendingAla...
                     openAlarmsCountForSeverityAlarm--;
                     if (openAlarmsCountForSeverityAlarm < 0){
                         openAlarmsCountForSeverityAlarm = 0;//force counter to '0'
@@ -272,7 +271,7 @@ public class AlarmQueue extends Observable implements Observer{
                 }
                 break;                
             case WARNING:
-                synchronized(openAlarmsCountForSeverityWarning){//sync on pendingAla...
+                synchronized(this){//sync on pendingAla...
                     openAlarmsCountForSeverityWarning--;
                     if (openAlarmsCountForSeverityWarning < 0){
                         openAlarmsCountForSeverityWarning = 0;//force counter to '0'
@@ -284,7 +283,7 @@ public class AlarmQueue extends Observable implements Observer{
                 }
                 break;                
             case MESSAGE:
-                synchronized(openAlarmsCountForSeverityMessage){//sync on pendingAla...
+                synchronized(this){//sync on pendingAla...
                     openAlarmsCountForSeverityMessage--;
                     if (openAlarmsCountForSeverityMessage < 0){
                         openAlarmsCountForSeverityMessage = 0;//force counter to '0'
@@ -338,7 +337,7 @@ public class AlarmQueue extends Observable implements Observer{
      * @return the pendingAlarmsCountForSeverityAlarm
      */
     public Integer getPendingAlarmsCountForSeverityAlarm() {
-        synchronized(pendingAlarmsCountForSeverityAlarm){
+        synchronized(this){
             return pendingAlarmsCountForSeverityAlarm;
         }
     }
@@ -347,7 +346,7 @@ public class AlarmQueue extends Observable implements Observer{
      * @return the pendingAlarmsCountForSeverityWarning
      */
     public Integer getPendingAlarmsCountForSeverityWarning() {
-        synchronized(pendingAlarmsCountForSeverityWarning){
+        synchronized(this){
             return pendingAlarmsCountForSeverityWarning;
         }
     }
@@ -356,7 +355,7 @@ public class AlarmQueue extends Observable implements Observer{
      * @return the pendingAlarmsCountForSeverityMessage
      */
     public Integer getPendingAlarmsCountForSeverityMessage() {
-        synchronized(pendingAlarmsCountForSeverityMessage){
+        synchronized(this){
            return pendingAlarmsCountForSeverityMessage;
         }
     }
@@ -365,7 +364,7 @@ public class AlarmQueue extends Observable implements Observer{
      * @return returns the number of the alarms of severity 'Alarm' which are not acknowledged
      */
     public Integer getOpenAlarmsCountForSeverityAlarm() {
-        synchronized(pendingAlarmsCountForSeverityAlarm){//sync on pendingAla....
+        synchronized(this){//sync on pendingAla....
             return openAlarmsCountForSeverityAlarm;
         }
     }
@@ -374,7 +373,7 @@ public class AlarmQueue extends Observable implements Observer{
      * @return returns the number of the alarms of severity 'Warning' which are not acknowledged
      */
     public Integer getOpenAlarmsCountForSeverityWarning() {
-        synchronized(pendingAlarmsCountForSeverityWarning){//sync on pendingAla....
+        synchronized(this){//sync on pendingAla....
             return openAlarmsCountForSeverityWarning;
         }
     }
@@ -383,7 +382,7 @@ public class AlarmQueue extends Observable implements Observer{
      * @return returns the number of the alarms of severity 'Message' which are not acknowledged
      */
     public Integer getOpenAlarmsCountForSeverityMessage() {
-        synchronized(pendingAlarmsCountForSeverityMessage){//sync on pendingAla....
+        synchronized(this){//sync on pendingAla....
            return openAlarmsCountForSeverityMessage;
         }
     }
@@ -428,7 +427,7 @@ public class AlarmQueue extends Observable implements Observer{
         @Override
         public boolean fire() throws ProcessException {
             boolean retFired;
-            synchronized(pendingAlarmsCountForSeverityAlarm){
+            synchronized(this){
                 retFired = alarmCountIncremented;
                 alarmCountIncremented = false;
             }
@@ -440,7 +439,7 @@ public class AlarmQueue extends Observable implements Observer{
         @Override
         public boolean fire() throws ProcessException {
             boolean retFired;
-            synchronized(pendingAlarmsCountForSeverityWarning){
+            synchronized(this){
                 retFired = warningCountIncremented;
                 warningCountIncremented = false;
             }
@@ -452,7 +451,7 @@ public class AlarmQueue extends Observable implements Observer{
         @Override
         public boolean fire() throws ProcessException {
             boolean retFired;
-            synchronized(pendingAlarmsCountForSeverityMessage){
+            synchronized(this){
                 retFired = messageCountIncremented;
                 messageCountIncremented = false;
             }

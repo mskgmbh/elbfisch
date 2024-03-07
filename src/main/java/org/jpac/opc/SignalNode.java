@@ -44,7 +44,6 @@
 
 package org.jpac.opc;
 
-import com.google.common.collect.ImmutableSet;
 import org.eclipse.milo.opcua.sdk.core.AccessLevel;
 import org.eclipse.milo.opcua.sdk.server.nodes.UaNodeContext;
 import org.eclipse.milo.opcua.sdk.server.nodes.UaVariableNode;
@@ -55,9 +54,7 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.QualifiedName;
 import org.eclipse.milo.opcua.stack.core.types.builtin.StatusCode;
 import org.eclipse.milo.opcua.stack.core.types.builtin.Variant;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UByte;
-import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.ubyte;
 import java.lang.reflect.Field;
-import java.util.Observable;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.jpac.JPac;
@@ -89,27 +86,25 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
         
         setDataType(getSignalDataType());
         dataValue = new DataValue(new Variant(getSignalValue().getValue()), StatusCode.BAD);
-        ImmutableSet<AccessLevel> accessLevels = AccessLevel.NONE;
         Opc.AccessLevel opcAccessLevel = retrieveOpcAccessLevel(signal);
+        UByte accessLevel   = AccessLevel.toValue(AccessLevel.NONE);
         switch(opcAccessLevel){
-            case NONE:
-                accessLevels = AccessLevel.NONE;
-                break;
             case READ_ONLY:
-                accessLevels = AccessLevel.READ_ONLY;
+                accessLevel = AccessLevel.toValue(AccessLevel.READ_ONLY);
                 break;
             case READ_WRITE:
-                accessLevels = AccessLevel.READ_WRITE;
-                break;
+                accessLevel = AccessLevel.toValue(AccessLevel.READ_WRITE);
+            break;
+            default:
+                accessLevel   = AccessLevel.toValue(AccessLevel.NONE);
         }
-        UByte accessLevel = ubyte(AccessLevel.getMask(accessLevels));
         setAccessLevel(accessLevel);
         setUserAccessLevel(accessLevel);  
         if (opcAccessLevel != Opc.AccessLevel.NONE){
             //if any kind of access is permitted, connect this node to the assigned signal
             try{this.signal.connect(this);}catch(SignalAlreadyConnectedException exc){/*cannot happen*/};
         }
-        if (opcAccessLevel == opcAccessLevel.READ_WRITE){
+        if (opcAccessLevel == Opc.AccessLevel.READ_WRITE){
             signal.setConnectedAsTarget(retrieveOpcConnectAsTarget(signal));
         }
     }  
@@ -165,14 +160,13 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
 
     
     @Override
-    public void update(Observable o, Object o1) {
-        Signal sourceSignal = (Signal)o;
-        boolean isValid = sourceSignal.isValid();
-        Log.debug("SignalNode.update() : {}", sourceSignal);
-        synchronized(lock){
+    public void update(Signal o) {
+        boolean isValid = o.isValid();
+        Log.debug("SignalNode.update() : {}", o);
+        synchronized(this){
             if(isValid){
                 lastSignalValue.copy(getSignalValue());
-                getSignalValue().copy(sourceSignal.getValue());
+                getSignalValue().copy(o.getValue());
             }
             else{
                 invalidateSignalValue();//TODO invalidate() problem: invalid signals will cause Status "BAD" on client side
@@ -202,7 +196,7 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
     public DataValue getValue() {
     	Log.debug("SignalNode.getValue {}: {}", signal, getSignalValue().getValue());//TODO
         DataValue theDataValue;
-        synchronized(lock){
+        synchronized(this){
             dataValue = new DataValue(new Variant(getSignalValue().getValue()), signalValue.isValid() ? StatusCode.GOOD : StatusCode.BAD);
             saveSignalState();   
             theDataValue = dataValue;

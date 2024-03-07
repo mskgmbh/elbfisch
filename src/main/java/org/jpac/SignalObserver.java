@@ -25,13 +25,11 @@
 
 package org.jpac;
 
-import java.util.Observer;
-
 /**
  *
  * @author berndschuster
  */
-public interface SignalObserver extends Observer{
+public interface SignalObserver extends Observer<Signal>{
     public void setConnectedAsTarget(boolean connected);
     public boolean isConnectedAsTarget();
 }

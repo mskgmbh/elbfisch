@@ -200,7 +200,7 @@ public class CharString extends Signal{
     }
 
     @Override
-    protected void updateValue(Object o, Object arg) throws SignalAccessException {
+    protected void updateValue(Signal o) throws SignalAccessException {
         try{
             if (o instanceof CharString){
                set(((CharString)o).get());

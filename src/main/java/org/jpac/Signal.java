@@ -29,8 +29,6 @@ import java.lang.Thread.State;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -42,10 +40,10 @@ import org.slf4j.Logger;
  * implements the base features of a signal
  * 
  */
-public abstract class Signal extends Observable implements Observer {
+public abstract class Signal extends Observable implements Observer<Signal> {
 	public final static String PROXYQUALIFIER = "$Proxy";     
 	
-    private   enum ConnTask{CONNECT,DISCONNECT, REMOTECONNECT, REMOTEDISCONNECT, SIGNALOBSERVERCONNECT, SIGNALOBSERVERDISCONNECT};
+    private   enum ConnTask{CONNECT,DISCONNECT, SIGNALOBSERVERCONNECT, SIGNALOBSERVERDISCONNECT};
     
     static    Logger Log = LoggerFactory.getLogger("jpac.Signal");
     private   String                     identifier;
@@ -56,8 +54,6 @@ public abstract class Signal extends Observable implements Observer {
     private   boolean                    connectedAsTarget;
     protected AbstractModule             containingModule;
     private   Set<Signal>                observingSignals;
-    @SuppressWarnings("deprecation")
-	private   Set<RemoteSignalOutput>    observingRemoteSignalOutputs;
     private   Queue<ConnectionTask>      connectionTasks;
     protected Supplier<?>                intrinsicFunction;
     
@@ -70,7 +66,6 @@ public abstract class Signal extends Observable implements Observer {
     protected boolean                    inApplyIntrinsicFunction;
     protected IoDirection                ioDirection;
     
-    @SuppressWarnings("deprecation")
 	public Signal(AbstractModule containingModule, String identifier, Supplier<?> intrinsicFunction, IoDirection ioDirection) throws SignalAlreadyExistsException{
         super();
         this.identifier                       = identifier;
@@ -83,7 +78,6 @@ public abstract class Signal extends Observable implements Observer {
         this.connectedAsTarget                = false;
         this.containingModule                 = containingModule;
         this.observingSignals                 = Collections.synchronizedSet(new HashSet<Signal>());
-        this.observingRemoteSignalOutputs     = Collections.synchronizedSet(new HashSet<RemoteSignalOutput>());
         this.connectionTasks                  = new ArrayBlockingQueue<ConnectionTask>(100);
         this.initializing                     = false;
         this.justConnectedAsSource            = false;
@@ -168,7 +162,6 @@ public abstract class Signal extends Observable implements Observer {
         }
     }
     
-    @SuppressWarnings("deprecation")
 	protected void handleConnections() throws SignalAlreadyConnectedException{
         //handle connection/disconnection of signals requested during last cycle
         //called inside the automation controller only
@@ -180,12 +173,6 @@ public abstract class Signal extends Observable implements Observer {
                     break;
                 case DISCONNECT:
                     deferredDisconnect((Signal)ct.target);
-                    break;
-                case REMOTECONNECT:
-                    deferredConnect((RemoteSignalOutput)ct.target);
-                    break;
-                case REMOTEDISCONNECT:
-                    deferredDisconnect((RemoteSignalOutput)ct.target);
                     break;
                 case SIGNALOBSERVERCONNECT:
                     deferredConnect((SignalObserver)ct.target);
@@ -271,75 +258,6 @@ public abstract class Signal extends Observable implements Observer {
         //invalidate target signal
         try{targetSignal.invalidate();} catch(SignalAccessException exc) {/*cannot happen here*/};
         observingSignals.remove(targetSignal);
-    }
-    
-    /**
-     * used to connect a signal to a RemoteSignalOutput. One signal can be connected
-     * to multiple RemoteSignalOutputs.
-     * The connection is unidirectional: Changes of the connecting signal (sourceSignal) will be
-     * propagated to the remote signal outputs it is connected to (targetSignal): sourceSignal.connect(targetSignal).
-     * @param targetSignal
-     */
-    @SuppressWarnings("deprecation")
-	public void connect(RemoteSignalOutput targetSignal) throws SignalAlreadyConnectedException{
-        synchronized(this){
-            if (Log.isDebugEnabled()) Log.debug(this + ".connect(" + targetSignal + ")");
-//            if (targetSignal.isConnectedAsTarget()){
-//                throw new SignalAlreadyConnectedException(targetSignal);
-//            }
-            try{
-                connectionTasks.add(new ConnectionTask(ConnTask.REMOTECONNECT, targetSignal));
-                targetSignal.setConnectedAsTarget(true);
-            }
-            catch(IllegalStateException exc){
-                Log.error("Error connectionTask queue full: ", exc);
-            }
-            catch(Exception exc){
-                Log.error("Error: ", exc);
-            }
-            //invoke propagation of the state of this signal to the new target
-            setJustConnectedAsSource(true);
-        }
-    }
-    
-    /**
-     * used to disconnect a signal from another signal
-     * @param targetSignal
-     */
-    @SuppressWarnings("deprecation")
-	public void disconnect(RemoteSignalOutput targetSignal){
-        synchronized(this){
-            if (Log.isDebugEnabled()) Log.debug(this + ".disconnect(" + targetSignal + ")");
-            try{
-                connectionTasks.add(new ConnectionTask(ConnTask.REMOTEDISCONNECT, targetSignal));
-            }
-            catch(IllegalStateException exc){
-                Log.error("Error connectionTask queue full: ", exc);
-            }
-            catch(Exception exc){
-                Log.error("Error: ", exc);
-            }
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-	protected void deferredConnect(RemoteSignalOutput targetSignal) throws SignalAlreadyConnectedException{
-        if (Log.isDebugEnabled()) Log.debug(this + ".deferredConnect(" + targetSignal + ")");
-        if (targetSignal.isConnectedAsTarget()){
-            throw new SignalAlreadyConnectedException(targetSignal);
-        }
-        addObserver(targetSignal);
-        observingRemoteSignalOutputs.add(targetSignal);
-    }
-    
-    @SuppressWarnings("deprecation")
-	protected void deferredDisconnect(RemoteSignalOutput targetSignal){
-        if (Log.isDebugEnabled()) Log.debug(this + ".deferredDisconnect(" + targetSignal + ")");
-        deleteObserver(targetSignal);
-        targetSignal.setConnectedAsTarget(false);
-        //invalidate target signal
-        targetSignal.invalidate();
-        observingRemoteSignalOutputs.remove(targetSignal);
     }
 
     /**
@@ -428,7 +346,7 @@ public abstract class Signal extends Observable implements Observer {
      * used to set the intrinsic function of this signal.
      * @param intrinsicFunction 
      */
-    protected void setIntrinsicFct(Supplier intrinsicFunction){
+    protected void setIntrinsicFct(Supplier<?> intrinsicFunction){
         assertSignalAccess();
         this.intrinsicFunction = intrinsicFunction;
     }
@@ -643,14 +561,14 @@ public abstract class Signal extends Observable implements Observer {
     
     
     @Override
-    public void update(Observable o, Object arg){
+    public void update(Signal o){
         synchronized(this){
             try{
                 //take over the valid state of the source signal ...
                 setValid(((Signal)o).isValid());
                 if (value.isValid()){
                     //...  and its value, if valid ...
-                    updateValue(o, arg);
+                    updateValue(o);
                 }
                 //propagate alteration of valid state and/or value
                 propagate(); 
@@ -660,7 +578,7 @@ public abstract class Signal extends Observable implements Observer {
             }
         }
     }
-    
+
     private boolean accessedByForeignModule(){
         boolean isForeignModule;
         Thread  thread = Thread.currentThread();
@@ -684,7 +602,7 @@ public abstract class Signal extends Observable implements Observer {
         this.justConnectedAsSource = justConnectedAsSource;
     }
     
-    protected Supplier getIntrinsicFunction(){
+    protected Supplier<?> getIntrinsicFunction(){
         return this.intrinsicFunction;
     }
     
@@ -709,7 +627,7 @@ public abstract class Signal extends Observable implements Observer {
     }
     
     abstract protected boolean isCompatibleSignal(Signal signal);
-    abstract protected void updateValue(Object o, Object arg) throws SignalAccessException;
+    abstract protected void updateValue(Signal o) throws SignalAccessException;
     abstract protected void propagateSignalInternally() throws SignalInvalidException;    
     abstract protected void applyTypedIntrinsicFunction() throws Exception;
     abstract protected Value getTypedValue();
@@ -720,12 +638,6 @@ public abstract class Signal extends Observable implements Observer {
         private Object   target;
 
         private ConnectionTask(ConnTask task, Signal targetSignal) {
-            this.task   = task;
-            this.target = targetSignal;
-        }  
-
-        @SuppressWarnings("deprecation")
-		private ConnectionTask(ConnTask task, RemoteSignalOutput targetSignal) {
             this.task   = task;
             this.target = targetSignal;
         }  

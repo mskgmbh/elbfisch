@@ -44,11 +44,9 @@ package org.jpac.opc;
 
 
 import java.util.List;
-import org.eclipse.milo.opcua.sdk.core.Reference;
 import org.eclipse.milo.opcua.sdk.server.nodes.UaServerNode;
 import org.eclipse.milo.opcua.sdk.server.nodes.UaVariableNode;
 import org.eclipse.milo.opcua.sdk.server.util.SubscriptionModel;
-import org.eclipse.milo.opcua.stack.core.Identifiers;
 import org.eclipse.milo.opcua.stack.core.StatusCodes;
 import org.eclipse.milo.opcua.stack.core.UaException;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
@@ -101,32 +99,32 @@ public class Namespace extends ManagedNamespace {
         subscriptionModel = new SubscriptionModel(server, this);
     }
 
-    @Override
-    protected void onStartup() {
-        super.onStartup();
+//     @Override
+//     protected void onStartup() {
+//         super.onStartup();
 
-        NodeId folderNodeId = newNodeId("Elbfisch");
+//         NodeId folderNodeId = newNodeId("Elbfisch");
 
-        folderNode = new UaFolderNode(
-            getNodeContext(),
-            folderNodeId,
-            newQualifiedName("Elbfisch"),
-            LocalizedText.english("Elbfisch")
-        );
+//         folderNode = new UaFolderNode(
+//             getNodeContext(),
+//             folderNodeId,
+//             newQualifiedName("Elbfisch"),
+//             LocalizedText.english("Elbfisch")
+//         );
 
-        getNodeManager().addNode(folderNode);
+//         getNodeManager().addNode(folderNode);
 
-        // Make sure our new folder shows up under the server's Objects folder.
-        folderNode.addReference(new Reference(
-            folderNode.getNodeId(),
-            Identifiers.Organizes,
-            Identifiers.ObjectsFolder.expanded(),
-            false
-        ));
+//         // Make sure our new folder shows up under the server's Objects folder.
+//         folderNode.addReference(new Reference(
+//             folderNode.getNodeId(),
+//             Identifiers.Organizes,
+//             Identifiers.ObjectsFolder.expanded(),
+//             false
+//         ));
 
-        // Add the rest of the nodes
-        registerNodes();
-}
+//         // Add the rest of the nodes
+//         registerNodes();
+// }
     
     
   
@@ -245,7 +243,7 @@ public class Namespace extends ManagedNamespace {
             UaServerNode node = getNodeManager().get(id.getNodeId());
             
             if (node != null) {
-                if (AccessLevel.fromMask(((SignalNode)node).getAccessLevel()).contains(AccessLevel.CurrentRead)){
+                if (AccessLevel.fromValue(((SignalNode)node).getAccessLevel()).contains(AccessLevel.CurrentRead)){
                     value = node.readAttribute(new AttributeContext(context), id.getAttributeId());
                 }
                 else{
@@ -272,7 +270,7 @@ public class Namespace extends ManagedNamespace {
             NodeId nodeId = writeValue.getNodeId();
             if (nodeId != null){
                 node = getNodeManager().get(nodeId);
-                if (AccessLevel.fromMask(((SignalNode)node).getAccessLevel()).contains(AccessLevel.CurrentWrite)){
+                if (AccessLevel.fromValue(((SignalNode)node).getAccessLevel()).contains(AccessLevel.CurrentWrite)){
                     UInteger  attributeId = writeValue.getAttributeId();
                     DataValue value       = writeValue.getValue();
                     String    indexRange  = writeValue.getIndexRange();

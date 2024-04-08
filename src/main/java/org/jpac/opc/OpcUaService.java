@@ -129,7 +129,7 @@ public class OpcUaService{
     }
 
     private final OpcUaServer   server;
-    private final NewNamespace  namespace;
+    private final Namespace  namespace;
 
     public OpcUaService(String opcUaServiceName, List<String> opcUaBindAddresses, int opcUaServicePort, double opcUaMinSupportedSampleInterval) throws Exception {
         Path securityTempDir = Paths.get(System.getProperty("java.io.tmpdir"), "server", "security");
@@ -216,7 +216,7 @@ public class OpcUaService{
             .build();
 
         server    = new OpcUaServer(serverConfig);
-        namespace = new NewNamespace(server);
+        namespace = new Namespace(server);
         namespace.startup();
     }
 
@@ -224,11 +224,11 @@ public class OpcUaService{
         Set<EndpointConfiguration> endpointConfigurations = new LinkedHashSet<>();
 
         //List<String> bindAddresses = newArrayList();
-        //bindAddresses.add("0.0.0.0");
+        bindAddresses.add("0.0.0.0");
 
         Set<String> hostnames = new LinkedHashSet<>();
         hostnames.add(HostnameUtil.getHostname());
-        //hostnames.addAll(HostnameUtil.getHostnames("0.0.0.0"));
+        hostnames.addAll(HostnameUtil.getHostnames("0.0.0.0"));
 
         for (String bindAddress : bindAddresses) {
             for (String hostname : hostnames) {
@@ -248,29 +248,21 @@ public class OpcUaService{
                     .setSecurityMode(MessageSecurityMode.None);
 
                 endpointConfigurations.add(buildTcpEndpoint(noSecurityBuilder));
-                //endpointConfigurations.add(buildHttpsEndpoint(noSecurityBuilder));
+                endpointConfigurations.add(buildHttpsEndpoint(noSecurityBuilder));
 
                 // TCP None/None
                 endpointConfigurations.add(buildTcpEndpoint(
                     builder.copy()
-                        .setSecurityPolicy(SecurityPolicy.None)
-                        .setSecurityMode(MessageSecurityMode.None))
+                        .setSecurityPolicy(SecurityPolicy.Basic256Sha256)
+                        .setSecurityMode(MessageSecurityMode.SignAndEncrypt))
                 );
 
-                // TCP Basic256Sha256 / SignAndEncrypt
-                // endpointConfigurations.add(buildTcpEndpoint(
-                //     builder.copy()
-                //         .setSecurityPolicy(SecurityPolicy.Basic256Sha256)
-                //         .setSecurityMode(MessageSecurityMode.SignAndEncrypt))
-                // );
-
-                // // HTTPS Basic256Sha256 / Sign (SignAndEncrypt not allowed for HTTPS)
-                // endpointConfigurations.add(buildHttpsEndpoint(
-                //     builder.copy()
-                //         .setSecurityPolicy(SecurityPolicy.Basic256Sha256)
-                //         .setSecurityMode(MessageSecurityMode.Sign))
-                // );
-
+                // HTTPS Basic256Sha256 / Sign (SignAndEncrypt not allowed for HTTPS)
+                endpointConfigurations.add(buildHttpsEndpoint(
+                    builder.copy()
+                        .setSecurityPolicy(SecurityPolicy.Basic256Sha256)
+                        .setSecurityMode(MessageSecurityMode.Sign))
+                );
                 /*
                  * It's good practice to provide a discovery-specific endpoint with no security.
                  * It's required practice if all regular endpoints have security configured.
@@ -288,7 +280,7 @@ public class OpcUaService{
                     .setSecurityMode(MessageSecurityMode.None);
 
                 endpointConfigurations.add(buildTcpEndpoint(discoveryBuilder));
-                //endpointConfigurations.add(buildHttpsEndpoint(discoveryBuilder));
+                endpointConfigurations.add(buildHttpsEndpoint(discoveryBuilder));
             }
         }
 

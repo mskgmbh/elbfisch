@@ -45,8 +45,12 @@
 package org.jpac.opc;
 
 import org.eclipse.milo.opcua.sdk.core.AccessLevel;
+import org.eclipse.milo.opcua.sdk.server.nodes.AttributeContext;
 import org.eclipse.milo.opcua.sdk.server.nodes.UaNodeContext;
 import org.eclipse.milo.opcua.sdk.server.nodes.UaVariableNode;
+import org.eclipse.milo.opcua.stack.core.AttributeId;
+import org.eclipse.milo.opcua.stack.core.StatusCodes;
+import org.eclipse.milo.opcua.stack.core.UaException;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.eclipse.milo.opcua.stack.core.types.builtin.LocalizedText;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
@@ -54,6 +58,8 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.QualifiedName;
 import org.eclipse.milo.opcua.stack.core.types.builtin.StatusCode;
 import org.eclipse.milo.opcua.stack.core.types.builtin.Variant;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UByte;
+import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UInteger;
+
 import java.lang.reflect.Field;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -158,6 +164,29 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
       return false;
     };
 
+    @Override
+    public void setAttribute(AttributeContext context, AttributeId attributeId, DataValue value) throws UaException{
+        if (attributeId == AttributeId.Value){
+            setValue(value);
+        }
+    }
+
+    public DataValue readAttribute(AttributeContext context, UInteger attributeId) {
+        DataValue value = null;
+        if (attributeId == AttributeId.Value.uid()){            
+            if (AccessLevel.fromValue(getAccessLevel()).contains(AccessLevel.CurrentRead)){
+                value = getValue();
+            }
+            else{
+                value = new DataValue(new StatusCode(StatusCodes.Bad_NotReadable));                    
+            }        
+        }
+        else
+        {
+            value = super.readAttribute(context, attributeId);
+        }        
+        return value;
+    }
     
     @Override
     public void update(Signal o) {
@@ -189,11 +218,14 @@ abstract public class SignalNode extends UaVariableNode implements SignalObserve
     
     @Override
     public synchronized void setValue(DataValue value){
+        super.setValue(value);
+        Log.debug("SignalNode.setValue {}: {}", signal, value.getValue());
         setSignalValue(value);
     }
     
     @Override
     public DataValue getValue() {
+        super.getValue();
     	Log.debug("SignalNode.getValue {}: {}", signal, getSignalValue().getValue());//TODO
         DataValue theDataValue;
         synchronized(this){
